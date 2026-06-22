@@ -26,5 +26,5 @@ jobs:
       - name: 차량관리 보고 슬랙 전송
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL:   C0BC37EB38C
+          SLACK_CHANNEL:   C087JL55TA6
         run: python run_vehicle_headless.py
