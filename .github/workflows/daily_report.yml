@@ -1,0 +1,37 @@
+name: 출석 현황 자동 보고
+
+on:
+  schedule:
+    # 매일 오전 11시 (KST = UTC+9, 즉 UTC 02:00)
+    - cron: '0 2 * * 1-5'   # 평일만 (월~금)
+  workflow_dispatch:          # 수동 실행 버튼
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: Playwright 브라우저 설치
+        run: playwright install chromium --with-deps
+
+      - name: 출석 현황 수집 및 슬랙 전송
+        env:
+          CAREFOR_ID:       ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:       ${{ secrets.CAREFOR_PW }}
+          SLACK_BOT_TOKEN:  ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          CONFIG_YAML:      ${{ secrets.CONFIG_YAML }}
+          CI: "true"
+        run: python run_headless.py

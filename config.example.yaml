@@ -1,0 +1,31 @@
+# 지점 설정 — 신규 지점 오픈 시 여기에 추가만 하면 됨
+branches:
+  - name: 둔산점          # 구글시트 표기명
+    ctmnumb: "23017000602" # 케어포 센터코드
+    capacity: 76           # 정원
+  - name: 서구점
+    ctmnumb: "23017000617"
+    capacity: 84
+  - name: 천안점
+    ctmnumb: "24413000644"
+    capacity: 82
+  - name: 청주 오창점
+    ctmnumb: "24311001003"
+    capacity: 62
+
+# 구글시트
+google_sheet:
+  spreadsheet_id: ""      # 새로 만들 시트 ID (생성 후 입력)
+  data_tab: "데이터"
+  report_tab: "충청본부 출석인원"
+  monthly_tab: "월간 평균 출석현황"
+
+# 슬랙 (webhook URL은 keyring에 저장)
+slack:
+  enabled: true
+  channel_name: "지점 공지방"  # 표시용 (실제 채널은 webhook URL이 결정)
+
+# 케어포 (비밀번호는 자동로그인 portal에서 자동 추출 — 저장 불필요)
+carefor:
+  portal_url: "https://eform.caring.co.kr/carefor"
+  login_proc_url: "https://www.carefor.co.kr/exe/login_proc.php"

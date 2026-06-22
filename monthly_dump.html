@@ -1,0 +1,1251 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko"><head>
+<title>2-8.월간 입소자, 일정, 서비스 현황</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta property="og:image" content="http://carefor.co.kr/img_c/kakao_logo.gif">
+<meta property="og:title" content="케어포">
+<meta property="og:url" content="carefor.co.kr">
+<meta property="og:description" content="노인장기요양 관리프로그램">
+<link rel="stylesheet" href="/css/style_daynurse.css?date=v_20260528" type="text/css">
+<link rel="stylesheet" href="/css/img_checkbox.css?date=v_20260528" type="text/css"><!-- ksyun 20180503 -->
+<link rel="stylesheet" href="/css/img_radio.css?date=v_20260528" type="text/css"><!-- ksyun 20200107 -->
+<link rel="stylesheet" href="/js/jquery-ui-1.10.4.custom.min.css" type="text/css">
+<link rel="stylesheet" href="/css/textareafullscreen.css?date=v_20260528" type="text/css">
+<link rel="stylesheet" href="/css/jquery.autocomplete.css?date=v_20260528" type="text/css"><!-- smpark 20220222 -->
+
+<link rel="stylesheet" href="/js/jquery.scrollbar-gh-pages/jquery.scrollbar.css"><!-- 2022.03.28 added by thPark jquery scrollbar -->
+<link rel="stylesheet" type="text/css" href="/css/style_common.css?date=v_20260528"><!-- less compile file : lessc style_common.less > style_common.css  -->
+<link rel="stylesheet" type="text/css" href="/css/gridTable.css?date=v_20260528">
+
+<link rel="shortcut icon" href="/carefor.ico">
+<!-- keypad css -->
+<!-- 2019.02.28 김학주 keypad.css 주석처리 -->
+<!--<link rel="stylesheet" href="/css/keypad.css?date=v_20260528" type="text/css">-->
+
+<script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.maskedinput-1.4.1.min.js"></script>
+<!-- <script type="text/javascript" src="/js/jquery-1.9.1.js"></script> -->
+
+<!--[if lt IE 9]>
+<script type="text/javascript" src="/js/css3-mediaqueries.js"></script>
+<script type="text/javascript" src="/js/html5.js"></script>
+<![endif]-->
+<script type="text/javascript" src="/js/jquery-ui-1.10.4.custom.min.js"></script>
+<script type="text/javascript" src="/js/jquery.history.js"></script>
+<script type="text/javascript" src="/js/jquery.scrollTo.min.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.alphanumeric.js"></script>
+<script type="text/javascript" src="/js/jquery/jquery.json-2.4.js"></script>
+<script type="text/javascript" src="/js/ckeditor/ckeditor.js"></script><style>.cke{visibility:hidden;}</style>
+<script type="text/javascript" src="/js/common.js?date=v_20260528"></script>
+<script type="text/javascript" src="/js/gridTable.js?date=v_20260528"></script>
+<script type="text/javascript" src="/js/search_menu.js?date=v_20260528"></script><!-- for ksyun -->
+<script type="text/javascript" src="/js/common2.js?date=v_20260528"></script><!-- for ksyun -->
+<script type="text/javascript" src="/js/common3.js?date=v_20260528"></script><!-- for Tae-hyung Park -->
+<script type="text/javascript" src="/js/validation.js?date=v_20260528"></script>
+<script type="text/javascript" src="/js/ctlLayer.js?date=v_20260528"></script>
+<script type="text/javascript" src="/js/ctlAjaxHistory.js"></script>
+<script type="text/javascript" src="/js/CanvasBase.js"></script>
+<script type="text/javascript" src="/js/ColorPicker.js"></script>
+<!-- plupload 사진업로드 for Tae-hyung -->
+<script type="text/javascript" src="/js/plupload/js/moxie.js"></script>
+<script type="text/javascript" src="/js/plupload/js/plupload.dev.js"></script>
+<script type="text/javascript" src="/js/jquery.cookie.js"></script>
+<!-- 급여제공 js -->
+<script type="text/javascript" src="/js/service.js?date=v_20260528"></script><!-- for Tae-hyung Park -->
+<!-- keypad -->
+<script type="text/javascript" src="/js/jquery.plugin.js"></script><!-- for Tae-hyung Park -->
+<script type="text/javascript" src="/js/jquery.keypad.js"></script><!-- for Tae-hyung Park -->
+<!-- monthpicker -->
+<script type="text/javascript" src="/js/jquery.mtz.monthpicker.js?v=1"></script><!-- for Tae-hyung Park -->
+<!-- SMS js -->
+<script type="text/javascript" src="/js/sms.js?date=v_20260528"></script><!-- for Tae-hyung Park -->
+<script type="text/javascript" src="/js/jquery.textareafullscreen.js?date=v_20260528"></script>
+
+<!-- Daum 주소 API -->
+<!-- 2019.09.11 김학주 DAUM 우편번호 API 장애 > IE가 아닐때만 API 사용하도록 처리했었음 -->
+<!-- 2019.09.11 김학주 스크립트 파일 경로 변경 -->
+<!-- 2019.09.23 김학주 스크립트 파일 직접 사용하는 페이지에서 로드하도록 수정 -->
+<!--<script src="https://spi.maps.daum.net/imap/map_js_init/postcode.v2.js"></script>-->
+<!--<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>-->
+
+
+<!-- Google Chart API -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('44', {packages: ['corechart']});
+</script><script type="text/javascript" charset="UTF-8" src="https://www.gstatic.com/charts/pre-45/loader.js"></script>
+<!-- 2022.03.04 김학주 demo 도메인 api 키를 kakao api hangang-sms 계정 > hangang.com APP 에 등록함 -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=d9434e296166158acac55e37b39e8c57&amp;libraries=services"></script><script charset="UTF-8" src="https://t1.daumcdn.net/mapjsapi/js/main/4.5.13/kakao.js"></script><script charset="UTF-8" src="https://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js"></script>
+
+<!-- <script type="text/javascript" src="//apis.daum.net/maps/maps3.js?apikey=c62b61ecc2892e83ef170eca48546813&libraries=services,LIBRARY"></script> -->
+<!-- <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=d9434e296166158acac55e37b39e8c57&libraries=services"></script> -->
+
+<!-- added by thPark input Mask -->
+<script type="text/javascript" src="/js/RobinHerbots-Inputmask/dist/jquery.inputmask.bundle.js"></script><style type="text/css">.im-caret {
+	-webkit-animation: 1s blink step-end infinite;
+	animation: 1s blink step-end infinite;
+}
+
+@keyframes blink {
+	from, to {
+		border-right-color: black;
+	}
+	50% {
+		border-right-color: transparent;
+	}
+}
+
+@-webkit-keyframes blink {
+	from, to {
+		border-right-color: black;
+	}
+	50% {
+		border-right-color: transparent;
+	}
+}
+
+.im-static {
+	color: grey;
+}
+</style>
+<script type="text/javascript" src="/js/RobinHerbots-Inputmask/dist/inputmask/phone-codes/phone.js"></script>
+<script type="text/javascript" src="/js/RobinHerbots-Inputmask/dist/inputmask/phone-codes/phone-be.js"></script>
+<script type="text/javascript" src="/js/RobinHerbots-Inputmask/dist/inputmask/phone-codes/phone-ru.js"></script>
+
+<!-- tablesorter -->
+<script type="text/javascript" src="/js/tablesorter/js/jquery.tablesorter.js"></script>
+
+<script type="text/javascript" src="/js/jquery.rowspanizer.ksyun.js"></script>
+
+<!-- 2020.07.10 윤관석 multiple-select -->
+<link rel="stylesheet" href="/css/multiple-select.min.css?date=v_20260528">
+<script src="/js/multiple-select.min.js?date=v_20260528"></script>
+
+<!-- 2020.07.29 added by thPark 파일다운로드 시 전처리 후처리 가능 -->
+<script type="text/javascript" src="/js/jquery.fileDownload.js"></script>
+
+<script type="text/javascript" src="/js/tinymce/js/tinymce/tinymce.js"></script>
+<!-- script type="text/javascript" src="/js/html2canvas.js"></script -->
+<script type="text/javascript" src="/js/html2canvas1.4.1.min.js"></script>
+
+<!-- 2022.03.28 added by thPark jquery scrollbar -->
+<script type="text/javascript" src="/js/jquery.scrollbar-gh-pages/jquery.scrollbar.js"></script>
+<!-- 2022.03.28 added by thPark template 관련 -->
+<script type="text/javascript" src="/js/common_template.js?date=v_20260528"></script>
+<script type="text/javascript" src="/js/common_document.js?date=v_20260528"></script>
+
+<script type="text/javascript" src="/js/window_size.js?date=v_20260528"></script>
+
+<script type="text/javascript" src="/js/photoswipe_script.js?date=v_20260528"></script>
+<script type="text/javascript">
+//view_location = "/daynurse";
+work_name = "daynurse";
+</script><link id="load-css-0" rel="stylesheet" type="text/css" href="https://www.gstatic.com/charts/44/css/core/tooltip.css"><link id="load-css-1" rel="stylesheet" type="text/css" href="https://www.gstatic.com/charts/44/css/util/util.css"><script type="text/javascript" charset="UTF-8" src="https://www.gstatic.com/charts/44/js/jsapi_compiled_format_module.js"></script><script type="text/javascript" charset="UTF-8" src="https://www.gstatic.com/charts/44/js/jsapi_compiled_default_module.js"></script><script type="text/javascript" charset="UTF-8" src="https://www.gstatic.com/charts/44/js/jsapi_compiled_ui_module.js"></script><script type="text/javascript" charset="UTF-8" src="https://www.gstatic.com/charts/44/js/jsapi_compiled_corechart_module.js"></script></head>
+<!-- script language=JavaScript type=text/javaScript>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-17621124-12', 'auto');
+	ga('send', 'pageview');
+</script-->
+
+
+<body>
+<link rel="stylesheet" href="/css/photoswipe.css">
+<link rel="stylesheet" href="/css/default-skin/default-skin.css">
+<script src="/js/photoswipe.min.js?date=v_20260528"></script>
+<script src="/js/photoswipe-ui-default.min.js?date=v_20260528"></script>
+<div id="pswpArea" class="pswp" tabindex="-1" role="dialog" aria-hidden="true" style="z-index:99999;">
+    <div class="pswp__bg"></div>
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="닫기 (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="공유"></button>                <button class="pswp__button pswp__button--download" title="다운로드"></button>                <button class="pswp__button pswp__button--fs" title="전체화면"></button>
+                <button class="pswp__button pswp__button--zoom" title="확대/축소"></button>
+                <button class="pswp__button pswp__button--print" title="인쇄"></button>                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="이전사진">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="다음사진">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div><script type="text/javascript" src="/js/ai_response.js"></script>
+<link rel="stylesheet" href="/css/ai.css">
+
+<!-- loading -->
+<section data-ai-loading-layer="">
+  <div class="ai_loading_box">
+    <div class="ai_loading_spinner"></div>
+    <div class="ai_loading_step" data-ai-loading-step="">처리 중</div>
+    <div class="ai_loading_message" data-ai-loading-message="">AI가 요청을 처리하고 있습니다.</div>
+  </div>
+</section><script type="text/javascript">
+$(document).ready(function(){
+    var idx           = 1;
+    var str_name      = '';
+    var start_session = '0';
+
+    if(str_name != "touch")
+    {
+        $("li[btn-name]").each(function(){
+            $("div[id="+$(this).attr("btn-name")+"]").addClass("left_sub"+idx);
+            idx++;
+        });
+
+                    if(start_session == '0')    $("div[id="+$("li[obj-type=openMenu][btn-name]").first().attr("btn-name")+"] li").first().click();
+            }
+    else if(start_session == '0')     $("li[obj-type=loadPage][btn-name]").first().click();
+
+    $("#left_area").find(".noready2, .invisible").click(function(){
+        alert('로그인 하신 아이디는 해당 메뉴에 권한이 없습니다.\n기관의 케어포 프로그램 담당자에게 메뉴 권한을 요청하시기 바랍니다.');
+    });
+});
+
+function stop_propagation(event)
+{
+    if(event.stopPropagation)     event.stopPropagation();
+    else                          event.cancelBubble = true;
+}
+
+function openAccount()
+{
+    var url    = "";
+    var option = "fullscreen=yes, scrollbars=yes, resizable=yes";
+    window.open(url, "account", option);
+}
+</script>
+
+  <div id="wrap">
+    <div id="left_area">
+      <div class="line5"></div>
+                        <div class="btn_sitemap" obj-type="loadPage" page-info="{'view':'/sitemap'}" param-info="{'title':'전체메뉴'}"><img src="/img_work/icon_sitemap.png" align="absmiddle">전체메뉴</div>
+                    <div class="line5"></div>
+      <div class="leftmenu">
+        <ul>
+          
+            <li obj-type="openMenu" btn-name="left_sub1" page-info="{'type':'lmenu','view':'left_sub1'}" param-info="" class=""><span class="hz"></span>1.수급자관리
+
+              <div id="left_sub1" data-type="dynamic_lmenu" style="display: none;" class="left_sub1">
+                <div class="tab_pos"><span class="hz"></span>1.수급자관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L01_M01" class="" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_manage'}" param-info="{'title':'1-1.수급자 정보관리','eval':'47'}">1-1.수급자 정보관리</li><!-- 1-1.수급자 정보관리 -->
+                            <li obj-type="loadPage" pamcode="L01_M11" class="submp" page-info="{'type':'left_sub1', 'view':'/share/patient/view.temporary_patient_manage'}" param-info="{'title':'1-1-1.대기 수급자 관리'}">1-1-1.대기 수급자 관리</li><!-- 1-1-1.대기 수급자 관리 -->
+                            <li obj-type="loadPage" pamcode="L01_M03" class="" page-info="{'type':'left_sub1', 'view':'/patient/view.patient_case_total'}" param-info="{'title':'1-2.전체 기초평가 현황'}">1-2.전체 기초평가 현황</li><!-- 1-3.전체 기초평가 현황 -->
+                            <li obj-type="loadPage" pamcode="L01_M04" class="" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_case'}" param-info="{'title':'1-3.기초평가 관리'}">1-3.기초평가 관리</li><!-- 1-4.기초평가 관리 -->
+                            <li obj-type="loadPage" pamcode="L01_M05" class="" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_consult'}" param-info="{'title':'1-4.상담일지'}">1-4.상담일지</li><!-- 1-5.상담일지 -->
+                            <li obj-type="loadPage" pamcode="L01_M06" class="" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_letter'}" param-info="{'title':'1-5.가정통신문'}">1-5.가정통신문</li><!-- 1-6.가정통신문 -->
+                            <li obj-type="loadPage" pamcode="L01_M10" class="" page-info="{'type':'left_sub1', 'view':'/patient/view.patient_guide'}" param-info="{'title':'1-6.수급자 안내사항/예방접종'}">1-6.수급자 안내사항/예방접종</li><!-- 1-7.수급자 안전관리 설명 -->
+                            <li obj-type="loadPage" pamcode="L01_M07" class="rpt" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_report'}" param-info="{'title':'1-7.수급자 현황 리포트'}">1-7.수급자 현황 리포트</li><!-- 1-8.수급자 현황 리포트 -->
+                            <li obj-type="loadPage" pamcode="L01_M08" class="rpt" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_statistics'}" param-info="{'title':'1-8.수급자 월별 통계 리포트'}">1-8.수급자 월별 통계 리포트</li><!-- 1-9.수급자 월별 통계 리포트 -->
+                            <li obj-type="loadPage" pamcode="L01_M09" class="rpt" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_level_report'}" param-info="{'title':'1-9.수급자 등급 변동 현황'}">1-9.수급자 등급 변동 현황</li><!-- 1-10.등급변동 만료현황리포트 -->
+                            <li obj-type="loadPage" pamcode="L01_M13" class="rpt" page-info="{'type':'left_sub1', 'view':'/share/patient/view.patient_connection_send_report'}" param-info="{'title':'1-10.연계기록지 발송 리포트'}">1-10.연계기록지 발송 리포트</li><!-- 1-11.연계기록지 발송 리포트 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub2" page-info="{'type':'lmenu','view':'left_sub2'}" param-info="" class="over"><span class="hz2"></span>2.이동<br>&nbsp;&nbsp;&nbsp;서비스관리
+              <div id="left_sub2" data-type="dynamic_lmenu" style="display:none;" class="left_sub2">
+                <div class="tab_pos"><span class="hz2"></span>2.이동<br>&nbsp;&nbsp;&nbsp;서비스관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L02_M01" class="" page-info="{'type':'left_sub2', 'view':'/transport/view.transport_manage'        }" param-info="{'title':'2-1.일정관리(공단연동)','eval':'47'}">2-1.일정관리(공단연동)</li><!-- 2-1.일정관리(공단연동) -->
+                            <li obj-type="loadPage" pamcode="L02_M09" class="submp" page-info="{'type':'left_sub2', 'view':'/share/patient/view.patient_out'  }" param-info="{'title':'2-1-1.외출 관리'}">2-1-1.외출 관리</li><!-- 2-1-1.외출 관리 -->
+                            <li obj-type="loadPage" pamcode="L02_M03" class="" page-info="{'type':'left_sub2', 'view':'/transport/view.transport_record_manual' }" param-info="{'title':'2-2.탑승관리(차량 이용)'}">2-2.탑승관리(차량 이용)</li><!-- 2-2.탑승관리(차량 이용) -->
+                            <li obj-type="loadPage" pamcode="L02_M05" class="" page-info="{'type':'left_sub2', 'view':'/transport/view.patient_stat_daily'      }" param-info="{'title':'2-3.출석관리(차량 미이용)'}">2-3.출석관리(차량 미이용)</li><!-- 2-3.출석관리(차량 미이용) -->
+                            <li obj-type="loadPage" pamcode="L02_M04" class="" page-info="{'type':'left_sub2', 'view':'/transport/view.transport_car_manage'    }" param-info="{'title':'2-4.차량관리'}">2-4.차량관리</li><!-- 2-4.차량관리 -->
+                            <li obj-type="loadPage" pamcode="L02_M02" class="" page-info="{'type':'left_sub2', 'view':'/rfid/view.transport_work'               }" param-info="{'title':'2-5.청구내역상세(공단연동)'}">2-5.청구내역상세(공단연동)</li><!-- 2-5.청구내역상세(공단연동) -->
+                            <li obj-type="loadPage" pamcode="L02_M06" class="" page-info="{'type':'left_sub2', 'view':'/transport/view.patient_stat_monthly'    }" param-info="{'title':'2-6. 공단 입퇴소내용 자료(공단연동)'}">2-6. 공단 입퇴소내용 자료(공단연동)</li><!-- 2-6.공단 급여비용 청구 자료(공단연동) -->
+                            <li obj-type="loadPage" pamcode="L02_M07" class="rpt" page-info="{'type':'left_sub2', 'view':'/transport/view.monthly_changed_plan'    }" param-info="{'title':'2-7.월간 서비스 변동현황'}">2-7.월간 서비스 변동현황</li><!-- 2-7.월간 서비스 변동현황 -->
+                            <li obj-type="loadPage" pamcode="L02_M08" class="rpt" page-info="{'type':'left_sub2', 'view':'/transport/view.monthly_attend_stat'     }" param-info="{'title':'2-8.월간 입소자, 일정, 서비스 현황'}">2-8.월간 입소자, 일정, 서비스 현황</li><!-- 2-8.월간 입소자 현황 -->
+                            <li obj-type="loadPage" pamcode="L02_M10" class="rpt" page-info="{'type':'left_sub2', 'view':'/share/patient/view.patient_out_report'  }" param-info="{'title':'2-9.수급자 외출 리포트'}">2-9.수급자 외출 리포트</li><!-- 2-9.외출 현황 리포트 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub3" page-info="{'type':'lmenu','view':'left_sub3'}" param-info="" class=""><span class="hz2"></span>3.요양<br>&nbsp;&nbsp;&nbsp;급여제공
+              <div id="left_sub3" data-type="dynamic_lmenu" style="display:none;" class="left_sub3">
+                <div class="tab_pos"><span class="hz2"></span>3.요양<br>&nbsp;&nbsp;&nbsp;급여제공</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L03_M01" class="" page-info="{'type':'left_sub3', 'view':'/share/care/view.care_service_weekly'}" param-info="{'title':'3-1.요양급여 제공 기록'}">3-1.요양급여 제공 기록</li><!-- 3-1.요양급여 제공 기록                -->
+                            <li obj-type="loadPage" pamcode="L03_M08" class="submp" page-info="{'type':'left_sub3', 'view':'/share/care/view.total_meal'}" param-info="{'title':'3-1-1.통합식사도움기록'}">3-1-1.통합식사도움기록</li><!-- 3-1-1.통합식사도움기록                -->
+                            <li obj-type="loadPage" pamcode="L03_M10" class="submp" page-info="{'type':'left_sub3', 'view':'/share/nursing/view.nursing_service'}" param-info="{'title':'3-1-2.간호급여 제공기록(바이탈,투약)','menu_target':'care'}">3-1-2.간호급여 제공기록(바이탈,투약)</li><!-- 3-1-2.간호급여 제공기록(요양보호사)   -->
+                            <li obj-type="loadPage" pamcode="L03_M12" class="submp" page-info="{'type':'left_sub3', 'view':'/share/care/view.care_service_bigo_all'}" param-info="{'title':'3-1-3.요양급여 특이사항 관리'}">3-1-3.요양급여 특이사항 관리</li><!-- 3-1-3.요양급여 특이사항 관리          -->
+                            <li obj-type="loadPage" pamcode="L03_M13" class="submp" page-info="{'type':'left_sub3', 'view':'/share/care/view.meal_satisfaction_daynurse'}" param-info="{'title':'3-1-4.식사(간식) 만족도 조사 및 반영'}">3-1-4.식사(간식) 만족도 조사 및 반영</li><!-- 3-1-4.식사(간식) 만족도 조사 및 반영  -->
+                            <li obj-type="loadPage" pamcode="L03_M02" class="" page-info="{'type':'left_sub3', 'view':'/share/care/view.status_change_report'}" param-info="{'title':'3-2.상태변화 기록'}">3-2.상태변화 기록</li><!-- 3-2.상태변화 기록                     -->
+                            <li obj-type="loadPage" pamcode="L03_M07" class="" page-info="{'type':'left_sub3', 'view':'/share/care/view.care_bath_manage'}" param-info="{'title':'3-3.목욕일정 및 제공현황'}">3-3.목욕일정 및 제공현황</li><!-- 2-3.목욕일정표                        -->
+                            <li obj-type="loadPage" pamcode="L03_M03" class="rpt" page-info="{'type':'left_sub3', 'view':'/share/care/view.care_meal_excretion'}" param-info="{'title':'3-4.요양/식사(조치사항)/화장실 리포트'}">3-4.요양/식사(조치사항)/화장실 리포트</li><!-- 3-4.요양/간호/식사/화장실 리포트      -->
+                            <li obj-type="loadPage" pamcode="L03_M04" class="rpt" page-info="{'type':'left_sub3', 'view':'/share/care/view.bath_help'}" param-info="{'title':'3-5.목욕도움 리포트'}">3-5.목욕도움 리포트</li><!-- 3-5.목욕도움 리포트                   -->
+                            <li obj-type="loadPage" pamcode="L03_M05" class="rpt" page-info="{'type':'left_sub3', 'view':'/share/care/view.patient_service'}" param-info="{'title':'3-6.급여제공 리포트'}">3-6.급여제공 리포트</li><!-- 3-6.급여제공 기록지(요양/식사/화장실) -->
+                            <li obj-type="loadPage" pamcode="L03_M11" class="rpt" page-info="{'type':'left_sub3', 'view':'/share/care/view.service'}" param-info="{'title':'3-7.급여제공 서비스 집계'}">3-7.급여제공 서비스 집계</li><!-- 3-7.급여제공 서비스 집계 리포트       -->
+
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub4" page-info="{'type':'lmenu','view':'left_sub4'}" param-info="" class=""><span class="hz2"></span>4.<span>간호</span><br>&nbsp;&nbsp;&nbsp;급여제공
+              <div id="left_sub4" data-type="dynamic_lmenu" style="display:none;" class="left_sub4">
+                <div class="tab_pos"><span class="hz2"></span>4.<span>간호</span><br>&nbsp;&nbsp;&nbsp;급여제공</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L04_M01" class="" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.nursing_service'}" param-info="{'title':'4-1.간호급여 제공기록(간호,투약,진료)'}">4-1.간호급여 제공기록(간호,투약,진료)</li><!-- 4-1.간호급여 제공기록(간호,투약,진료) -->
+                            <li obj-type="loadPage" pamcode="L04_M08" class="submp" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.total_vital_check'}" param-info="{'title':'4-1-1.통합 간호관리 기록'}">4-1-1.통합 간호관리 기록</li><!-- 4-1-1.통합 바이탈 기록 -->
+                            <li obj-type="loadPage" pamcode="L04_M03" class="" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.emergency_history'}" param-info="{'title':'4-2.응급상황 기록(필요시)'}">4-2.응급상황 기록(필요시)</li><!-- 4-2.응급상황 기록 -->
+                            <li obj-type="loadPage" pamcode="L04_M04" class="rpt" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.total_nursing_service'}" param-info="{'title':'4-3.통합 간호제공 리포트'}">4-3.통합 간호제공 리포트</li><!-- 4-3.통합 간호제공 리포트 -->
+                            <li obj-type="loadPage" pamcode="L04_M05" class="rpt" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.nursing_hospital_report'}" param-info="{'title':'4-4.병의원 진료내역 리포트'}">4-4.병의원 진료내역 리포트</li><!-- 4-4.병의원 진료내역 리포트 -->
+                            <li obj-type="loadPage" pamcode="L04_M06" class="rpt" page-info="{'type':'left_sub4', 'view':'/share/nursing/view.medication_delivery'}" param-info="{'title':'4-5.투약제공 리포트'}">4-5.투약제공 리포트</li><!-- 4-5.투약제공 리포트 -->
+                                                      </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+            <li obj-type="openMenu" btn-name="left_sub5" page-info="{'type':'lmenu','view':'left_sub5'}" param-info="" class=""><span class="hz2"></span>5.프로그램<br>&nbsp;&nbsp;&nbsp;급여제공
+              <div id="left_sub5" data-type="dynamic_lmenu" style="display:none;" class="left_sub5">
+                <div class="tab_pos"><span class="hz2"></span>5.프로그램<br>&nbsp;&nbsp;&nbsp;급여제공</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L05_M01" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_service_daily'}" param-info="{'title':'5-1.프로그램 제공기록'}">5-1.프로그램 제공기록</li><!-- 5-1.프로그램 제공기록              -->
+                            <li obj-type="loadPage" pamcode="L05_M12" class="submp" page-info="{'type':'left_sub5', 'view':'/share/program/view.outside_lecturer_manage'}" param-info="{'title':'5-1-1.외부강사/자원봉사자 관리'}">5-1-1.외부강사/자원봉사자 관리</li><!-- 5-1-1.외부강사/자원봉사자 관리     -->
+                            <li obj-type="loadPage" pamcode="L05_M02" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_service'}" param-info="{'title':'5-2.프로그램 일정관리'}">5-2.프로그램 일정관리</li><!-- 5-2.프로그램 일정관리              -->
+                            <li obj-type="loadPage" pamcode="L05_M03" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_plan'}" param-info="{'title':'5-3.프로그램 수급자 그룹 설정(필요시)'}">5-3.프로그램 수급자 그룹 설정(필요시)</li><!-- 5-3.프로그램 수급자 그룹 설정      -->
+                            <li obj-type="loadPage" pamcode="L05_M05" class="submp" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_group'}" param-info="{'title':'5-3-1.프로그램 그룹 관리'}">5-3-1.프로그램 그룹 관리</li><!-- 5-3-1.프로그램 그룹 관리           -->
+                            <li obj-type="loadPage" pamcode="L05_M04" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_item'}" param-info="{'title':'5-4.프로그램 정보관리'}">5-4.프로그램 정보관리</li><!-- 5-4.프로그램 정보관리              -->
+                            <li obj-type="loadPage" pamcode="L05_M10" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_evaluation'}" param-info="{'title':'5-5.프로그램 의견수렴 및 반영'}">5-5.프로그램 의견수렴 및 반영</li><!-- 5-5.프로그램평가(의견수렴)         -->
+                            <li obj-type="loadPage" pamcode="L05_M11" class="submp" page-info="{'type':'left_sub5', 'view':'/share/program/view.social_worker_report'}" param-info="{'title':'5-5-1.프로그램관리자 업무수행일지'}">5-5-1.프로그램관리자 업무수행일지</li><!-- 5-5-1.프로그램 관리자 업무수행일지 -->
+                            <li obj-type="loadPage" pamcode="L05_M15" class="" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_annual_plan_sep'}" param-info="{'title':'5-6.프로그램 계획'}">5-6.프로그램 계획</li><!-- 5-6.프로그램 계획                  -->
+                            <li obj-type="loadPage" pamcode="L05_M06" class="rpt" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_record'}" param-info="{'title':'5-7.수급자 참여프로그램 리포트'}">5-7.수급자 참여프로그램 리포트</li><!-- 5-7.수급자 참여프로그램 리포트     -->
+                            <li obj-type="loadPage" pamcode="L05_M07" class="rpt" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_service_yearly'}" param-info="{'title':'5-8.프로그램 제공기록 리포트(운영기록지)'}">5-8.프로그램 제공기록 리포트(운영기록지)</li><!-- 5-8.연간 프로그램 운영기록 리포트  -->
+                            <li obj-type="loadPage" pamcode="L05_M08" class="rpt" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_plan_state'}" param-info="{'title':'5-9.프로그램 수급자 그룹 설정 이력 리포트'}">5-9.프로그램 수급자 그룹 설정 이력 리포트</li><!-- 5-9.수급자 목표 및 계획수립 리포트 -->
+                            <li obj-type="loadPage" pamcode="L05_M09" class="rpt" page-info="{'type':'left_sub5', 'view':'/share/program/view.program_service_rpt'}" param-info="{'title':'5-10.수급자 프로그램 일정 리포트'}">5-10.수급자 프로그램 일정 리포트</li><!-- 5-10.수급자 프로그램 일정 리포트   -->
+                            <!-- li obj-type="" pamcode="L05_M13" class=""      page-info="{'type':'left_sub5', 'view':'/share/program/view.program_plan_ltcare'}"      param-info="{'title':''}"></li--><!-- 5-11.프로그램 계획(평가매뉴얼)     -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub6" page-info="{'type':'lmenu','view':'left_sub6'}" param-info="" class=""><span class="hz2"></span>6.<span class="m_sp">식단/위생/점검</span><br>&nbsp;&nbsp; 관리
+              <div id="left_sub6" data-type="dynamic_lmenu" style="display:none;" class="left_sub6">
+                <div class="tab_pos"><span class="hz2"></span>6.<span class="m_sp">식단/위생/점검</span><br>&nbsp;&nbsp; 관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L06_M01" class="" page-info="{'type':'left_sub6', 'view':'/share/safe/view.weekly_menu'}" param-info="{'title':'6-1.주간식단표'}">6-1.주간식단표</li><!-- 6-1.주간식단표 -->
+                            <li obj-type="loadPage" pamcode="L06_M02" class="" page-info="{'type':'left_sub6', 'view':'/share/safe/view.daily_check'}" param-info="{'title':'6-2.일일점검'}">6-2.일일점검</li><!-- 6-2.일일점검 -->
+                            <li obj-type="loadPage" pamcode="L06_M03" class="" page-info="{'type':'left_sub6', 'view':'/share/safe/view.regularly_check'}" param-info="{'title':'6-3.정기점검'}">6-3.정기점검</li><!-- 6-3.정기점검 -->
+                            <li obj-type="loadPage" pamcode="L06_M07" class="submp" page-info="{'type':'left_sub6', 'view':'/share/safe/view.infection_manage'}" param-info="{'title':'6-3-1.감염병 관리'}">6-3-1.감염병 관리</li><!-- 6-3-1.감염병 관리 -->
+                            <li obj-type="loadPage" pamcode="L06_M04" class="" page-info="{'type':'left_sub6', 'view':'/safe/view.daily_center'}" param-info="{'title':'6-4.시설운영일지'}">6-4.시설운영일지</li><!-- 6-4.시설운영일지 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub7" page-info="{'type':'lmenu','view':'left_sub7'}" param-info="" class=""><span class="hz2"></span>7.본인<br>&nbsp;&nbsp;&nbsp;부담금관리
+              <div id="left_sub7" data-type="dynamic_lmenu" style="display:none;" class="left_sub7">
+                <div class="tab_pos"><span class="hz2"></span>7.본인<br>&nbsp;&nbsp;&nbsp;부담금관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L07_M01" class="" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_master'}" param-info="{'title':'7-1.본인부담금 청구관리'}">7-1.본인부담금 청구관리</li><!-- 7-1.본인부담금 청구관리              -->
+                            <li obj-type="loadPage" pamcode="L07_M02" class="" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_receipt'}" param-info="{'title':'7-2.본인부담금 입금관리'}">7-2.본인부담금 입금관리</li><!-- 7-2.본인부담금 입금관리              -->
+                            <li obj-type="loadPage" pamcode="L07_M09" class="submp" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_master_statistic'}" param-info="{'title':'7-2-1.의료비공제(연말정산)'}">7-2-1.의료비공제(연말정산)</li><!-- 7-2-1.의료비공제(연말정산)           -->
+                            <li obj-type="loadPage" pamcode="L07_M03" class="" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_nopay'}" param-info="{'title':'7-3.본인부담금 미납관리'}">7-3.본인부담금 미납관리</li><!-- 7-3.본인부담금 미납관리              -->
+                            <li obj-type="loadPage" pamcode="L07_M11" class="" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cms_manage'}" param-info="{'title':'7-4.본인부담금 자동이체 (CMS)'}">7-4.본인부담금 자동이체 (CMS)</li><!-- 7-5.본인부담금 자동이체 (CMS)      -->
+                            <li obj-type="loadPage" pamcode="L07_M12" class="" page-info="{'type':'left_sub7', 'view':'/share/cost/view.npay_manage'}" param-info="{'title':'7-5.본인부담금 간편결제'}">7-5.본인부담금 간편결제</li><!-- 7-6.본인부담금 간편결제      -->
+                            <!--<li obj-type="" pamcode="L07_M05" class="rpt" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_master_patient_yearly'}"    param-info="{'title':''}"></li>--><!-- 7-7.연간 본인부담금 청구대장 리포트  -->
+                            <li obj-type="loadPage" pamcode="L07_M05" class="rpt" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_master_report'}" param-info="{'title':'7-6.본인부담금 청구대장 리포트'}">7-6.본인부담금 청구대장 리포트</li><!-- 7-7.연간 본인부담금 청구대장 리포트  -->
+                            <li obj-type="loadPage" pamcode="L07_M06" class="rpt" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_deposit_report'}" param-info="{'title':'7-7.본인부담금 입금대장 리포트'}">7-7.본인부담금 입금대장 리포트</li><!-- 7-8.월별 본인부담금 입금대장 리포트  -->
+                            <li obj-type="loadPage" pamcode="L07_M07" class="rpt" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_receipt_report'}" param-info="{'title':'7-8.본인부담금 수납대장 리포트'}">7-8.본인부담금 수납대장 리포트</li><!-- 7-9.월별 본인부담금 수납대장 리포트  -->
+                            <li obj-type="loadPage" pamcode="L07_M10" class="rpt" page-info="{'type':'left_sub7', 'view':'/share/cost/view.cost_receipt_apply_yearly'}" param-info="{'title':'7-9.본인부담금 수납,환불내역'}">7-9.본인부담금 수납,환불내역</li><!-- 7-10.본인부담금 수납내역 -->
+                            <li obj-type="loadPage" pamcode="L07_M13" class="rpt" page-info="{'type':'left_sub7', 'view':'/cost/view.cost_calculator'}" param-info="{'title':'7-10.본인부담금 간편계산기'}">7-10.본인부담금 간편계산기</li><!-- 7-10.본인부담금 간편계산기 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            
+            <li obj-type="openMenu" btn-name="left_sub8" page-info="{'type':'lmenu','view':'left_sub8'}" param-info="" class=""><span class="hz"></span>8.직원관리
+              <div id="left_sub8" data-type="dynamic_lmenu" style="display:none;" class="left_sub8">
+                <div class="tab_pos"><span class="hz"></span>8.직원관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L08_M01" class="" page-info="{'type':'left_sub8', 'view':'/staff/view.staff_manage'}" param-info="{'title':'8-1.직원 정보관리'}">8-1.직원 정보관리</li><!-- 8-1.직원 정보관리 -->
+                            <li obj-type="loadPage" pamcode="L08_M17" class="submp" page-info="{'type':'left_sub8', 'view':'/share/staff/view.welfare_reward_manage'}" param-info="{'title':'8-1-1.복지(포상) 제공대장 관리'}">8-1-1.복지(포상) 제공대장 관리</li><!-- 8-1-1.복지(포상) 제공대장 관리 -->
+                                                        <li obj-type="loadPage" pamcode="L08_M02" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.work_plan'}" param-info="{'title':'8-2.근무일정표'}">8-2.근무일정표</li><!-- 8-2.근무일정표 -->
+                            <li obj-type="loadPage" pamcode="L08_M10" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.schedule_manage'}" param-info="{'title':'8-3.연간 일정계획(필요시)'}">8-3.연간 일정계획(필요시)</li><!-- 8-3.연간 일정계획 -->
+                            <li obj-type="loadPage" pamcode="L08_M03" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_work_manage'}" param-info="{'title':'8-4.출퇴근 및 근무관리'}">8-4.출퇴근 및 근무관리</li><!-- 8-4.출퇴근 및 근무관리 -->
+                            <li obj-type="loadPage" pamcode="L08_M04" class="" page-info="{'type':'left_sub8', 'view':'/share/patient/view.patient_case_meeting_tab'}" param-info="{'title':'8-5.사례관리 회의록'}">8-5.사례관리 회의록</li><!-- 8-5.사례관리 회의록 -->
+                            <li obj-type="loadPage" pamcode="L08_M05" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_meeting'}" param-info="{'title':'8-6.회의록(운영위원회)'}">8-6.회의록(운영위원회)</li><!-- 8-6.회의록(보호자,복지및포상) -->
+                            <li obj-type="loadPage" pamcode="L08_M06" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_education'}" param-info="{'title':'8-7.교육일지'}">8-7.교육일지</li><!-- 8-7.교육일지 -->
+                            <li obj-type="loadPage" pamcode="L08_M16" class="submp" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_refresher_training'}" param-info="{'title':'8-7-1.요양보호사 보수교육'}">8-7-1.요양보호사 보수교육</li><!-- 8-7-1.요양보호사 보수교육 -->
+                            <li obj-type="loadPage" pamcode="L08_M07" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_daily_volunteer_list'}" param-info="{'title':'8-8.자원봉사자 활동일지(필요시)'}">8-8.자원봉사자 활동일지(필요시)</li><!-- 8-8.자원봉사자 활동일지 -->
+                            <li obj-type="loadPage" pamcode="L08_M09" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_difficulty_report'}" param-info="{'title':'8-9.고충처리 관리'}">8-9.고충처리 관리</li><!-- 8-9.고충처리 관리 -->
+                            <li obj-type="loadPage" pamcode="L08_M13" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_yearly_report'}" param-info="{'title':'8-10.건강검진관리'}">8-10.건강검진관리</li><!-- 8-10.건강검진관리 -->
+                            <li obj-type="loadPage" pamcode="L08_M14" class="" page-info="{'type':'left_sub8', 'view':'/share/staff/view.center_quality'}" param-info="{'title':'8-11.질향상노력(삭제예정)'}">8-11.질향상노력(삭제예정)</li><!-- 8-11.질향상노력 -->
+                                                        <li obj-type="loadPage" pamcode="L08_M08" class="rpt" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_report'}" param-info="{'title':'8-12.직원 현황 리포트'}">8-12.직원 현황 리포트</li><!-- 8-12.현황 리포트 -->
+                                                        <li obj-type="loadPage" pamcode="L08_M12" class="rpt" page-info="{'type':'left_sub8', 'view':'/share/staff/view.staff_vacation_report'}" param-info="{'title':'8-13.연차,유급휴일 대장'}">8-13.연차,유급휴일 대장</li><!-- 8-13.연차대장 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub9" page-info="{'type':'lmenu','view':'left_sub9'}" param-info="" class=""><span class="hz2"></span>9.기초설정 및<br>&nbsp;&nbsp;&nbsp;운영관리
+              <div id="left_sub9" data-type="dynamic_lmenu" style="display:none;" class="left_sub9">
+                <div class="tab_pos"><span class="hz2"></span>9.기초설정 및<br>&nbsp;&nbsp;&nbsp;운영관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L09_M01" class="" page-info="{'type':'left_sub9', 'view':'/basic/view.center_master'}" param-info="{'title':'9-1.시설정보설정'}">9-1.시설정보설정</li><!-- 9-1.시설정보설정 -->
+                            <li obj-type="loadPage" pamcode="L09_M06" class="submp" page-info="{'type':'left_sub9', 'view':'/share/basic/view.basic_set'}" param-info="{'title':'9-1-1.기초작업 및 기초설정'}">9-1-1.기초작업 및 기초설정</li><!-- 9-1-1.기초작업 및 기초설정 -->
+                            <li obj-type="loadPage" pamcode="L09_M02" class="" page-info="{'type':'left_sub9', 'view':'/basic/view.service_cost'}" param-info="{'title':'9-2.요양급여 수가설정'}">9-2.요양급여 수가설정</li><!-- 9-2.요양급여 수가설정 -->
+                            <li obj-type="loadPage" pamcode="L09_M03" class="" page-info="{'type':'left_sub9', 'view':'/share/basic/view.service_pay'}" param-info="{'title':'9-3.이용요금 결제 및 연장','kcpFlag':true}">9-3.이용요금 결제 및 연장</li><!-- 9-3.이용요금 결제 및 연장 -->
+                                                        <li obj-type="loadPage" pamcode="L09_M05" class="" page-info="{'type':'left_sub9', 'view':'/share/basic/view.equipment_ledger'}" param-info="{'title':'9-4.비품관리대장'}">9-4.비품관리대장</li><!-- 9-4.비품관리대장 -->
+                                                        <li obj-type="loadPage" pamcode="L09_M04" class="rpt" page-info="{'type':'left_sub9', 'view':'/basic/view.sales_amount'}" param-info="{'title':'9-5.연간 부담금현황'}">9-5.연간 부담금현황</li><!-- 9-5.연간 부담금현황 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+            <li obj-type="openMenu" btn-name="left_sub10" page-info="{'type':'lmenu','view':'left_sub10'}" param-info="" class="" style="letter-spacing:-1px;"><span class="hz"></span>10.부가서비스
+              <div id="left_sub10" data-type="dynamic_lmenu" style="display:none;" class="left_sub10">
+                <div class="tab_pos" style="letter-spacing:-1px;"><span class="hz"></span>10.부가서비스</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L10_M01" class="" page-info="{'type':'left_sub10', 'view':'/share/manage/view.send_sms_new'}" param-info="{'title':'10-1.문자메시지 발송'}">10-1.문자메시지 발송</li><!-- 10-1.문자메시지 발송 -->
+                            <li obj-type="loadPage" pamcode="L10_M02" class="" page-info="{'type':'left_sub10', 'view':'/share/manage/view.send_service_url'}" param-info="{'title':'10-2.급여제공내역 안내 발송'}">10-2.급여제공내역 안내 발송</li><!-- 10-2.급여제공내역 안내 발송 -->
+                            <li obj-type="loadPage" pamcode="L10_M10" class="submp" page-info="{'type':'left_sub10', 'view':'/share/manage/view.send_sign_url'}" param-info="{'title':'10-2-1.수가변경안내 발송'}">10-2-1.수가변경안내 발송</li><!-- 10-2-1.수가변경안내 발송 -->
+                            <li obj-type="loadPage" pamcode="L10_M03" class="" page-info="{'type':'left_sub10', 'view':'/patient/view.protector_service_reading'}" param-info="{'title':'10-3.보호자 급여기록 열람내역'}">10-3.보호자 급여기록 열람내역</li><!-- 10-3.보호자 급여기록 열람내역 -->
+                            <li obj-type="loadPage" pamcode="L10_M04" class="" page-info="{'type':'left_sub10', 'view':'/share/storage/view.form_storage'}" param-info="{'title':'10-4.기관 공지사항, 자료실'}">10-4.기관 공지사항, 자료실</li><!-- 10-4.자료실 -->
+                            <li obj-type="loadPage" pamcode="L10_M05" class="" page-info="{'type':'left_sub10', 'view':'/share/manage/view.hompy'}" param-info="{'title':'10-5.홈페이지 서비스'}">10-5.홈페이지 서비스</li><!-- 10-5.홈페이지 서비스 -->
+                            <li obj-type="loadPage" pamcode="L10_M07" class="" page-info="{'type':'left_sub10', 'view':'/share/service/view.family_app'}" param-info="{'title':'10-6.보호자 앱 관리'}">10-6.보호자 앱 관리</li><!-- 10-6.보호자 앱 관리 -->
+                            <!-- li obj-type="" pamcode="L10_M11" class="noready2"           page-info="{'type':'left_sub10', 'view':'/service/view.pdfbackup'}"                      param-info="{'title':'10-7.PDF 백업서비스(삭제예정)'}">10-7.PDF 백업서비스(삭제예정)</li--><!-- 10-7.PDF 백업서비스 -->
+                            <!-- li obj-type="" pamcode="L10_M12" class="noready2"           page-info="{'type':'left_sub10', 'view':'/share/service/view.electronic_authorization'}" param-info="{'title':'10-8.전자결재 관리'}">10-8.전자결재 관리</li--><!-- 10-8.전자결재 관리 -->
+                            <li obj-type="loadPage" pamcode="L10_M08" class="rpt" page-info="{'type':'left_sub10', 'view':'/share/manage/view.center_send_history2'}" param-info="{'title':'10-7.안내발송내역(문자, 이메일)'}">10-7.안내발송내역(문자, 이메일)</li><!-- 10-8.안내발송내역(문자, 이메일) -->
+                            <li obj-type="loadPage" pamcode="L10_M06" class="rpt" page-info="{'type':'left_sub10', 'view':'/share/manage/view.print_all'}" param-info="{'title':'10-8.평가항목 및 사전 준비자료 출력'}">10-8.평가항목 및 사전 준비자료 출력</li><!-- 10-9.평가항목 일괄출력 -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+
+                        <li obj-type="openMenu" btn-name="left_sub11" page-info="{'type':'lmenu','view':'left_sub11'}" param-info="" class="" style="letter-spacing:"><span class="hz2"></span>11.직원<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;급여관리
+              <div id="left_sub11" data-type="dynamic_lmenu" style="display:none;" class="left_sub11">
+                <div class="tab_pos"><span class="hz2"></span>11.직원<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;급여관리</div>
+                <div class="w_pos">
+                  <table cellspacing="0" cellpadding="0" class="tbl_leftoutside">
+                    <tbody><tr>
+                      <td class="t1"><span class="close" onclick="close_lmenu();stop_propagation(event);"><img src="/img_work/close_leftmenu.png"></span></td>
+                    </tr>
+                    <tr>
+                      <td class="t2">
+                        <div class="submenu_div">
+                          <ul>
+                            <li obj-type="loadPage" pamcode="L11_M01" class="" page-info="{'type':'left_sub11', 'view':'/share/salary/view.salary_register'}" param-info="{'title':'11-1. 월별 급여대장'}">11-1. 월별 급여대장</li><!-- 11-1.월별 급여대장              -->
+                            <li obj-type="loadPage" pamcode="L11_M09" class="" page-info="{'type':'left_sub11', 'view':'/share/salary/view.salary_retire'}" param-info="{'title':'11-2. 퇴직적립금 관리'}">11-2. 퇴직적립금 관리</li><!-- 11-2.퇴직적립금 관리            -->
+                            <li obj-type="loadPage" pamcode="L11_M03" class="" page-info="{'type':'left_sub11', 'view':'/share/salary/view.salary_setting'}" param-info="{'title':'11-3. 직원 급여계약 설정'}">11-3. 직원 급여계약 설정</li><!-- 11-3.급여계약 설정              -->
+                            <li obj-type="loadPage" pamcode="L11_M04" class="" page-info="{'type':'left_sub11', 'view':'/share/salary/view.extra_deduct'}" param-info="{'title':'11-4. 급여기초 설정(수당/공제)'}">11-4. 급여기초 설정(수당/공제)</li><!-- 11-4.급여기초설정(수당/공제)    -->
+                            <li obj-type="loadPage" pamcode="L11_M08" class="" page-info="{'type':'left_sub11', 'view':'/share/salary/view.salary_rate_reference'}" param-info="{'title':'11-5. 인건비 지출비율 참고자료'}">11-5. 인건비 지출비율 참고자료</li><!-- 11-5.인건비 지출비율 참고자료   -->
+                            <li obj-type="loadPage" pamcode="L11_M06" class="rpt" page-info="{'type':'left_sub11', 'view':'/share/salary/view.salary_report'}" param-info="{'title':'11-6.직원 급여대장 리포트(간이지급명세서)'}">11-6.직원 급여대장 리포트(간이지급명세서)</li><!-- 11-6.직원 연간 급여대장         -->
+                          </ul>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="t3">&nbsp;</td>
+                    </tr>
+                  </tbody></table>
+                </div>
+              </div>
+            </li>
+            
+            
+<script type="text/javascript">
+function income_expense_expire()
+{
+        var expire_flag = $("#expire_flag").val();
+    if (expire_flag != '1') open_modal_url( view_location+ '/layer/modal/share_layer/common/view.income_expense_expire.php', {}, true, 40);
+    }
+
+function open_sujifine()
+{
+    if('' == '1')
+    {
+        alert("체험하기에서는 재무회계 서비스 접근이 불가능합니다.");
+        return false;
+    }
+
+    var f_sujifine = $("#openSujifineForm");
+
+    $(f_sujifine).find("input[name=usmusid]").val('');
+    $(f_sujifine).find("input[name=otp]").val('');
+
+    $.ajax({
+        type: "POST",
+        url: "/share/exe/sujifine/get.sujifine_id.exe.php",
+        data: {stmmgno: '902297'},
+        async: false,
+        success: function(data){
+            data = $.parseJSON( data.replace(/\'/g, "\"") );
+
+            if(data.usmusid != '')
+            {
+                window.open('', "sujifineLogin", "width=1920,height=935,resizable=no,status=no,directories=no,location=no,menubar=no");
+
+                $(f_sujifine).find("input[name=usmusid]").val(data.usmusid);
+                $(f_sujifine).find("input[name=otp]").val(data.otp);
+
+                $(f_sujifine).submit();
+            }
+            else
+            {
+                alert("재무회계 서비스에 등록되지 않은 사용자입니다.");
+            }
+        }
+    });
+}
+
+function linkInzi()
+{
+    $.post("/share/exe/inzi/link.inzi.exe.php", {}, function(data1) {
+        $.post("/share/exe/inzi/login.inzi.exe.php", {}, function(data2) {
+            var param = $.parseJSON( data2 );
+            openInzi(param);
+        });
+    });
+}
+
+function openInzi(param)
+{
+    var thisForm = $("#openInziFrm");
+    thisForm.find("input[name=center_mgno]").val( param['center_mgno'] );
+    thisForm.find("input[name=center_manager_yn]").val( param['center_manager_yn'] );
+    thisForm.find("input[name=auth_key]").val( param['auth_key'] );
+    thisForm.submit();
+}
+</script>
+
+<form id="openInziFrm" name="openInziFrm" action="https://inzi.carefor.co.kr/webapi/carefor_mamber_login" method="POST" target="_blank">
+  <input type="hidden" name="center_mgno" autocomplete="off" style="">
+  <input type="hidden" name="center_manager_yn" autocomplete="off" style="">
+  <input type="hidden" name="auth_key" autocomplete="off" style="">
+</form>
+
+<form id="openSujifineForm" name="openSujifineForm" action="https://www.sujifine.co.kr/carefor_login" method="post" target="sujifineLogin">
+  <input type="hidden" name="usmusid" value="" autocomplete="off" style="">
+  <input type="hidden" name="otp" value="" autocomplete="off" style="">
+</form>
+
+          
+                        <li class="inzi" style="cursor:pointer;background:none;border:0;padding:0;height:59px;overflow:visible;display:block;" onclick="javascript:linkInzi();"><img src="/img_work/leftmenu_inzi.png" border="0"></li>
+                      <li class="daesang" style="cursor:pointer;background:none;border:0;padding:0;height:59px;overflow:visible;display:block" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/agreement_wellLife'}" param-info="{'type':'modal'}">
+        <img src="/img_work/leftmenu_daesang.png" border="0">
+      </li>
+                        
+                  </ul>
+      </div>
+      <div class="line5"></div>
+      <!--div class="gen"><a href="http://carefor.co.kr/pdf_manual/daynurse.pdf" target="_blank"><img src="/img_work/btn_manual.png" border="0" /></a></div-->
+       <!--div class="gen" style="cursor:pointer;" obj-type="loadPage" page-info="{'type':'left_sub10', 'view':'/manage/view.hompy'}"  param-info="{'title':'10-5.홈페이지 서비스'}"><img src="/img_work/btn_homepage.png" border="0" /></div-->
+       <!--div class="gen" style="cursor:pointer;" obj-type="loadPage" page-info="{'type':'left_sub10', 'view':'/share/manage/view.shopping'}"  param-info="{'title':'쇼핑몰'}"><img src="/img_work/btn_shopping.png" border="0" /></div-->
+    </div>
+
+<script type="text/javascript">
+$(document).ready(function()
+{
+    let openLayerUrlArr = [];
+
+    
+        openLayerUrlArr.push('/layer/modal/share_layer/common/view.today_confirm_info.php');
+    
+    
+    // CF-5580
+    
+    // CF-5997
+    
+    if(getCookie("doNotOpenNoticeOn") == '' || getCookie("doNotOpenNoticeOn") != window.name)
+    {
+        openNoticeLayer(openLayerUrlArr);
+    }
+});
+</script>
+<span id="login_key" style="display: none;">902297</span>
+<div id="right_area">
+  <div id="top_area" class="top_area">
+    
+<script type="text/javascript">
+$("input[name=rtcInput]").ready(function(){
+    realtimeClock();
+});
+
+function realtimeClock()
+{
+    document.rtcForm.rtcInput.value = getTimeStamp();
+    setTimeout("realtimeClock()", 1000);
+}
+
+function open_program_manual()
+{
+    var param = new Object();
+    param['pamcode'] = sessionStorage.getItem('pamcode');
+    open_modal_url('/layer/modal/share_layer/community/program_manual.php', param, true, 40);
+}
+
+function openRemote() {
+window.open("https://939.co.kr/hang", "케어포원격서비스지원", "width=1114,height=695,resizable=yes,scrollbars=yes");
+}
+
+function openCareDesk()
+{
+    window.open('/share/care_desk/index.php', 'care_desk', 'width=1000,height=900,scrollbars=no,resizable=no,top=0,left=0');
+}
+</script>
+<div class="top_title">
+<span class="top_btn_type5" id="program_manual_btn" style="cursor: pointer;" onclick="javascript:open_program_manual();">매뉴얼</span>
+<span id="title_id" onchange="javascript:checkProgramManual();">2-8.월간 입소자, 일정, 서비스 현황</span>
+</div>
+<div class="login_info">
+  관리팀님 로그인중..&nbsp;
+  <span class="top_btn_type1" style="cursor: pointer;" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/basic/checkInOut'}" param-info="{}">출퇴근관리</span>
+  <!-- span class="top_btn_type2" style="cursor: pointer;" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/community/utube_man'}" param-info="{'mnlgubn':'1'}">사용매뉴얼</span -->
+<!--  <span class="top_btn_type2" style="cursor: pointer;" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/community/layer_center'}" param-info="{}">고객센터 (1:1문의)</span>-->
+  <span class="top_btn_type2" style="cursor: pointer;" onclick="openCareDesk();">1:1문의 및 통합검색</span>
+        <!-- span class="top_btn_type2" style="cursor: pointer;" onclick="openCareDesk();">1:1문의 및 통합검색</span>
+  <span class="top_btn_type2" style="cursor: pointer;" onclick="openRemote();">원격지원</span -->
+  <span class="top_btn_type4" style="cursor: pointer;" onclick="copy_carefor();">새창열기</span>
+  <a href="https://www.carefor.co.kr/exe/logout_proc.php?flag="><span class="top_btn_type3" id="btn_logout_id">로그아웃</span></a>
+</div>
+<div class="notice_info">
+  <span class="t1">
+    <span class="n1 dotdotdot" style="cursor: pointer;" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/community/layer_center'}" param-info="{}">
+      [ 공지사항 ]     </span>
+    <span class="n2">&nbsp;</span>
+    <span class="n3">
+      <form name="rtcForm">
+        <input type="text" name="rtcInput" class="input_time2" readonly="readonly" autocomplete="off" style="">
+      </form>
+    </span>
+  </span>
+</div>  </div>
+  <div id="r_padding">
+
+
+<section class="colArea fitArea">
+  <div class="tabmenu_bg">
+    <div class="tabmenu">
+      <ul>
+        <li tab-id="ATTEND" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/view.monthly_resident_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026', 'mm':'06', 'tab_number':'1'}" class="over">월간 입소자 현황</li>
+            
+        <li tab-id="ATTEND" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/html/info.monthly_transport_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026', 'mm':'06', 'tab_number':'2'}">월간 일정 현황</li>
+
+        <li tab-id="ATTEND" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/html/info.monthly_service_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026', 'mm':'06', 'tab_number':'3'}">월간 이동서비스 현황</li>
+      </ul>
+    </div>
+  </div>
+
+  <section class="fitArea rowArea">
+    <section class="fitArea colArea" id="div_monthly_attend_stat_info">
+
+
+<!--<section class="colArea fitArea">-->
+<!--  --><!--  <div class="tabmenu_bg">-->
+<!--    <div class="tabmenu">-->
+<!--      <ul>-->
+<!--        <li class="--><!--" tab-type="sub" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/view.monthly_resident_stat', 'view':'/transport/view.monthly_attend_stat'}"-->
+<!--            param-info="{'yy':'--><!--', 'mm':'--><!--', 'resident_tab_number':'1', 'pdrusfg':'X'}">일반</li>-->
+<!--            -->
+<!--        --><!--        --><!--        <li class="--><!--" tab-type="sub" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/view.monthly_resident_stat', 'view':'/transport/view.monthly_attend_stat'}"-->
+<!--            param-info="{'yy':'--><!--', 'mm':'--><!--', 'resident_tab_number':'--><!--', 'pdrusfg':'--><!--'}">치매--><!--실</li>-->
+<!--        --><!--        --><!--        -->
+<!--        --><!--        <li class="--><!--" tab-type="sub" data-rel="sel" page-info="{'target':'div_monthly_attend_stat_info', 'contents':'/transport/view.monthly_resident_stat', 'view':'/transport/view.monthly_attend_stat'}"-->
+<!--            param-info="{'yy':'--><!--', 'mm':'--><!--', 'resident_tab_number':'--><!--', 'pdrusfg':'A'}">전체</li>-->
+<!--        --><!--      </ul>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--  -->  
+  <section class="fitArea rowArea">
+    <section class="colArea" style="width: fit-content;">
+      <section class="fitArea colArea withTitle">
+        <div class="block_title">월별 평균 이용 현황</div>
+        <section class="fitArea colArea">
+          <div class="buttonBox">
+            <div class="datepicker" style="justify-content: space-evenly; width:70%">
+              <span arrow="left" onclick="reloadPage({'yy':'2025','resident_tab_number':'','pdrusfg':'X'});"></span>
+              <span class="datearea">2026년</span>
+              <span arrow="right" onclick="reloadPage({'yy':'2027','resident_tab_number':'','pdrusfg':'X'});"></span>
+            </div>
+            <select class="input_search_box" style="width:115px" onchange="reloadPage({'yy':'2026', 'mm':'06','pdrusfg':$(this).val()});">
+                <option selected="" value="X">일반</option>
+
+                                                                                                                
+                            </select>
+          </div>
+          
+          <g-t class="list fitArea" data-gt-col-size="4em 4em 4em 4em 4.2em 4em 4em 5em" id="monthlyArrendStatListBody" data-gt-select-value="06" data-gt-loaded="true" style="grid-template-columns: 4em 4em 4em 4em 4.2em 4em 4em 5em;">
+            <g-h data-gt-row-count="3" data-gt-col-count="8" data-gt-loaded="true">
+              <g-th class="list noneBorderTop noneBorderLeft" rowspan="3" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="0" data-gt-col="0" data-rowspan-target="0,1,2">월</g-th>
+              <g-th class="list noneBorderTop" colspan="6" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="1" data-gt-col="1" data-colspan-target="1,2,3,4,5,6">입소자 수</g-th>
+              <g-th class="list noneBorderTop" rowspan="3" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="2" data-gt-col="2" data-rowspan-target="0,1,2">평균<br>입소자 수</g-th>
+              
+              <g-th class="list" rowspan="2" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="1" data-gt-col="1" data-rowspan-target="1,2">등급<br>입소자</g-th>
+              <g-th class="list" colspan="3" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="3" data-gt-col="3" data-colspan-target="3,4,5">등급외 입소자</g-th>
+              <g-th class="list" rowspan="2" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="4" data-gt-col="4" data-rowspan-target="1,2">미이용</g-th>
+              <g-th class="list" rowspan="2" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="5" data-gt-col="5" data-rowspan-target="1,2">합계</g-th>
+              
+              <g-th class="list" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="3" data-gt-col="3">등급외</g-th>
+              <g-th class="list" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="6" data-gt-col="6">비급여</g-th>
+              <g-th class="list" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="7" data-gt-col="7">한도초과</g-th>
+            </g-h>
+            
+            <g-b data-gt-row-count="12" data-gt-col-count="8" data-gt-loaded="true" style="grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;">  
+                            <g-tf data-rel="sel" data-key="01" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'01','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="0" data-gt-row="0" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderTop noneBorderLeft" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">01 월</g-td>
+              <g-td class="alignRight cr noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">1331</g-td>
+              <g-td class="alignRight cr noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">2</g-td>
+              <g-td class="alignRight cr noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">3</g-td>
+              <g-td class="alignRight cr noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">85</g-td>
+              <g-td class="alignRight cr noneBorderTop" style="font-weight: bold;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1421</g-td>
+              <g-td class="alignRight cr noneBorderTop" style="font-weight: bold;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">53</g-td>
+                            <g-tf data-rel="sel" data-key="02" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'02','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="1" data-gt-row="1" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">02 월</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">1090</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">2</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">61</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1153</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">50</g-td>
+                            <g-tf data-rel="sel" data-key="03" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'03','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="2" data-gt-row="2" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">03 월</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">1308</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">70</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1378</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">53</g-td>
+                            <g-tf data-rel="sel" data-key="04" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'04','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="3" data-gt-row="3" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">04 월</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">1375</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">63</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1438</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">55</g-td>
+                            <g-tf data-rel="sel" data-key="05" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'05','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="4" data-gt-row="4" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">05 월</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">1382</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">1</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">57</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1440</g-td>
+              <g-td class="alignRight cr" style="font-weight: bold;" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">55</g-td>
+                            <g-tf data-rel="sel" data-key="06" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'06','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="5" data-gt-row="5" class="cr selectedRow"></g-tf>
+              <g-td class="fitRow cr selectedRow noneBorderLeft" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">06 월</g-td>
+              <g-td class="alignRight cr selectedRow" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">974</g-td>
+              <g-td class="alignRight cr selectedRow" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">2</g-td>
+              <g-td class="alignRight cr selectedRow" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr selectedRow" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+              <g-td class="alignRight cr selectedRow" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">37</g-td>
+              <g-td class="alignRight cr selectedRow" style="font-weight: bold;" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">1013</g-td>
+              <g-td class="alignRight cr selectedRow" style="font-weight: bold;" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">56</g-td>
+                            <g-tf data-rel="sel" data-key="07" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'07','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="6" data-gt-row="6" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">07 월</g-td>
+              <g-td class="cr" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                            <g-tf data-rel="sel" data-key="08" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'08','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="7" data-gt-row="7" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">08 월</g-td>
+              <g-td class="cr" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                            <g-tf data-rel="sel" data-key="09" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'09','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="8" data-gt-row="8" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">09 월</g-td>
+              <g-td class="cr" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                            <g-tf data-rel="sel" data-key="10" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'10','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="9" data-gt-row="9" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">10 월</g-td>
+              <g-td class="cr" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                            <g-tf data-rel="sel" data-key="11" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'11','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="10" data-gt-row="10" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">11 월</g-td>
+              <g-td class="cr" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                            <g-tf data-rel="sel" data-key="12" page-info="{'target':'div_monthly_resident_stat_info', 'contents':'/transport/html/info.monthly_attend_stat', 'view':'/transport/view.monthly_attend_stat'}" param-info="{'yy':'2026','mm':'12','resident_tab_number':'','pdrusfg':'X'}" data-gt-init-row="11" data-gt-row="11" class="cr"></g-tf>
+              <g-td class="fitRow cr noneBorderLeft" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="0" data-gt-col="0" data-mouseover-flag="true">12 월</g-td>
+              <g-td class="cr" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+              <g-td class="cr" style="" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="7" data-gt-col="7" data-mouseover-flag="true">-</g-td>
+                          </g-b>
+          </g-t>
+        </section>
+      </section>
+      
+      <div class="infoBox" style="width: 100%; color: #ff6100; font-size: 16px; font-weight: bold;">
+        ※ 참고자료로 활용하여 주시기 바랍니다.
+      </div>
+    </section>
+    
+    <section class="fitArea colArea" id="div_monthly_resident_stat_info">
+<section class="fitArea colArea withTitle">
+  <div class="block_title">월간 이용 현황</div>
+  <g-t class="list fitArea" data-gt-col-size="10em 1fr 1fr 1fr 1fr 1fr 1fr" data-gt-loaded="true" style="grid-template-columns: 10em 1fr 1fr 1fr 1fr 1fr 1fr;">
+    <g-h data-gt-row-count="2" data-gt-col-count="7" data-gt-loaded="true">
+      <g-th class="list noneBorderTop noneBorderLeft" rowspan="2" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="0" data-gt-col="0" data-rowspan-target="0,1">일자</g-th>
+      <g-th class="list noneBorderTop" rowspan="2" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="1" data-gt-col="1" data-rowspan-target="0,1">등급 입소자</g-th>
+      <g-th class="list noneBorderTop" colspan="3" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="2" data-gt-col="2" data-colspan-target="2,3,4">등급외 입소자</g-th>
+      <g-th class="list noneBorderTop" rowspan="2" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="3" data-gt-col="3" data-rowspan-target="0,1">미이용</g-th>
+      <g-th class="list noneBorderTop" rowspan="2" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="4" data-gt-col="4" data-rowspan-target="0,1">합계</g-th>
+
+      <g-th class="list" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="2" data-gt-col="2">등급외<img class="cr" src="/img_work/icon_faq.png" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/confirm_message'}" param-info="{'type':'modal','title':'등급외','message':'등급외 등급으로 등록된 일정'}"></g-th>
+      <g-th class="list" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="5" data-gt-col="5">비급여<img class="cr" src="/img_work/icon_faq.png" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/confirm_message'}" param-info="{'type':'modal','title':'비급여','message':'등급은 있으며, 비급여 일정으로 등록된 일정 인원'}"></g-th>
+<!--      <g-th class="list">한도초과<img class="cr" src="/img_work/icon_faq.png" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/confirm_message'}" param-info="{'type':'modal','title':'한도초과','message':'한도초과 발생일 이후부터의 일정 인원(단, 한도초과 발생한 일자의 일정은 일반 일정 인원)'}"></g-th>-->
+      <g-th class="list" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="6" data-gt-col="6">한도초과<img class="cr" src="/img_work/icon_faq.png" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/confirm_message'}" param-info="{'type':'modal','title':'한도초과','message':'급여비용이 모두 한도초과인 일정 인원(일부 급여비용이 청구된 일자의 일정은 일반 일정 인원)'}"></g-th>
+    </g-h>
+
+    <g-b data-gt-row-count="30" data-gt-col-count="7" data-gt-loaded="true">
+            <g-td data-gt-init-row="0" data-gt-row="0" data-gt-init-col="0" data-gt-col="0" class="noneBorderTop noneBorderLeft" data-mouseover-flag="true"><span class="mon">2026.06.01(월)</span></g-td>
+      <g-td class="alignRight noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">62</g-td>
+      <g-td class="alignRight noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight noneBorderTop" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">1</g-td>
+      <g-td class="alignRight noneBorderTop" style="font-weight: bold;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">63</g-td>
+            <g-td data-gt-init-row="1" data-gt-row="1" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="tue">2026.06.02(화)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">59</g-td>
+      <g-td class="alignRight" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">3</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">62</g-td>
+            <g-td data-gt-init-row="2" data-gt-row="2" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="wed">2026.06.03(수)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">43</g-td>
+      <g-td class="alignRight" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="2" data-gt-row="2" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">43</g-td>
+            <g-td data-gt-init-row="3" data-gt-row="3" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="thu">2026.06.04(목)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">58</g-td>
+      <g-td class="alignRight" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">3</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="3" data-gt-row="3" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">61</g-td>
+            <g-td data-gt-init-row="4" data-gt-row="4" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="fri">2026.06.05(금)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">60</g-td>
+      <g-td class="alignRight" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">2</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="4" data-gt-row="4" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">62</g-td>
+            <g-td data-gt-init-row="5" data-gt-row="5" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sat">2026.06.06(토)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">32</g-td>
+      <g-td class="alignRight" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="5" data-gt-row="5" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">32</g-td>
+            <g-td data-gt-init-row="6" data-gt-row="6" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sun">2026.06.07(일)</span></g-td>
+      <g-td class="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="6" data-gt-row="6" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="7" data-gt-row="7" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="mon">2026.06.08(월)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">60</g-td>
+      <g-td class="alignRight" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">2</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="7" data-gt-row="7" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">62</g-td>
+            <g-td data-gt-init-row="8" data-gt-row="8" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="tue">2026.06.09(화)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">60</g-td>
+      <g-td class="alignRight" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">3</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="8" data-gt-row="8" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">63</g-td>
+            <g-td data-gt-init-row="9" data-gt-row="9" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="wed">2026.06.10(수)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">55</g-td>
+      <g-td class="alignRight" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">6</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="9" data-gt-row="9" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">61</g-td>
+            <g-td data-gt-init-row="10" data-gt-row="10" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="thu">2026.06.11(목)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">59</g-td>
+      <g-td class="alignRight" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">3</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="10" data-gt-row="10" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">62</g-td>
+            <g-td data-gt-init-row="11" data-gt-row="11" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="fri">2026.06.12(금)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">59</g-td>
+      <g-td class="alignRight" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">2</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="11" data-gt-row="11" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">61</g-td>
+            <g-td data-gt-init-row="12" data-gt-row="12" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sat">2026.06.13(토)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">34</g-td>
+      <g-td class="alignRight" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="12" data-gt-row="12" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">34</g-td>
+            <g-td data-gt-init-row="13" data-gt-row="13" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sun">2026.06.14(일)</span></g-td>
+      <g-td class="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="13" data-gt-row="13" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="14" data-gt-row="14" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="mon">2026.06.15(월)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">61</g-td>
+      <g-td class="alignRight" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">1</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="14" data-gt-row="14" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">62</g-td>
+            <g-td data-gt-init-row="15" data-gt-row="15" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="tue">2026.06.16(화)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">62</g-td>
+      <g-td class="alignRight" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">2</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="15" data-gt-row="15" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">64</g-td>
+            <g-td data-gt-init-row="16" data-gt-row="16" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="wed">2026.06.17(수)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">58</g-td>
+      <g-td class="alignRight" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">3</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="16" data-gt-row="16" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">61</g-td>
+            <g-td data-gt-init-row="17" data-gt-row="17" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="thu">2026.06.18(목)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">59</g-td>
+      <g-td class="alignRight" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">4</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="17" data-gt-row="17" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">63</g-td>
+            <g-td data-gt-init-row="18" data-gt-row="18" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="fri">2026.06.19(금)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">60</g-td>
+      <g-td class="alignRight" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">1</g-td>
+      <g-td class="alignRight" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">2</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="18" data-gt-row="18" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">63</g-td>
+            <g-td data-gt-init-row="19" data-gt-row="19" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sat">2026.06.20(토)</span></g-td>
+      <g-td class="alignRight" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">33</g-td>
+      <g-td class="alignRight" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">1</g-td>
+      <g-td class="alignRight" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">0</g-td>
+      <g-td class="alignRight" style="font-weight: bold;" data-gt-init-row="19" data-gt-row="19" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">34</g-td>
+            <g-td data-gt-init-row="20" data-gt-row="20" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sun">2026.06.21(일)</span></g-td>
+      <g-td class="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="20" data-gt-row="20" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="21" data-gt-row="21" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="mon">2026.06.22(월)</span></g-td>
+      <g-td class="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="21" data-gt-row="21" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="22" data-gt-row="22" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="tue">2026.06.23(화)</span></g-td>
+      <g-td class="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="22" data-gt-row="22" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="23" data-gt-row="23" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="wed">2026.06.24(수)</span></g-td>
+      <g-td class="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="23" data-gt-row="23" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="24" data-gt-row="24" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="thu">2026.06.25(목)</span></g-td>
+      <g-td class="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="24" data-gt-row="24" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="25" data-gt-row="25" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="fri">2026.06.26(금)</span></g-td>
+      <g-td class="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="25" data-gt-row="25" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="26" data-gt-row="26" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sat">2026.06.27(토)</span></g-td>
+      <g-td class="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="26" data-gt-row="26" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="27" data-gt-row="27" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="sun">2026.06.28(일)</span></g-td>
+      <g-td class="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="27" data-gt-row="27" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="28" data-gt-row="28" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="mon">2026.06.29(월)</span></g-td>
+      <g-td class="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="28" data-gt-row="28" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+            <g-td data-gt-init-row="29" data-gt-row="29" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-mouseover-flag="true"><span class="tue">2026.06.30(화)</span></g-td>
+      <g-td class="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="1" data-gt-col="1" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="2" data-gt-col="2" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="3" data-gt-col="3" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="4" data-gt-col="4" data-mouseover-flag="true">-</g-td>
+      <g-td class="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="5" data-gt-col="5" data-mouseover-flag="true">-</g-td>
+      <g-td class="" style="" data-gt-init-row="29" data-gt-row="29" data-gt-init-col="6" data-gt-col="6" data-mouseover-flag="true">-</g-td>
+          </g-b>
+
+    <g-f data-gt-row-count="2" data-gt-col-count="7" data-gt-loaded="true">
+      <g-th data-gt-init-row="0" data-gt-row="0" data-gt-init-col="0" data-gt-col="0" class="noneBorderTop noneBorderLeft">합계</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="1" data-gt-col="1">974</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="2" data-gt-col="2">2</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="3" data-gt-col="3">0</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="4" data-gt-col="4">0</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="5" data-gt-col="5">37</g-th>
+      <g-th class="alignRight noneBorderTop" style="padding-right: 5px; background: #fffaf2;" data-gt-init-row="0" data-gt-row="0" data-gt-init-col="6" data-gt-col="6"><b>1013</b></g-th>
+
+            <g-th colspan="4" style="font-size: 18px; padding: 10px;" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="0" data-gt-col="0" class="noneBorderLeft" data-colspan-target="0,1,2,3">
+        평균 입소자 수
+        <img class="cr" src="/img_work/icon_faq.png" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/confirm_message'}" param-info="{'type':'modal','title':'평균 입소자 수 계산','message':'입소자 합계(1013명) / 급여제공일(18일) = 56.28 값의 반올림한 &lt;b&gt;56&lt;/b&gt; 입니다.'}">
+      </g-th>
+      <g-th class="alignRight" colspan="3" style="font-size: 18px; padding: 10px;" data-gt-init-row="1" data-gt-row="1" data-gt-init-col="4" data-gt-col="4" data-colspan-target="4,5,6">56 명</g-th>
+          </g-f>
+  </g-t>
+</section>
+
+<div class="buttonBox">
+  <div class="m_button prt" flex="vertical" gap="1" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/prt_report'}" param-info="{'layer_title':'입소자 현황'
+                   ,'report_title':'입소자 현황'
+                   ,'download_name':'입소자 현황(2026년 06월)'
+                   ,'data_name':'/share/prt_report/transport/prt_patient_attendance_summary.php'
+                   ,'crf_name':'share/transport/prt_patient_attendance_summary'
+                   ,'prt_width':'100%'
+                   ,'param':'yy=2026&amp;mm=06&amp;pdrusfg=X'}">
+    <span>입소자 현황 출력</span>
+      </div>
+
+  <div class="m_button prt" obj-type="openLayer" page-info="{'type':'modal','view':'/share_layer/common/prt_report'}" param-info="{'layer_title':'출석 현황'
+                   ,'report_title':'출석 현황'
+                   ,'download_name':'출석 현황(2026년 06월)'
+                   ,'data_name':'/share/prt_report/transport/prt_patient_attendance_stat.php'
+                   ,'crf_name':'share/transport/prt_patient_attendance_stat'
+                   ,'prt_width':'PageWidth'
+                   ,'param':'date=202606&amp;pdrusfg=X'}">출석 현황 출력
+  </div>
+</div></section>
+  </section>
+</section></section>
+  </section>
+</div>
+</div>  <div class="clear"></div></div><div class="clear"></div><div class="keypad-popup" style="display: none;"></div><div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"><div style="border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div></div></body></html>

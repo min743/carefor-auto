@@ -1,0 +1,68 @@
+"""
+Windows 자격증명 관리자(DPAPI) 기반 비밀 저장.
+keyring 라이브러리가 Windows에서는 자동으로 Credential Manager 사용.
+"""
+from __future__ import annotations
+
+import keyring
+
+SERVICE_NAME = "carefor-auto"
+
+KEY_SLACK_WEBHOOK   = "slack_webhook_url"
+KEY_SLACK_BOT_TOKEN = "slack_bot_token"
+KEY_PORTAL_ID       = "portal_id"
+KEY_PORTAL_PASSWORD = "portal_password"
+KEY_SHEET_WEBHOOK   = "sheet_webhook_url"
+
+
+def get(key: str) -> str | None:
+    return keyring.get_password(SERVICE_NAME, key)
+
+
+def set_(key: str, value: str) -> None:
+    keyring.set_password(SERVICE_NAME, key, value)
+
+
+def delete(key: str) -> None:
+    try:
+        keyring.delete_password(SERVICE_NAME, key)
+    except keyring.errors.PasswordDeleteError:
+        pass
+
+
+def get_slack_webhook() -> str | None:
+    return get(KEY_SLACK_WEBHOOK)
+
+
+def set_slack_webhook(url: str) -> None:
+    set_(KEY_SLACK_WEBHOOK, url)
+
+
+def get_slack_bot_token() -> str | None:
+    return get(KEY_SLACK_BOT_TOKEN)
+
+
+def set_slack_bot_token(token: str) -> None:
+    set_(KEY_SLACK_BOT_TOKEN, token)
+
+
+def get_portal_credentials() -> tuple[str, str] | None:
+    """케어포 자동로그인 portal HTTP Basic 인증 정보."""
+    pid = get(KEY_PORTAL_ID)
+    pw = get(KEY_PORTAL_PASSWORD)
+    if pid and pw:
+        return pid, pw
+    return None
+
+
+def set_portal_credentials(portal_id: str, portal_password: str) -> None:
+    set_(KEY_PORTAL_ID, portal_id)
+    set_(KEY_PORTAL_PASSWORD, portal_password)
+
+
+def get_sheet_webhook() -> str | None:
+    return get(KEY_SHEET_WEBHOOK)
+
+
+def set_sheet_webhook(url: str) -> None:
+    set_(KEY_SHEET_WEBHOOK, url)
