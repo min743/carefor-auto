@@ -74,17 +74,18 @@ def run_slack_only(
     if not branches_data:
         return {"ok": False, "errors": errors, "sent_slack": False}
 
-    # 이미지 생성 + 바탕화면 저장
+    # 이미지 생성 + 바탕화면 저장 (서버 환경에서는 저장 생략)
     image_bytes: bytes | None = None
     saved_image_path: str | None = None
     try:
         image_bytes = generate_image(target_date, branches_data)
         desktop = Path.home() / "Desktop"
-        filename = f"출석현황_{target_date.strftime('%Y%m%d')}.png"
-        img_path = desktop / filename
-        img_path.write_bytes(image_bytes)
-        saved_image_path = str(img_path)
-        logger.info("이미지 저장: %s", saved_image_path)
+        if desktop.exists():
+            filename = f"출석현황_{target_date.strftime('%Y%m%d')}.png"
+            img_path = desktop / filename
+            img_path.write_bytes(image_bytes)
+            saved_image_path = str(img_path)
+            logger.info("이미지 저장: %s", saved_image_path)
     except Exception as e:
         logger.exception("이미지 생성 실패")
         errors.append(f"image: {e}")
