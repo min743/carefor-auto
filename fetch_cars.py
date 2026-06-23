@@ -7,6 +7,23 @@ from src import credentials
 
 API_URL = 'https://script.google.com/macros/s/AKfycbzc4VeJQQpeYblx3Ack2Yrp1q0pJPe_LM9g8_3noB6-DJCaLMsFVENZDFOXYzvUHT0/exec'
 
+# 지점별 케어포 센터코드 (천안점은 데이터 입력 중이라 주행거리 스크래핑 제외)
+BRANCH_CTMNUMB = {
+    "둔산점":     "23017000602",
+    "서구점":     "23017000617",
+    "청주 오창점": "24311001003",
+}
+
+# 자차 제외 차량번호 (끝 4자리)
+EXCLUDE_CAR_SUFFIX = {"3702", "5346"}
+
+
+def _is_excluded_car(car_no: str) -> bool:
+    """자차(개인 차량)는 차량번호 끝 4자리로 판별."""
+    digits = ''.join(filter(str.isdigit, car_no))
+    return digits[-4:] in EXCLUDE_CAR_SUFFIX if len(digits) >= 4 else False
+
+
 def fetch_vehicle_data():
     res = requests.post(API_URL,
         headers={'Content-Type': 'text/plain;charset=utf-8'},
@@ -16,7 +33,43 @@ def fetch_vehicle_data():
     raw = res.json()
     branches = raw['data']['branches']
     data = raw['data']['data']
-    return {br: data[br] for br in branches if data.get(br)}
+    result = {}
+    for br in branches:
+        if not data.get(br):
+            continue
+        cars = [c for c in data[br] if not _is_excluded_car(c.get('carNumber', ''))]
+        result[br] = cars
+    return result
+
+
+def fetch_carefor_mileage(headless: bool = True) -> dict[str, int]:
+    """케어포에서 전 지점 차량별 누적 주행거리 수집. 반환: {차량번호: km}"""
+    from src.carefor_client import fetch_branch_car_mileage
+    result: dict[str, int] = {}
+    for branch, ctmnumb in BRANCH_CTMNUMB.items():
+        try:
+            mileage = fetch_branch_car_mileage(ctmnumb, branch, headless=headless)
+            result.update(mileage)
+            print(f"  {branch}: {len(mileage)}대 수집")
+        except Exception as e:
+            print(f"  {branch} 오류: {e}")
+    return result
+
+
+def apply_carefor_mileage(branches_data: dict, carefor_km: dict[str, int]) -> dict:
+    """구글시트 차량 데이터에 케어포 주행거리 덮어쓰기."""
+    for branch, cars in branches_data.items():
+        for car in cars:
+            car_no = car.get('carNumber', '')
+            # 차량번호 끝 4자리로 매칭 (공백/형식 차이 대응)
+            matched_km = None
+            for cn, km in carefor_km.items():
+                if cn.replace(" ", "") == car_no.replace(" ", ""):
+                    matched_km = km
+                    break
+            if matched_km is not None:
+                car['totalKm'] = matched_km
+    return branches_data
 
 
 def classify(cars, today):
