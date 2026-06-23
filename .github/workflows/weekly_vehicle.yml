@@ -5,6 +5,15 @@ on:
     # 매주 월요일 오전 11시 (KST = UTC 02:00)
     - cron: '0 2 * * 1'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '미리보기만 (슬랙 전송 안 함)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   vehicle-report:
@@ -23,8 +32,14 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements.txt
 
+      - name: Playwright 브라우저 설치
+        run: playwright install chromium --with-deps
+
       - name: 차량관리 보고 슬랙 전송
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL:   C0BC37EB38C
+          CAREFOR_ID:      ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:      ${{ secrets.CAREFOR_PW }}
+          DRY_RUN:         ${{ github.event.inputs.dry_run || 'false' }}
         run: python run_vehicle_headless.py
