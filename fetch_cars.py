@@ -169,9 +169,3 @@ if __name__ == "__main__":
     branches_data = fetch_vehicle_data()
     msg = build_vehicle_message(today, branches_data)
     sys.stdout.buffer.write((msg + "\n").encode("utf-8"))
-
-    from slack_sdk import WebClient
-    token = credentials.get_slack_bot_token()
-    client = WebClient(token=token)
-    client.chat_postMessage(channel="C087JL55TA6", text=msg)
-    print("\n슬랙 전송 완료")
