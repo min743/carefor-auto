@@ -7,7 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fetch_cars import fetch_vehicle_data, fetch_carefor_mileage, apply_carefor_mileage, build_vehicle_message
+from fetch_cars import (fetch_vehicle_data, fetch_carefor_mileage, apply_carefor_mileage,
+                        fetch_notion_inspect_dates, apply_notion_inspect_dates, build_vehicle_message)
 from slack_sdk import WebClient
 
 # 환경변수에서 자격증명 패치 (keyring 우회)
@@ -44,6 +45,15 @@ print(f"총 {len(carefor_km)}대 주행거리 수집 완료")
 
 # 3) 주행거리 반영
 branches_data = apply_carefor_mileage(branches_data, carefor_km)
+
+# 4) 노션에서 정기검사 유효기간 수집 및 반영
+print("노션 정기검사 유효기간 수집 중...")
+try:
+    inspect_dates = fetch_notion_inspect_dates()
+    print(f"   {len(inspect_dates)}대 검사유효기간 수집 완료")
+    branches_data = apply_notion_inspect_dates(branches_data, inspect_dates)
+except Exception as e:
+    print(f"   노션 수집 오류 (구글시트 값 유지): {e}")
 
 msg = build_vehicle_message(today, branches_data)
 

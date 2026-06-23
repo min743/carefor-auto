@@ -24,6 +24,24 @@ def _is_excluded_car(car_no: str) -> bool:
     return digits[-4:] in EXCLUDE_CAR_SUFFIX if len(digits) >= 4 else False
 
 
+def fetch_notion_inspect_dates() -> dict[str, str]:
+    """노션 차량현황에서 차량번호 → 검사유효기간 수집."""
+    from src.notion_client import fetch_inspect_dates
+    return fetch_inspect_dates()
+
+
+def apply_notion_inspect_dates(branches_data: dict, inspect_dates: dict[str, str]) -> dict:
+    """노션 검사유효기간을 구글시트 데이터에 덮어쓰기."""
+    for branch, cars in branches_data.items():
+        for car in cars:
+            car_no = car.get('carNumber', '').replace(' ', '')
+            for notion_no, end_date in inspect_dates.items():
+                if notion_no.replace(' ', '') == car_no:
+                    car['inspectEnd'] = end_date
+                    break
+    return branches_data
+
+
 def fetch_vehicle_data():
     res = requests.post(API_URL,
         headers={'Content-Type': 'text/plain;charset=utf-8'},

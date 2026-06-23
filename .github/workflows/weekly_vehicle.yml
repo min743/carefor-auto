@@ -42,4 +42,5 @@ jobs:
           CAREFOR_ID:      ${{ secrets.CAREFOR_ID }}
           CAREFOR_PW:      ${{ secrets.CAREFOR_PW }}
           DRY_RUN:         ${{ github.event.inputs.dry_run || 'false' }}
+          NOTION_TOKEN:    ${{ secrets.NOTION_TOKEN }}
         run: python run_vehicle_headless.py
