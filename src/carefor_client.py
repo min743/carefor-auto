@@ -505,10 +505,11 @@ def fetch_branch_attendance(
         _navigate_spa(data_page, patient_report_url(g_pammgno))
         hyeon_won = scrape_patient_report(data_page)
 
-        # 5) 6-4 시설운영일지 → 결석
+        # 5) 6-4 시설운영일지 → 일정(출석), 결석 = 현원 - 일정
         _navigate_spa(data_page, daily_center_url(g_pammgno))
-        _, gyeol_seok = scrape_daily_center(data_page)
-        chul_seok = hyeon_won - gyeol_seok  # 출석 = 현원 - 결석
+        _, iljung = scrape_daily_center(data_page)
+        chul_seok = iljung          # 출석 = 일정
+        gyeol_seok = hyeon_won - iljung  # 결석 = 현원 - 일정
 
         # 6) 2-8 월간 입소자 → 월평균 입소자 수만
         _navigate_spa(data_page, monthly_attend_url(g_pammgno))
