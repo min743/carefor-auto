@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from src import credentials
 
-API_URL = 'https://script.google.com/macros/s/AKfycbzc4VeJQQpeYblx3Ack2Yrp1q0pJPe_LM9g8_3noB6-DJCaLMsFVENZDFOXYzvUHT0/exec'
+API_URL = 'https://script.google.com/macros/s/AKfycbyH8lT1hyxFHyKQaPjF0FQixctfFLc-1fooQREZbBpUXbvSbOxK7VTNr04Ixu414xGn/exec'
 
 # 지점별 케어포 센터코드 (천안점은 데이터 입력 중이라 주행거리 스크래핑 제외)
 BRANCH_CTMNUMB = {
@@ -75,6 +75,20 @@ def fetch_carefor_mileage(headless: bool = True) -> dict[str, int]:
         except Exception as e:
             print(f"  {branch} 오류: {e}")
     return result
+
+
+def save_mileage_to_sheet(carefor_km: dict[str, int]) -> int:
+    """케어포 주행거리를 구글시트에 저장. 반환: 업데이트된 차량 수."""
+    data = [{"carNumber": car_no, "totalKm": km} for car_no, km in carefor_km.items()]
+    res = requests.post(API_URL,
+        headers={'Content-Type': 'text/plain;charset=utf-8'},
+        data=json.dumps({'action': 'updateMileage', 'data': data}),
+        timeout=30)
+    res.encoding = 'utf-8'
+    result = res.json()
+    if not result.get('ok'):
+        raise RuntimeError(f"구글시트 저장 실패: {result.get('error')}")
+    return result.get('data', {}).get('updated', 0)
 
 
 def apply_carefor_mileage(branches_data: dict, carefor_km: dict[str, int]) -> dict:
