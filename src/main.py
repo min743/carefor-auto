@@ -54,10 +54,11 @@ def run_slack_only(
         cb(BranchProgress(name=branch.name, status="running"))
         try:
             att = fetch_branch_attendance(branch.ctmnumb, branch.name, target_date=target_date, headless=True)
+            gyeol_seok = att.hyeon_won - att.chul_seok
             row = {
                 "name": branch.name,
                 "hyeon_won": att.hyeon_won,
-                "gyeol_seok": att.gyeol_seok,
+                "gyeol_seok": gyeol_seok,
                 "chul_seok": att.chul_seok,
                 "avg_attendees": att.avg_attendees,
                 "capacity": branch.capacity,
@@ -65,7 +66,7 @@ def run_slack_only(
             branches_data.append(row)
             cb(BranchProgress(
                 name=branch.name, status="success",
-                hyeon_won=att.hyeon_won, gyeol_seok=att.gyeol_seok, chul_seok=att.chul_seok,
+                hyeon_won=att.hyeon_won, gyeol_seok=gyeol_seok, chul_seok=att.chul_seok,
             ))
         except Exception as e:
             logger.exception("Failed for branch %s", branch.name)
@@ -149,10 +150,11 @@ def run_daily_report(
         cb(BranchProgress(name=branch.name, status="running"))
         try:
             att = fetch_branch_attendance(branch.ctmnumb, branch.name, headless=True)
+            gyeol_seok = att.hyeon_won - att.chul_seok
             row = {
                 "name": branch.name,
                 "hyeon_won": att.hyeon_won,
-                "gyeol_seok": att.gyeol_seok,
+                "gyeol_seok": gyeol_seok,
                 "chul_seok": att.chul_seok,
                 "avg_attendees": att.avg_attendees,
                 "capacity": branch.capacity,
@@ -160,7 +162,7 @@ def run_daily_report(
             branches_data.append(row)
             cb(BranchProgress(
                 name=branch.name, status="success",
-                hyeon_won=att.hyeon_won, gyeol_seok=att.gyeol_seok, chul_seok=att.chul_seok,
+                hyeon_won=att.hyeon_won, gyeol_seok=gyeol_seok, chul_seok=att.chul_seok,
             ))
         except Exception as e:
             logger.exception("Failed for branch %s", branch.name)
