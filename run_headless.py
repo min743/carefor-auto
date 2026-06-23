@@ -14,7 +14,7 @@ _env_map = {
     _creds.KEY_PORTAL_ID:       os.environ.get("CAREFOR_ID"),
     _creds.KEY_PORTAL_PASSWORD: os.environ.get("CAREFOR_PW"),
     _creds.KEY_SLACK_BOT_TOKEN: os.environ.get("SLACK_BOT_TOKEN"),
-    _creds.KEY_SLACK_WEBHOOK:   os.environ.get("SLACK_WEBHOOK_URL"),
+    _creds.KEY_SLACK_WEBHOOK:   None,  # 텍스트 웹훅 비활성화 (이미지만 전송)
 }
 
 _original_get = _creds.get
