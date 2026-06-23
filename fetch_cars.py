@@ -24,20 +24,23 @@ def _is_excluded_car(car_no: str) -> bool:
     return digits[-4:] in EXCLUDE_CAR_SUFFIX if len(digits) >= 4 else False
 
 
-def fetch_notion_inspect_dates() -> dict[str, str]:
-    """노션 차량현황에서 차량번호 → 검사유효기간 수집."""
+def fetch_notion_inspect_dates() -> dict[str, dict]:
+    """노션 차량현황에서 차량번호 → {inspect_start, inspect_end} 수집."""
     from src.notion_client import fetch_inspect_dates
     return fetch_inspect_dates()
 
 
-def apply_notion_inspect_dates(branches_data: dict, inspect_dates: dict[str, str]) -> dict:
-    """노션 검사유효기간을 구글시트 데이터에 덮어쓰기."""
+def apply_notion_inspect_dates(branches_data: dict, inspect_dates: dict[str, dict]) -> dict:
+    """노션 검사 가능기간(시작~종료)을 구글시트 데이터에 덮어쓰기."""
     for branch, cars in branches_data.items():
         for car in cars:
             car_no = car.get('carNumber', '').replace(' ', '')
-            for notion_no, end_date in inspect_dates.items():
+            for notion_no, dates in inspect_dates.items():
                 if notion_no.replace(' ', '') == car_no:
-                    car['inspectEnd'] = end_date
+                    if dates.get('inspect_start'):
+                        car['inspectStart'] = dates['inspect_start']
+                    if dates.get('inspect_end'):
+                        car['inspectEnd'] = dates['inspect_end']
                     break
     return branches_data
 
