@@ -38,6 +38,7 @@ def run_slack_only(
     config: Config,
     target_date: date | None = None,
     progress_callback: ProgressCallback | None = None,
+    dry_run: bool = False,
 ) -> dict:
     """
     케어포 데이터 수집 → 슬랙 전송만. 구글시트 입력 없음.
@@ -92,7 +93,7 @@ def run_slack_only(
 
     # 슬랙 이미지 전송 (Bot Token)
     sent_image = False
-    if image_bytes:
+    if image_bytes and not dry_run:
         bot_token = credentials.get_slack_bot_token()
         if bot_token:
             try:
@@ -105,16 +106,17 @@ def run_slack_only(
     # 슬랙 텍스트 보고 (webhook)
     slack_message = slack_notifier.build_message(target_date, branches_data)
     sent_slack = False
-    webhook = credentials.get_slack_webhook()
-    if webhook:
-        try:
-            slack_notifier.send_via_webhook(webhook, slack_message)
-            sent_slack = True
-        except Exception as e:
-            logger.exception("Slack webhook send failed")
-            errors.append(f"slack: {e}")
-    else:
-        errors.append("slack: webhook URL이 저장되어 있지 않습니다")
+    if not dry_run:
+        webhook = credentials.get_slack_webhook()
+        if webhook:
+            try:
+                slack_notifier.send_via_webhook(webhook, slack_message)
+                sent_slack = True
+            except Exception as e:
+                logger.exception("Slack webhook send failed")
+                errors.append(f"slack: {e}")
+        else:
+            errors.append("slack: webhook URL이 저장되어 있지 않습니다")
 
     return {
         "ok": not errors,

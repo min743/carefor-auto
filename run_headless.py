@@ -42,12 +42,21 @@ if not cfg_path.exists():
 from src.config import Config
 from src.main import run_slack_only
 
-cfg = Config.load(cfg_path)
-result = run_slack_only(cfg, target_date=date.today())
+DRY_RUN = os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes")
 
-print("=== 결과 ===")
-print(f"슬랙 이미지: {'✅' if result.get('sent_image') else '❌'}")
-print(f"슬랙 텍스트: {'✅' if result.get('sent_slack') else '❌'}")
-if result.get("errors"):
-    print("오류:", result["errors"])
-    sys.exit(1)
+cfg = Config.load(cfg_path)
+result = run_slack_only(cfg, target_date=date.today(), dry_run=DRY_RUN)
+
+print("\n=== 메시지 미리보기 ===")
+print(result.get("slack_message", ""))
+print("=" * 40)
+
+if DRY_RUN:
+    print("DRY_RUN 모드: 슬랙 전송 건너뜀")
+else:
+    print("=== 결과 ===")
+    print(f"슬랙 이미지: {'✅' if result.get('sent_image') else '❌'}")
+    print(f"슬랙 텍스트: {'✅' if result.get('sent_slack') else '❌'}")
+    if result.get("errors"):
+        print("오류:", result["errors"])
+        sys.exit(1)

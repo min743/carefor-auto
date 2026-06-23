@@ -4,7 +4,16 @@ on:
   schedule:
     # 매일 오전 11시 (KST = UTC+9, 즉 UTC 02:00)
     - cron: '0 2 * * 1-5'   # 평일만 (월~금)
-  workflow_dispatch:          # 수동 실행 버튼
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '미리보기만 (슬랙 전송 안 함)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   report:
@@ -37,4 +46,5 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           CONFIG_YAML:      ${{ secrets.CONFIG_YAML }}
           CI: "true"
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python run_headless.py
