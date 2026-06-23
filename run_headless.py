@@ -47,10 +47,6 @@ DRY_RUN = os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes")
 cfg = Config.load(cfg_path)
 result = run_slack_only(cfg, target_date=date.today(), dry_run=DRY_RUN)
 
-print("\n=== 메시지 미리보기 ===")
-print(result.get("slack_message", ""))
-print("=" * 40)
-
 if DRY_RUN:
     print("DRY_RUN 모드: 슬랙 전송 건너뜀")
 else:
