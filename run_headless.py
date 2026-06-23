@@ -20,8 +20,8 @@ _env_map = {
 _original_get = _creds.get
 
 def _patched_get(key: str) -> str | None:
-    if key in _env_map and _env_map[key]:
-        return _env_map[key]
+    if key in _env_map:
+        return _env_map[key]  # None이면 None 반환 (keyring 우회 안 함)
     return _original_get(key)
 
 _creds.get = _patched_get

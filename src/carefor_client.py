@@ -306,17 +306,26 @@ def scrape_monthly_attend(page: Page, target: date) -> tuple[int, float]:
                 const imgs = document.querySelectorAll('img[param-info]');
                 for (const img of imgs) {
                     const p = img.getAttribute('param-info') || '';
-                    if (p.includes('입소자 합계')) return p;
+                    if (p.includes('입소자 합계') || p.includes('입소자')) return p;
+                }
+                // data-param-info 도 시도
+                const els = document.querySelectorAll('[param-info],[data-param-info]');
+                for (const el of els) {
+                    const p = (el.getAttribute('param-info') || el.getAttribute('data-param-info') || '');
+                    if (p.includes('합계') || p.includes('56') || p.includes('60')) return p;
                 }
                 return null;
             })()
         """)
+        print(f"  [DEBUG] param_info: {param_info}")
         if param_info:
-            m = re.search(r"=\s*([\d.]+)\s*값의", param_info)
+            m = re.search(r"=\s*([\d.]+)\s*예의|\s*=\s*([\d.]+)\s*값의", param_info)
+            if not m:
+                m = re.search(r"=\s*([\d]+\.[\d]+)", param_info)
             if m:
-                avg = float(m.group(1))
-    except Exception:
-        pass
+                avg = float(m.group(1) or m.group(2))
+    except Exception as e:
+        print(f"  [DEBUG] param_info 오류: {e}")
 
     if avg == 0.0 and daily_totals:
         avg = round(sum(daily_totals) / len(daily_totals), 2)
