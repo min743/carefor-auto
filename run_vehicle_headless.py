@@ -77,6 +77,6 @@ print("=" * 40)
 if os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes"):
     print("DRY_RUN 모드: 슬랙 전송 건너뜀")
 else:
-    client = WebClient(token=token)
+    client = WebClient(token=token, retry_handlers=[])
     client.chat_postMessage(channel=channel, text=msg)
     print("차량관리 보고 전송 완료")
