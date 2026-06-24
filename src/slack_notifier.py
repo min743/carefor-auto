@@ -121,7 +121,7 @@ def send_image_via_api(
     mention_text: str | None = None,
 ) -> None:
     """Slack Token으로 이미지를 채널에 파일로 업로드."""
-    client = WebClient(token=bot_token)
+    client = WebClient(token=bot_token, retry_handlers=[])
     channel_id = _resolve_channel_id(client, channel)
     client.files_upload_v2(
         channel=channel_id,
