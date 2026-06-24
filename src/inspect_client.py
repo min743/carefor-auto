@@ -36,55 +36,34 @@ def _query_inspect(page: Page, car_number: str, corp_number: str) -> date | None
     page.goto(CYBERTS_URL, wait_until="domcontentloaded", timeout=30000)
     page.wait_for_timeout(2000)
 
-    # 차량번호 입력 필드
-    car_input = page.query_selector(
-        'input[name="vhrno"], input[id="vhrno"], input[placeholder*="차량번호"], input[placeholder*="자동차번호"]'
-    )
-    if car_input:
-        car_input.fill(car_number)
+    # 차량번호 입력
+    page.fill('input[placeholder*="자동차등록번호"]', car_number)
+    page.wait_for_timeout(500)
 
-    # 법인번호 입력 필드
-    corp_input = page.query_selector(
-        'input[name="bzno"], input[id="bzno"], input[name="corpNo"], input[placeholder*="법인"]'
-    )
-    if corp_input:
-        corp_input.fill(corp_number)
+    # 법인번호 입력 (앞 6자리)
+    page.fill('input[placeholder*="등록번호 앞 6자리"]', corp_number[:6])
+    page.wait_for_timeout(500)
 
-    # 조회 버튼 클릭
-    page.evaluate("""
-        (() => {
-            const btns = document.querySelectorAll('button, input[type="submit"], input[type="button"], a');
-            for (const b of btns) {
-                const txt = (b.textContent || b.value || '').trim();
-                if (txt.includes('조회') || txt.includes('검색')) {
-                    b.click();
-                    return true;
-                }
-            }
-            return false;
-        })()
-    """)
+    # 검색 버튼 클릭
+    page.click('button:has-text("검색"), input[value*="검색"]')
     page.wait_for_timeout(3000)
 
     body_text = page.evaluate("document.body.innerText")
-    print(f"  [DEBUG cyberts] {body_text[:500]}")
 
-    # 날짜 패턴 추출: YYYY.MM.DD 또는 YYYY-MM-DD 또는 YYYY년MM월DD일
-    patterns = [
-        r"(\d{4})[.\-년](\d{1,2})[.\-월](\d{1,2})",
-    ]
-    candidates = []
-    for pat in patterns:
-        for m in re.finditer(pat, body_text):
-            y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
-            if 2020 <= y <= 2035 and 1 <= mo <= 12 and 1 <= d <= 31:
-                candidates.append(date(y, mo, d))
+    # 테이블에서 날짜 추출: YYYY-MM-DD 형식
+    dates = re.findall(r"\b(20\d{2}-\d{2}-\d{2})\b", body_text)
+    valid_dates = []
+    for d_str in dates:
+        try:
+            valid_dates.append(date.fromisoformat(d_str))
+        except ValueError:
+            pass
 
-    if not candidates:
+    if len(valid_dates) < 2:
         return None
 
     # 만료일 = 가장 미래 날짜
-    return max(candidates)
+    return max(valid_dates)
 
 
 def fetch_all_inspect_dates(
