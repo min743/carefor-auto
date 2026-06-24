@@ -63,23 +63,23 @@ def fetch_vehicle_data():
     return result
 
 
-def fetch_carefor_mileage(headless: bool = True) -> dict[str, int]:
-    """케어포에서 전 지점 차량별 누적 주행거리 수집. 반환: {차량번호: km}"""
+def fetch_carefor_mileage(headless: bool = True) -> dict[str, dict]:
+    """케어포에서 전 지점 차량별 데이터 수집. 반환: {차량번호: {totalKm, oilDate, oilKm, oilNextKm}}"""
     from src.carefor_client import fetch_branch_car_mileage
-    result: dict[str, int] = {}
+    result: dict[str, dict] = {}
     for branch, ctmnumb in BRANCH_CTMNUMB.items():
         try:
-            mileage = fetch_branch_car_mileage(ctmnumb, branch, headless=headless)
-            result.update(mileage)
-            print(f"  {branch}: {len(mileage)}대 수집")
+            data = fetch_branch_car_mileage(ctmnumb, branch, headless=headless)
+            result.update(data)
+            print(f"  {branch}: {len(data)}대 수집")
         except Exception as e:
             print(f"  {branch} 오류: {e}")
     return result
 
 
-def save_mileage_to_sheet(carefor_km: dict[str, int]) -> int:
-    """케어포 주행거리를 구글시트에 저장. 반환: 업데이트된 차량 수."""
-    data = [{"carNumber": car_no, "totalKm": km} for car_no, km in carefor_km.items()]
+def save_mileage_to_sheet(carefor_data: dict[str, dict]) -> int:
+    """케어포 데이터(주행거리+오일)를 구글시트에 저장. 반환: 업데이트된 차량 수."""
+    data = [{"carNumber": car_no, **car_data} for car_no, car_data in carefor_data.items()]
     res = requests.post(API_URL,
         headers={'Content-Type': 'text/plain;charset=utf-8'},
         data=json.dumps({'action': 'updateMileage', 'data': data}),
@@ -91,19 +91,22 @@ def save_mileage_to_sheet(carefor_km: dict[str, int]) -> int:
     return result.get('data', {}).get('updated', 0)
 
 
-def apply_carefor_mileage(branches_data: dict, carefor_km: dict[str, int]) -> dict:
-    """구글시트 차량 데이터에 케어포 주행거리 덮어쓰기."""
+def apply_carefor_mileage(branches_data: dict, carefor_data: dict[str, dict]) -> dict:
+    """구글시트 차량 데이터에 케어포 데이터 덮어쓰기."""
     for branch, cars in branches_data.items():
         for car in cars:
             car_no = car.get('carNumber', '')
-            # 차량번호 끝 4자리로 매칭 (공백/형식 차이 대응)
-            matched_km = None
-            for cn, km in carefor_km.items():
+            for cn, data in carefor_data.items():
                 if cn.replace(" ", "") == car_no.replace(" ", ""):
-                    matched_km = km
+                    if 'totalKm' in data:
+                        car['totalKm'] = data['totalKm']
+                    if 'oilDate' in data:
+                        car['oilDate'] = data['oilDate']
+                    if 'oilKm' in data:
+                        car['oilKm'] = data['oilKm']
+                    if 'oilNextKm' in data:
+                        car['oilNextKm'] = data['oilNextKm']
                     break
-            if matched_km is not None:
-                car['totalKm'] = matched_km
     return branches_data
 
 

@@ -351,6 +351,67 @@ def _click_drive_record_tab(page: Page) -> None:
     page.wait_for_timeout(1500)
 
 
+def _click_maintenance_tab(page: Page) -> None:
+    """정비기록(필요시) 탭 클릭."""
+    page.evaluate("""
+        (() => {
+            const els = Array.from(document.querySelectorAll('button, input[type="button"], a, td, th, li, span'));
+            for (const el of els) {
+                const txt = (el.textContent || el.value || '').trim();
+                if (txt.includes('정비기록')) {
+                    el.click();
+                    return true;
+                }
+            }
+            return false;
+        })()
+    """)
+    page.wait_for_timeout(1500)
+
+
+def scrape_car_oil_change(page: Page, default_interval: int = 8000) -> dict:
+    """
+    정비기록 탭에서 최신 엔진오일 교환 기록 추출.
+    반환: {"oilDate": "2026-02-06", "oilKm": 40567, "oilNextKm": 48567}
+    기록 없으면 {}
+    """
+    rows = page.evaluate("""
+        Array.from(document.querySelectorAll('tr')).map(tr =>
+            Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim())
+        ).filter(r => r.length >= 3)
+    """)
+
+    oil_rows = [r for r in rows if any('엔진오일' in c and '교환' in c for c in r)]
+    if not oil_rows:
+        return {}
+
+    # 최신 기록 = 첫 번째 행 (내림차순 정렬 기준)
+    row_text = ' '.join(oil_rows[0])
+
+    date_m = re.search(r'(\d{4})\.(\d{2})\.(\d{2})', row_text)
+    oil_date = f"{date_m.group(1)}-{date_m.group(2)}-{date_m.group(3)}" if date_m else None
+
+    km_m = re.search(r'엔진오일\s*교환\s*[\(（]?\s*([\d,]+)\s*km', row_text)
+    oil_km = int(km_m.group(1).replace(',', '')) if km_m else None
+
+    next_km_m = re.search(r'다음교체주기\s*([\d,]+)\s*km', row_text)
+    if next_km_m:
+        oil_next_km = int(next_km_m.group(1).replace(',', ''))
+    elif oil_km is not None:
+        oil_next_km = oil_km + default_interval
+    else:
+        oil_next_km = None
+
+    result = {}
+    if oil_date:
+        result['oilDate'] = oil_date
+    if oil_km is not None:
+        result['oilKm'] = oil_km
+    if oil_next_km is not None:
+        result['oilNextKm'] = oil_next_km
+    return result
+
+
 def scrape_car_mileage(page: Page) -> dict[str, int]:
     """
     2-4 차량관리 화면에서 차량별 최신 누적 주행거리 추출.
@@ -411,7 +472,6 @@ def scrape_car_mileage(page: Page) -> dict[str, int]:
         page.wait_for_timeout(1000)
 
         # 계기판(km): innerText에서 "숫자,숫자 ~ 숫자,숫자" 패턴 추출
-        # 시간 패턴(예: 30 ~ 09)은 숫자가 3자리 미만이므로 제외
         km_text = page.evaluate("""
             (() => {
                 const txt = document.body.innerText;
@@ -420,10 +480,21 @@ def scrape_car_mileage(page: Page) -> dict[str, int]:
             })()
         """)
 
+        car_data: dict = {}
         if km_text:
             nums = re.findall(r"[\d,]+", km_text)
             if nums:
-                result[car_no] = int(nums[-1].replace(",", ""))
+                car_data['totalKm'] = int(nums[-1].replace(",", ""))
+
+        # 정비기록 탭 클릭 → 엔진오일 교환 기록 수집
+        _click_maintenance_tab(page)
+        page.wait_for_load_state("networkidle", timeout=15000)
+        page.wait_for_timeout(1000)
+        oil_data = scrape_car_oil_change(page)
+        car_data.update(oil_data)
+
+        if car_data:
+            result[car_no] = car_data
 
     return result
 
