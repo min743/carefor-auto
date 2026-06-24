@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from src import credentials
 
-API_URL = 'https://script.google.com/macros/s/AKfycbzTf1MUaxcVCVxC_6F3x_t69fy4T_Drbn9sgbPn9muMzg8yhC4ehbtw7rklVhrFVaGL/exec'
+API_URL = 'https://script.google.com/macros/s/AKfycbxZ0TRzqAMvxhxCwYNUoYfmdqLUjtSl56iThqZfgt0EUzA6MF6jwA7RaMmeMwR9l-U/exec'
 
 BRANCH_CTMNUMB = {
     "둔산점":      "23017000602",
@@ -22,6 +22,31 @@ def _is_excluded_car(car_no: str) -> bool:
     """자차(개인 차량)는 차량번호 끝 4자리로 판별."""
     digits = ''.join(filter(str.isdigit, car_no))
     return digits[-4:] in EXCLUDE_CAR_SUFFIX if len(digits) >= 4 else False
+
+
+def fetch_cyberts_inspect_dates(branches_data: dict, headless: bool = True) -> dict[str, tuple]:
+    """cyberts.kr에서 전 차량 정기검사 가능기간 조회. 반환: {차량번호: (start, end)}"""
+    from src.inspect_client import fetch_all_inspect_dates
+    return fetch_all_inspect_dates(branches_data, headless=headless)
+
+
+def apply_cyberts_inspect_dates(branches_data: dict, inspect_dates: dict[str, tuple]) -> dict:
+    """cyberts 검사 가능기간을 구글시트 데이터에 덮어쓰기 + 시트 저장용 데이터 준비."""
+    save_data = []
+    for branch, cars in branches_data.items():
+        for car in cars:
+            car_no = car.get('carNumber', '').replace(' ', '')
+            for cn, (start, end) in inspect_dates.items():
+                if cn.replace(' ', '') == car_no:
+                    car['inspectStart'] = str(start)
+                    car['inspectEnd'] = str(end)
+                    save_data.append({
+                        'carNumber': car_no,
+                        'inspectStart': str(start),
+                        'inspectEnd': str(end),
+                    })
+                    break
+    return branches_data, save_data
 
 
 def fetch_notion_inspect_dates() -> dict[str, dict]:
