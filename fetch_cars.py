@@ -95,6 +95,7 @@ def fetch_carefor_mileage(headless: bool = True) -> dict[str, dict]:
     for branch, ctmnumb in BRANCH_CTMNUMB.items():
         try:
             data = fetch_branch_car_mileage(ctmnumb, branch, headless=headless)
+            data = {no: v for no, v in data.items() if not _is_excluded_car(no)}
             result.update(data)
             print(f"  {branch}: {len(data)}대 수집")
         except Exception as e:
