@@ -497,7 +497,10 @@ def scrape_car_mileage(page: Page) -> dict[str, int]:
             car_data: dict = {}
             if record and record.get('km'):
                 nums = re.findall(r"[\d,]+", record['km'])
-                if nums:
+                if len(nums) >= 2:
+                    # 출발km ~ 도착km 형식: 더 큰 값이 현재 주행거리
+                    car_data['totalKm'] = max(int(n.replace(",", "")) for n in nums)
+                elif nums:
                     car_data['totalKm'] = int(nums[0].replace(",", ""))
             if record and record.get('date'):
                 # 2026.06.25 → 2026-06-25
