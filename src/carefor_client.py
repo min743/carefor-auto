@@ -472,16 +472,25 @@ def scrape_car_mileage(page: Page) -> dict[str, int]:
             page.wait_for_load_state("networkidle", timeout=15000)
             page.wait_for_timeout(1000)
 
-            # 계기판(km) + 운행일: innerText에서 추출
+            # 계기판(km) + 운행일: km 패턴 근처 줄에서 날짜 추출
             record = page.evaluate("""
                 (() => {
                     const txt = document.body.innerText;
-                    const kmMatches = txt.match(/[\\d,]{4,}\\s*~\\s*[\\d,]{4,}/g);
-                    const dateMatches = txt.match(/20\\d{2}\\.\\d{2}\\.\\d{2}/g);
-                    return {
-                        km: kmMatches ? kmMatches[0] : null,
-                        date: dateMatches ? dateMatches[0] : null
-                    };
+                    const lines = txt.split('\\n');
+                    const kmRe = /[\\d,]{4,}\\s*~\\s*[\\d,]{4,}/;
+                    const dateRe = /20\\d{2}\\.\\d{2}\\.\\d{2}/;
+                    let km = null, date = null;
+                    for (let i = 0; i < lines.length; i++) {
+                        if (kmRe.test(lines[i]) && !km) {
+                            km = lines[i].match(kmRe)[0];
+                            for (let j = Math.max(0, i-5); j <= Math.min(lines.length-1, i+5); j++) {
+                                const dm = lines[j].match(dateRe);
+                                if (dm) { date = dm[0]; break; }
+                            }
+                            break;
+                        }
+                    }
+                    return { km, date };
                 })()
             """)
 
