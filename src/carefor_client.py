@@ -472,20 +472,27 @@ def scrape_car_mileage(page: Page) -> dict[str, int]:
             page.wait_for_load_state("networkidle", timeout=15000)
             page.wait_for_timeout(1000)
 
-            # 계기판(km): innerText에서 "숫자,숫자 ~ 숫자,숫자" 패턴 추출
-            km_text = page.evaluate("""
+            # 계기판(km) + 운행일: innerText에서 추출
+            record = page.evaluate("""
                 (() => {
                     const txt = document.body.innerText;
-                    const matches = txt.match(/[\\d,]{4,}\\s*~\\s*[\\d,]{4,}/g);
-                    return matches ? matches[0] : null;
+                    const kmMatches = txt.match(/[\\d,]{4,}\\s*~\\s*[\\d,]{4,}/g);
+                    const dateMatches = txt.match(/20\\d{2}\\.\\d{2}\\.\\d{2}/g);
+                    return {
+                        km: kmMatches ? kmMatches[0] : null,
+                        date: dateMatches ? dateMatches[0] : null
+                    };
                 })()
             """)
 
             car_data: dict = {}
-            if km_text:
-                nums = re.findall(r"[\d,]+", km_text)
+            if record and record.get('km'):
+                nums = re.findall(r"[\d,]+", record['km'])
                 if nums:
                     car_data['totalKm'] = int(nums[0].replace(",", ""))
+            if record and record.get('date'):
+                # 2026.06.25 → 2026-06-25
+                car_data['updatedAt'] = record['date'].replace('.', '-')
 
             # 정비기록 탭 클릭 → 엔진오일 교환 기록 수집
             _click_maintenance_tab(page)
