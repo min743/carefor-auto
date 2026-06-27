@@ -91,23 +91,37 @@ def run_slack_only(
         logger.exception("이미지 생성 실패")
         errors.append(f"image: {e}")
 
-    # 슬랙 이미지 전송 (Bot Token) — 충청본부_지점 채널, 지점별 센터장 멘션
-    BRANCH_CHANNEL = "C0870HLTG9Z"
+    # 슬랙 이미지 전송 (Bot Token)
+    # 토요일: 본부방 전송, 센터장 태그 없음 / 평일: 지점방 전송, 센터장 태그 포함
+    BRANCH_CHANNEL = "C0870HLTG9Z"   # 지점방
+    HQ_CHANNEL     = "C087JL55TA6"   # 본부방
+    is_saturday = (target_date.weekday() == 5)
+    send_channel = HQ_CHANNEL if is_saturday else BRANCH_CHANNEL
+
     BRANCH_MENTIONS = {
         "둔산점":      "U08908V4Y64",
         "서구점":      "U07K74212MV",
         "청주 오창점": "U087FH5CKL0",
         "천안점":      "U03DFLVSQ91",
     }
-    mention_parts = [f"<@{BRANCH_MENTIONS[b['name']]}>" for b in branches_data if b["name"] in BRANCH_MENTIONS]
-    mention_text = (
-        "*#지점별 출석인원*\n"
-        "안녕하세요 충청본부 입니다.\n"
-        "각 지점별 출석 인원 공지 합니다.\n"
-        "변동사항 있을 경우 스레드에 댓글로 남겨 주시기 바랍니다.\n"
-        "(케어포 1-1(수급중) / 6-4(시설일지) 확인 / 매일 11:00 기준 / 보류자 제외한 현 수급자 기준)\n"
-        + " ".join(mention_parts)
-    ) if mention_parts else None
+    if is_saturday:
+        mention_text = (
+            "*#지점별 출석인원*\n"
+            "안녕하세요 충청본부 입니다.\n"
+            "각 지점별 출석 인원 공지 합니다.\n"
+            "변동사항 있을 경우 스레드에 댓글로 남겨 주시기 바랍니다.\n"
+            "(케어포 1-1(수급중) / 6-4(시설일지) 확인 / 매일 11:00 기준 / 보류자 제외한 현 수급자 기준)"
+        )
+    else:
+        mention_parts = [f"<@{BRANCH_MENTIONS[b['name']]}>" for b in branches_data if b["name"] in BRANCH_MENTIONS]
+        mention_text = (
+            "*#지점별 출석인원*\n"
+            "안녕하세요 충청본부 입니다.\n"
+            "각 지점별 출석 인원 공지 합니다.\n"
+            "변동사항 있을 경우 스레드에 댓글로 남겨 주시기 바랍니다.\n"
+            "(케어포 1-1(수급중) / 6-4(시설일지) 확인 / 매일 11:00 기준 / 보류자 제외한 현 수급자 기준)\n"
+            + " ".join(mention_parts)
+        ) if mention_parts else None
 
     sent_image = False
     if image_bytes and not dry_run:
@@ -115,7 +129,7 @@ def run_slack_only(
         if bot_token:
             try:
                 slack_notifier.send_image_via_api(
-                    bot_token, BRANCH_CHANNEL, image_bytes,
+                    bot_token, send_channel, image_bytes,
                     mention_text=mention_text,
                 )
                 sent_image = True
