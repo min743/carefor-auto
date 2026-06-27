@@ -2,7 +2,8 @@ name: 출석관리
 
 on:
   schedule:
-    - cron: '0 2 * * 6'  # 매주 토요일 KST 11:00 (UTC 02:00)
+    - cron: '0 2 * * 1-5'  # 월~금 KST 11:00 (UTC 02:00)
+    - cron: '0 2 * * 6'    # 토요일 KST 11:00 (UTC 02:00)
   workflow_dispatch:
     inputs:
       dry_run:
