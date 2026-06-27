@@ -81,9 +81,19 @@ print("\n=== 메시지 미리보기 ===")
 print(msg)
 print("=" * 40)
 
+MENTION_IDS = [
+    "U08908V4Y64",  # 둔산점 센터장
+    "U07K74212MV",  # 서구점 센터장
+    "U087FH5CKL0",  # 청주 오창점 센터장
+    "U03DFLVSQ91",  # 천안점 센터장
+    "U0B2T1QAN1X",  # 대전점 김유경 센터장
+]
+mention_text = " ".join(f"<@{uid}>" for uid in MENTION_IDS)
+full_msg = f"{mention_text}\n{msg}"
+
 if os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes"):
     print("DRY_RUN 모드: 슬랙 전송 건너뜀")
 else:
     client = WebClient(token=token, retry_handlers=[])
-    client.chat_postMessage(channel=channel, text=msg)
+    client.chat_postMessage(channel=channel, text=full_msg)
     print("차량관리 보고 전송 완료")
