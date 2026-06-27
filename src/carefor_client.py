@@ -542,6 +542,8 @@ def fetch_branch_car_mileage(
         resp = portal_page.goto(PORTAL_URL, wait_until="domcontentloaded")
         print(f"    [{branch_name}] 포털 응답: {resp.status if resp else 'None'}, URL: {portal_page.url}")
         portal_page.wait_for_function("typeof login2 === 'function'", timeout=15000)
+        portal_page.wait_for_load_state("networkidle", timeout=15000)
+        portal_page.wait_for_timeout(3000)
         print(f"    [{branch_name}] login2 함수 확인, 새 탭 대기 중...")
 
         with ctx.expect_page(timeout=60000) as new_page_info:
