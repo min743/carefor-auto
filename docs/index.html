@@ -412,6 +412,7 @@
         </div>
       </div>
       <div class="header-btns">
+        <button id="installBtn" onclick="installApp()" style="display:none">📲 설치</button>
         <button onclick="refreshFromSheet()">🔄 새로고침</button>
         <button onclick="exportCSV()">📤 백업</button>
       </div>
@@ -986,6 +987,28 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
+
+// PWA 설치 버튼
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = '';
+});
+function installApp() {
+  if (!_installPrompt) return;
+  _installPrompt.prompt();
+  _installPrompt.userChoice.then(() => {
+    _installPrompt = null;
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'none';
+  });
+}
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
 </script>
 </body>
 </html>
