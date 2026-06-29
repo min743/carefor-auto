@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1e3a8a">
+<title>방문요양 대전점 운행기록</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Malgun Gothic', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f4f6f8;
+    color: #2c3e50;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e8f0fe;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+  }
+  .form-group label .required { color: #e53e3e; margin-left: 2px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #2c3e50;
+    background: #fafafa;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .km-info {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #3b82f6;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:active { opacity: 0.85; }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .history-section { margin-top: 4px; }
+  .history-item {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid #3b82f6;
+  }
+  .history-date { font-size: 12px; color: #718096; margin-bottom: 4px; }
+  .history-main { font-size: 14px; font-weight: 600; color: #2c3e50; }
+  .history-detail { font-size: 12px; color: #718096; margin-top: 4px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #e8f0fe;
+    color: #1e3a8a;
+    margin-right: 4px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #2d3748;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: #38a169; }
+  .toast.error { background: #e53e3e; }
+
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 998;
+    align-items: center;
+    justify-content: center;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background: white;
+    color: #718096;
+    cursor: pointer;
+  }
+  .tab-btn.active { border-color: #3b82f6; color: #1e3a8a; background: #e8f0fe; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a0aec0;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🚗 방문요양 대전점 운행기록</h1>
+  <p>233다9797 · 아반떼</p>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('input')">✏️ 입력</button>
+    <button class="tab-btn" onclick="switchTab('history')">📋 최근 기록</button>
+  </div>
+
+  <!-- 입력 탭 -->
+  <div id="tab-input" class="tab-content active">
+    <div class="card">
+      <div class="card-title">🚙 운행 정보</div>
+
+      <div class="km-info" id="currentKmInfo">
+        <span>📍</span> <span id="currentKmText">현재 누적주행거리 불러오는 중...</span>
+      </div>
+
+      <div class="form-group">
+        <label>운행일자 <span class="required">*</span></label>
+        <input type="date" id="driveDate">
+      </div>
+
+      <div class="form-group">
+        <label>운전자명 <span class="required">*</span></label>
+        <input type="text" id="driverName" placeholder="이름 입력">
+      </div>
+
+      <div class="form-group">
+        <label>운행목적 <span class="required">*</span></label>
+        <input type="text" id="driveReason" placeholder="예: 방문요양, 업무, 차량점검 등">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>출발km <span class="required">*</span></label>
+          <input type="number" id="startKm" placeholder="출발 시 계기판" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>운행km <span class="required">*</span></label>
+          <input type="number" id="driveKm" placeholder="운행 거리" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⛽ 주유 정보 (해당 시)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>주유량 (L)</label>
+          <input type="number" id="fuelLiter" placeholder="0" inputmode="decimal" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>유류비 (원)</label>
+          <input type="number" id="fuelCost" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>비고</label>
+        <input type="text" id="memo" placeholder="특이사항 입력">
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitLog()">저장하기</button>
+  </div>
+
+  <!-- 최근 기록 탭 -->
+  <div id="tab-history" class="tab-content">
+    <div id="historyList">
+      <div class="empty-state">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<script>
+// ===== 설정 =====
+const DRIVE_LOG_API = 'https://script.google.com/macros/s/AKfycbzlfRYjvu6ZZY33xYveomm7foNQB2KhM62cq0vOT9nr8wQW2hM0flgD_dFm1mDEVII/exec';
+const CAR_MGMT_API = 'https://script.google.com/macros/s/AKfycbzlrOLKx9_Cs4LnWYPMi9bySTPPpjOHy4pxcwXKJ7F7c4eulGOWs3SZmdRdAgL7sDFi/exec';
+const CAR_NUMBER = '233다9797';
+
+// ===== 초기화 =====
+window.onload = () => {
+  // 오늘 날짜 기본값
+  document.getElementById('driveDate').value = new Date().toISOString().split('T')[0];
+  // 마지막 운전자 저장값 복원
+  const saved = localStorage.getItem('lastDriver');
+  if (saved) document.getElementById('driverName').value = saved;
+  // 현재 km 불러오기
+  loadCurrentKm();
+};
+
+async function loadCurrentKm() {
+  try {
+    const res = await fetch(CAR_MGMT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getAll' })
+    });
+    const data = await res.json();
+    const allCars = Object.values(data.data.data).flat();
+    const car = allCars.find(c => c.carNumber && c.carNumber.replace(/\s/g,'') === CAR_NUMBER.replace(/\s/g,''));
+    if (car && car.totalKm) {
+      document.getElementById('currentKmText').textContent = `현재 누적주행거리: ${Number(car.totalKm).toLocaleString()} km`;
+    } else {
+      document.getElementById('currentKmText').textContent = '현재 누적주행거리 정보 없음';
+    }
+  } catch(e) {
+    document.getElementById('currentKmText').textContent = '누적주행거리 불러오기 실패';
+  }
+}
+
+// ===== 탭 전환 =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'history') loadHistory();
+}
+
+// ===== 운행기록 저장 =====
+async function submitLog() {
+  const date = document.getElementById('driveDate').value;
+  const driver = document.getElementById('driverName').value.trim();
+  const reason = document.getElementById('driveReason').value.trim();
+  const startKm = document.getElementById('startKm').value;
+  const driveKm = document.getElementById('driveKm').value;
+  const fuelLiter = document.getElementById('fuelLiter').value || '';
+  const fuelCost = document.getElementById('fuelCost').value || '';
+  const memo = document.getElementById('memo').value.trim();
+
+  if (!date || !driver || !reason || !startKm || !driveKm) {
+    showToast('필수 항목을 모두 입력해주세요', 'error');
+    return;
+  }
+  if (Number(driveKm) <= 0) {
+    showToast('운행km을 올바르게 입력해주세요', 'error');
+    return;
+  }
+
+  const totalKm = Number(startKm) + Number(driveKm);
+
+  showLoading(true);
+
+  try {
+    // 1) 방문요양 구글시트에 운행기록 저장
+    const logPayload = {
+      action: 'addDriveLog',
+      data: { date, driver, reason, startKm: Number(startKm), driveKm: Number(driveKm), fuelLiter: fuelLiter ? Number(fuelLiter) : '', fuelCost: fuelCost ? Number(fuelCost) : '', memo }
+    };
+    const logRes = await fetch(DRIVE_LOG_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(logPayload)
+    });
+    const logData = await logRes.json();
+    if (!logData.ok) throw new Error(logData.error || '저장 실패');
+
+    // 2) 차량관리 구글시트 totalKm 업데이트
+    const kmPayload = {
+      action: 'updateMileage',
+      data: [{ carNumber: CAR_NUMBER, totalKm, kmDate: date }]
+    };
+    await fetch(CAR_MGMT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(kmPayload)
+    });
+
+    // 운전자 저장
+    localStorage.setItem('lastDriver', driver);
+
+    // 폼 리셋 (날짜·운전자 유지)
+    document.getElementById('driveReason').value = '';
+    document.getElementById('startKm').value = totalKm;
+    document.getElementById('driveKm').value = '';
+    document.getElementById('fuelLiter').value = '';
+    document.getElementById('fuelCost').value = '';
+    document.getElementById('memo').value = '';
+    document.getElementById('currentKmText').textContent = `현재 누적주행거리: ${totalKm.toLocaleString()} km`;
+
+    showToast('저장 완료! ✅', 'success');
+  } catch(e) {
+    showToast('저장 실패: ' + e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ===== 최근 기록 불러오기 =====
+async function loadHistory() {
+  document.getElementById('historyList').innerHTML = '<div class="empty-state">불러오는 중...</div>';
+  try {
+    const res = await fetch(DRIVE_LOG_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getDriveLogs', limit: 20 })
+    });
+    const data = await res.json();
+    if (!data.ok || !data.data || data.data.length === 0) {
+      document.getElementById('historyList').innerHTML = '<div class="empty-state">기록이 없습니다</div>';
+      return;
+    }
+    const html = data.data.map(r => `
+      <div class="history-item">
+        <div class="history-date">${r.date}</div>
+        <div class="history-main">${r.driver} · ${r.reason}</div>
+        <div class="history-detail">
+          <span class="badge">${Number(r.startKm).toLocaleString()}km 출발</span>
+          <span class="badge">+${Number(r.driveKm).toLocaleString()}km</span>
+          ${r.fuelCost ? `<span class="badge">⛽ ${Number(r.fuelCost).toLocaleString()}원</span>` : ''}
+          ${r.memo ? `· ${r.memo}` : ''}
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('historyList').innerHTML = html;
+  } catch(e) {
+    document.getElementById('historyList').innerHTML = '<div class="empty-state">불러오기 실패</div>';
+  }
+}
+
+// ===== 유틸 =====
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('show', show);
+  document.querySelector('.btn-submit').disabled = show;
+}
+</script>
+</body>
+</html>
