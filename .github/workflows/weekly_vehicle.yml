@@ -2,9 +2,6 @@ name: 차량관리 주간 보고
 # schedule refresh
 
 on:
-  schedule:
-    # 매주 월요일 오전 11시 10분 (KST = UTC 02:10)
-    - cron: '10 2 * * 1'
   workflow_dispatch:
     inputs:
       dry_run:
