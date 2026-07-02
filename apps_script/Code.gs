@@ -179,6 +179,12 @@ function setupMonthlyTab_(ss) {
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
+
+    // ---- 지점점검 업로드 (run_audit.py) ----
+    if (payload.action === 'audit') {
+      return handleAuditPost_(payload);
+    }
+
     if (!payload.date || !Array.isArray(payload.branches)) {
       throw new Error('payload format error: need {date, branches}');
     }
@@ -252,4 +258,103 @@ function testDoPost() {
   };
   const result = doPost(sample);
   Logger.log(result.getContent());
+}
+
+
+// ==================== 지점점검 (평가 매뉴얼 36항목) ====================
+
+const TAB_AUDIT = '지점점검';
+const AUDIT_BRANCHES = ['둔산점', '서구점', '천안점', '청주 오창점'];
+const AUDIT_HEADER_ROW = 4;   // 항목 표 헤더 행
+const AUDIT_FIRST_ITEM_ROW = 5;
+
+/**
+ * run_audit.py 가 보내는 점검 결과를 '지점점검' 탭에 기록.
+ * - 자동 항목: 상태(양호/미흡) 셀 갱신 + 메모(detail)를 셀 노트로
+ * - 수기 항목: 셀을 건드리지 않음 (본부/지점이 시트에서 직접 입력)
+ *
+ * payload: {
+ *   action: 'audit', generated: '...',
+ *   items: [{no, name, method}, ...36],
+ *   branches: { '둔산점': {run_at, cutoff, people, counts:{...}, item_results:{'20':{status,detail}}}, ... }
+ * }
+ */
+function handleAuditPost_(payload) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(TAB_AUDIT);
+  if (!sh) {
+    sh = ss.insertSheet(TAB_AUDIT);
+    setupAuditTab_(sh, payload.items);
+  }
+
+  // 요약 블록 (1~2행)
+  sh.getRange(1, 1).setValue('📋 지점 점검 현황 (자동수집: run_audit.py / 수기 항목은 직접 입력)');
+  sh.getRange(2, 1).setValue('갱신: ' + (payload.generated || ''));
+  AUDIT_BRANCHES.forEach((b, i) => {
+    const col = 4 + i;
+    const d = payload.branches[b];
+    if (!d) return;
+    const c = d.counts || {};
+    sh.getRange(2, col).setValue(
+      d.run_at + '\n' + d.people + '명 / 불일치 ' + (c['불일치'] || 0) + '건'
+    ).setWrap(true).setFontSize(8);
+  });
+
+  // 자동 항목 상태 기록
+  const items = payload.items || [];
+  items.forEach((it, idx) => {
+    const row = AUDIT_FIRST_ITEM_ROW + idx;
+    if (it.method === 'manual') return; // 수기 항목은 손대지 않음
+    AUDIT_BRANCHES.forEach((b, i) => {
+      const col = 4 + i;
+      const d = payload.branches[b];
+      const cell = sh.getRange(row, col);
+      if (!d) { return; }
+      const r = (d.item_results || {})[String(it.no)];
+      if (!r) { cell.setValue('수집전').setNote(''); return; }
+      cell.setValue(r.status).setNote(r.detail || '');
+    });
+  });
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, tab: TAB_AUDIT }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * '지점점검' 탭 최초 생성: 36항목 그리드 + 드롭다운 + 조건부서식.
+ */
+function setupAuditTab_(sh, items) {
+  sh.setColumnWidth(1, 40);
+  sh.setColumnWidth(2, 170);
+  sh.setColumnWidth(3, 50);
+  for (let i = 0; i < AUDIT_BRANCHES.length; i++) sh.setColumnWidth(4 + i, 110);
+  sh.setColumnWidth(8, 300);
+
+  const hdr = ['#', '항목명', '방식'].concat(AUDIT_BRANCHES).concat(['메모(공용)']);
+  sh.getRange(AUDIT_HEADER_ROW, 1, 1, hdr.length).setValues([hdr])
+    .setFontWeight('bold').setBackground('#dce6f4');
+
+  (items || []).forEach((it, idx) => {
+    const row = AUDIT_FIRST_ITEM_ROW + idx;
+    sh.getRange(row, 1, 1, 3).setValues([[it.no, it.name, it.method === 'manual' ? '수기' : '자동']]);
+    if (it.method === 'manual') {
+      // 수기 항목: 지점 셀에 드롭다운
+      const rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(['미입력', '양호', '미흡', '해당없음'], true).build();
+      const range = sh.getRange(row, 4, 1, AUDIT_BRANCHES.length);
+      range.setDataValidation(rule).setValue('미입력').setBackground('#f0f4ff');
+    }
+  });
+
+  // 조건부 서식 (상태 색)
+  const body = sh.getRange(AUDIT_FIRST_ITEM_ROW, 4, (items || []).length, AUDIT_BRANCHES.length);
+  const rules = [
+    ['양호', '#d5f0dc'], ['미흡', '#f8d3d3'], ['수집전', '#e8e8e8'], ['미입력', '#dbe4ff'], ['해당없음', '#eeeeee'],
+  ].map(([txt, color]) =>
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(txt).setBackground(color).setRanges([body]).build()
+  );
+  sh.setConditionalFormatRules(rules);
+  sh.setFrozenRows(AUDIT_HEADER_ROW);
 }
