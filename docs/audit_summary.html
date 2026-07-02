@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>지점 점검 요약</title>
+<style>
+body{font-family:'맑은 고딕',sans-serif;margin:0;background:#f4f6fa;color:#222}
+header{background:#2f5496;color:#fff;padding:14px 20px}
+header h1{font-size:18px;margin:0}
+.sub{font-size:12px;opacity:.85;margin-top:3px}
+.wrap{padding:16px;max-width:1100px;margin:0 auto}
+.cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bcard{background:#fff;border-radius:10px;padding:12px 16px;box-shadow:0 2px 6px rgba(0,0,0,.08);min-width:150px;flex:1}
+.bcard h3{margin:0 0 6px;font-size:15px;color:#2f5496}
+.bcard .meta{font-size:11px;color:#888}
+.bcard .nums{font-size:12px;margin-top:6px;line-height:1.7}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+th,td{border:1px solid #dde3ee;padding:6px 8px;text-align:center}
+th{background:#eef2f9}
+td.name{text-align:left;white-space:nowrap}
+.ok{color:#2c8a41;font-weight:bold}.bad{color:#c02020;font-weight:bold}
+.na{color:#999}.man{color:#4a69b0}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.d-ok{background:#35a94e}.d-bad{background:#d93a3a}.d-na{background:#c2c2c2}.d-man{background:#6f8fd6}
+#gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
+#gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
+.note{font-size:11px;color:#777;margin-top:10px;line-height:1.6}
+</style></head><body>
+<div id="gate"><h2>🔒 지점 점검 요약</h2><div>접속 번호 4자리를 입력하세요</div>
+<input id="pin" type="password" maxlength="4" inputmode="numeric" autofocus></div>
+<header><h1>📋 지점 점검 요약 (본부 공유용)</h1><div class="sub" id="gen"></div></header>
+<div class="wrap">
+<div class="cards" id="cards"></div>
+<table id="tbl"></table>
+<div class="note">· 이 페이지에는 수급자 개인정보가 포함되어 있지 않습니다 (지점 단위 집계만).<br>
+· 상세 내역(수급자별)은 지점 점검 PC의 대시보드에서만 확인할 수 있습니다.<br>
+· 상태 기준 — <span class="ok">양호</span>: 문제 0건 / <span class="bad">미흡</span>: 문제 있음 / <span class="na">수집전</span>: 자동수집 미구현·미실행 / <span class="man">수기</span>: 현장 확인 항목</div>
+</div>
+<script>
+const DATA = {"branches": {"둔산점": {"run_at": "2026-07-02 15:39", "cutoff": "2024.01.01", "people": 135, "item_results": {"20": {"status": "미흡", "detail": "낙상↔욕구사정 불일치 39건, 계획-평가 순서 위반 10건"}, "21": {"status": "미흡", "detail": "반기별 낙상·욕창·인지 누락 331건"}, "22": {"status": "미흡", "detail": "급여제공계획 발송·서명 문제 42건"}}, "counts": {"대조회차": 268, "불일치": 39, "반기누락": 331, "계획문제": 42, "순서위반": 10}}, "서구점": {"run_at": "2026-07-02 15:53", "cutoff": "2025.01.01", "people": 149, "item_results": {"20": {"status": "미흡", "detail": "낙상↔욕구사정 불일치 92건, 계획-평가 순서 위반 15건"}, "21": {"status": "미흡", "detail": "반기별 낙상·욕창·인지 누락 222건"}, "22": {"status": "미흡", "detail": "급여제공계획 발송·서명 문제 93건"}}, "counts": {"대조회차": 240, "불일치": 92, "반기누락": 222, "계획문제": 93, "순서위반": 15}}, "천안점": {"run_at": "2026-07-02 16:17", "cutoff": "2024.05.31", "people": 223, "item_results": {"20": {"status": "미흡", "detail": "낙상↔욕구사정 불일치 186건, 계획-평가 순서 위반 9건"}, "21": {"status": "미흡", "detail": "반기별 낙상·욕창·인지 누락 303건"}, "22": {"status": "미흡", "detail": "급여제공계획 발송·서명 문제 71건"}}, "counts": {"대조회차": 293, "불일치": 186, "반기누락": 303, "계획문제": 71, "순서위반": 9}}, "청주 오창점": {"run_at": "2026-07-02 16:36", "cutoff": "2024.07.31", "people": 167, "item_results": {"20": {"status": "미흡", "detail": "낙상↔욕구사정 불일치 106건, 계획-평가 순서 위반 11건"}, "21": {"status": "미흡", "detail": "반기별 낙상·욕창·인지 누락 174건"}, "22": {"status": "미흡", "detail": "급여제공계획 발송·서명 문제 78건"}}, "counts": {"대조회차": 221, "불일치": 106, "반기누락": 174, "계획문제": 78, "순서위반": 11}}}, "items": [{"no": 1, "name": "운영규정", "method": "manual"}, {"no": 2, "name": "사업계획", "method": "manual"}, {"no": 3, "name": "인력기준", "method": "manual"}, {"no": 4, "name": "경력직", "method": "manual"}, {"no": 5, "name": "보수교육", "method": "auto"}, {"no": 6, "name": "직원교육", "method": "auto"}, {"no": 7, "name": "직원인권보호", "method": "auto"}, {"no": 8, "name": "직원권익향상", "method": "auto"}, {"no": 9, "name": "안전하고 쾌적한 환경조성", "method": "manual"}, {"no": 10, "name": "낙상예방환경조성", "method": "manual"}, {"no": 11, "name": "재난상황대응", "method": "auto"}, {"no": 12, "name": "응급상황대응", "method": "manual"}, {"no": 13, "name": "시설안전", "method": "auto"}, {"no": 14, "name": "질향상노력", "method": "manual"}, {"no": 15, "name": "건강검진", "method": "auto"}, {"no": 16, "name": "감염관리", "method": "auto"}, {"no": 17, "name": "소통노력", "method": "auto"}, {"no": 18, "name": "정보제공", "method": "manual"}, {"no": 19, "name": "노인인권보호", "method": "auto"}, {"no": 20, "name": "욕구사정", "method": "auto"}, {"no": 21, "name": "위험도평가", "method": "auto"}, {"no": 22, "name": "급여제공계획 수립 및 제공", "method": "auto"}, {"no": 23, "name": "투약 및 약품관리", "method": "auto"}, {"no": 24, "name": "신체기능 프로그램", "method": "auto"}, {"no": 25, "name": "인지기능 프로그램", "method": "auto"}, {"no": 26, "name": "사회적응 프로그램", "method": "auto"}, {"no": 27, "name": "기능회복훈련", "method": "auto"}, {"no": 28, "name": "이동서비스 수칙", "method": "auto"}, {"no": 29, "name": "사례관리", "method": "auto"}, {"no": 30, "name": "외부기관연계", "method": "auto"}, {"no": 31, "name": "등급현황", "method": "manual"}, {"no": 32, "name": "백신접종률", "method": "manual"}, {"no": 33, "name": "식사(간식)제공결과", "method": "auto"}, {"no": 34, "name": "급여제공 결과평가", "method": "auto"}, {"no": 35, "name": "제도안내", "method": "manual"}, {"no": 36, "name": "급여만족도", "method": "manual"}], "generated": "2026-07-02 16:47"};
+const PIN = '7436';
+const BR = ['둔산점','서구점','천안점','청주 오창점'];
+document.getElementById('pin').addEventListener('input', e => {
+  if(e.target.value === PIN){ document.getElementById('gate').style.display='none'; sessionStorage.setItem('ap','1'); }
+});
+if(sessionStorage.getItem('ap')==='1') document.getElementById('gate').style.display='none';
+document.getElementById('gen').textContent = '생성: ' + DATA.generated;
+const cards = document.getElementById('cards');
+BR.forEach(b => {
+  const d = DATA.branches[b];
+  const el = document.createElement('div'); el.className='bcard';
+  if(!d){ el.innerHTML = `<h3>${b}</h3><div class="meta">수집 전</div>`; cards.appendChild(el); return; }
+  const c = d.counts;
+  el.innerHTML = `<h3>${b}</h3><div class="meta">수집 ${d.run_at} · 기준일 ${d.cutoff} · ${d.people}명</div>
+  <div class="nums">낙상↔욕구 불일치 <b class="bad">${c.불일치}</b>/${c.대조회차}회차<br>
+  반기별 평가 누락 <b class="bad">${c.반기누락}</b>건 · 계획 문제 <b class="bad">${c.계획문제}</b>건</div>`;
+  cards.appendChild(el);
+});
+function cell(b, it){
+  const d = DATA.branches[b];
+  if(it.method==='manual') return '<span class="dot d-man"></span><span class="man">수기</span>';
+  if(!d) return '<span class="dot d-na"></span><span class="na">-</span>';
+  const r = d.item_results[String(it.no)];
+  if(!r) return '<span class="dot d-na"></span><span class="na">수집전</span>';
+  if(r.status==='양호') return '<span class="dot d-ok"></span><span class="ok">양호</span>';
+  return `<span class="dot d-bad"></span><span class="bad" title="${r.detail}">미흡</span>`;
+}
+let h = '<tr><th style="width:30px">#</th><th style="width:170px">항목</th>' + BR.map(b=>`<th>${b}</th>`).join('') + '</tr>';
+DATA.items.forEach(it => {
+  h += `<tr><td>${it.no}</td><td class="name">${it.name}</td>` + BR.map(b=>`<td>${cell(b,it)}</td>`).join('') + '</tr>';
+});
+document.getElementById('tbl').innerHTML = h;
+</script></body></html>
