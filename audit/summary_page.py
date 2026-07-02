@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 AUDIT_DIR = ROOT / "audit_results"
 OUT = ROOT / "docs" / "audit_summary.html"
 
-PIN = "7436"  # 본부 공유용 간단 잠금 (변경 가능)
+PIN = "15771389"  # 본부 공유용 간단 잠금 (변경 가능)
 
 BRANCH_ORDER = ["둔산점", "서구점", "천안점", "청주 오창점"]
 
@@ -80,8 +80,8 @@ td.name{text-align:left;white-space:nowrap}
 #gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
 .note{font-size:11px;color:#777;margin-top:10px;line-height:1.6}
 </style></head><body>
-<div id="gate"><h2>🔒 지점 점검 요약</h2><div>접속 번호 4자리를 입력하세요</div>
-<input id="pin" type="password" maxlength="4" inputmode="numeric" autofocus></div>
+<div id="gate"><h2>🔒 지점 점검 요약</h2><div>접속 번호를 입력하세요</div>
+<input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
 <header><h1>📋 지점 점검 요약 (본부 공유용)</h1><div class="sub" id="gen"></div></header>
 <div class="wrap">
 <div class="cards" id="cards"></div>
