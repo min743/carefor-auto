@@ -57,6 +57,13 @@ def main() -> None:
         except Exception as e:
             print(f"[{b.name}] 실패: {e}")
 
+    # 구글시트 '지점점검' 탭 업로드 (본부 공유)
+    try:
+        from audit.sheet_upload import upload
+        upload()
+    except Exception as e:
+        print(f"구글시트 업로드 건너뜀: {e}")
+
     print("\n완료. audit_dashboard.html 을 열어 확인하세요.")
 
 
