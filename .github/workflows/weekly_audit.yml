@@ -1,0 +1,58 @@
+name: 지점점검 (매주 월 아침)
+
+on:
+  schedule:
+    # 매주 일요일 22:00 UTC = 월요일 07:00 KST
+    - cron: '0 22 * * 0'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '테스트용: 지점당 인원 제한 (0=전체)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write   # 요약페이지(docs/audit_summary.html) 커밋용
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 패키지 설치
+        run: pip install requests PyYAML playwright keyring keyrings.alt
+
+      - name: Playwright 브라우저 설치
+        run: playwright install chromium --with-deps
+
+      - name: 지점 점검 실행
+        env:
+          CAREFOR_ID:        ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:        ${{ secrets.CAREFOR_PW }}
+          CONFIG_YAML:       ${{ secrets.CONFIG_YAML }}
+          AUDIT_WEBHOOK_URL: ${{ secrets.AUDIT_WEBHOOK_URL }}
+          AUDIT_LIMIT:       ${{ github.event.inputs.limit || '0' }}
+          CI: "true"
+        run: python run_audit_headless.py
+
+      - name: 요약페이지 커밋 (개인정보 없음)
+        run: |
+          git config user.name "audit-bot"
+          git config user.email "actions@github.com"
+          git add docs/audit_summary.html
+          if git diff --cached --quiet; then
+            echo "요약페이지 변경 없음"
+          else
+            git commit -m "chore: 지점점검 요약페이지 자동 갱신 [skip ci]"
+            git push
+          fi
