@@ -48,9 +48,10 @@ def build_payload() -> dict:
 
 
 def upload() -> None:
-    url = credentials.get_sheet_webhook()
+    url = credentials.get_audit_webhook()
     if not url:
-        print("구글시트 webhook URL이 저장되어 있지 않습니다 (기존 출석보고 설정 필요).")
+        print("지점점검용 구글시트 webhook URL이 저장되어 있지 않습니다.")
+        print("점검 전용 시트의 Apps Script 배포 URL을 set_audit_webhook 으로 저장하세요.")
         return
     payload = build_payload()
     if not payload["branches"]:

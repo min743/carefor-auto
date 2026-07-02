@@ -66,3 +66,15 @@ def get_sheet_webhook() -> str | None:
 
 def set_sheet_webhook(url: str) -> None:
     set_(KEY_SHEET_WEBHOOK, url)
+
+
+# ---- 지점점검 전용 webhook (출석보고와 분리) ----
+KEY_AUDIT_WEBHOOK = "audit_webhook_url"
+
+
+def get_audit_webhook() -> str | None:
+    return get(KEY_AUDIT_WEBHOOK)
+
+
+def set_audit_webhook(url: str) -> None:
+    set_(KEY_AUDIT_WEBHOOK, url)
