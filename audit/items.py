@@ -1,0 +1,51 @@
+"""평가 매뉴얼 36개 점검 항목 정의.
+
+method: auto = 케어포 자동 수집 / manual = 수기 확인(대시보드에서 입력)
+impl:   True = 자동 판정 구현됨 / False = 아직 미구현(대시보드에 '수집전' 표시)
+"""
+
+ITEMS = [
+    {"no": 1,  "name": "운영규정",            "method": "manual", "loc": "-",                          "criteria": "운영규정 11개 항목 구비·비치 여부 (직원 열람 가능 장소)"},
+    {"no": 2,  "name": "사업계획",            "method": "manual", "loc": "-",                          "criteria": "연도별 사업계획 수립 여부 (기관운영·서비스제공·직원관리 3개 분야, 예산 포함)"},
+    {"no": 3,  "name": "인력기준",            "method": "manual", "loc": "-",                          "criteria": "법적 인력기준 준수 + 법적기준 초과 배치 여부"},
+    {"no": 4,  "name": "경력직",              "method": "manual", "loc": "-",                          "criteria": "2년 이상/미만 운영기관 기준 직원 경력 비율 충족 여부"},
+    {"no": 5,  "name": "보수교육",            "method": "auto",   "loc": "8-7-1",                      "criteria": "상단 대상자 수 = 이수자 수 (요양보호사 보수교육 전원 이수)", "impl": False},
+    {"no": 6,  "name": "직원교육",            "method": "auto",   "loc": "8-7 운영규정 교육란",           "criteria": "① 급여제공지침 등 12개 항목 마련·비치 ② 미참석자 1명 이하(관리자 1명 제외) ③ 전 직원 급여제공지침 교육 연 1회 이상", "impl": False},
+    {"no": 7,  "name": "직원인권보호",         "method": "auto",   "loc": "1-6",                        "criteria": "① 올해 기록 1건 이상(2026 신설) ② 전 수급자(보호자) 폭언·폭행·성희롱예방 안내 연 1회 ③ 안내일 이전 퇴소자 제외", "impl": False},
+    {"no": 8,  "name": "직원권익향상",         "method": "auto",   "loc": "8-1-1 복지(포상) 제공대장",     "criteria": "① 5대 보험 가입·완납 ② 매월 대상자 확인 ③ 이번 분기 최종 대상자 확인", "impl": False},
+    {"no": 9,  "name": "안전하고 쾌적한 환경조성", "method": "manual", "loc": "-",                       "criteria": "환경 쾌적성 및 안전 관련 현장 점검"},
+    {"no": 10, "name": "낙상예방환경조성",      "method": "manual", "loc": "-",                          "criteria": "낙상 위험 요소 제거·안전손잡이 등 환경 점검"},
+    {"no": 11, "name": "재난상황대응",         "method": "auto",   "loc": "8-7",                        "criteria": "반기별 재난대응훈련 실시 — 5/1(상반기), 11/1(하반기) 기준", "impl": False},
+    {"no": 12, "name": "응급상황대응",         "method": "manual", "loc": "-",                          "criteria": "① 매뉴얼·비상연락체계 구비 ② 응급알림장치 설치·작동 ③ 직원 대처 숙지(면담)"},
+    {"no": 13, "name": "시설안전",            "method": "auto",   "loc": "6-3 정기점검",                "criteria": "소방시설 점검 월 1회 — 매월 28일 기준 입력 여부", "impl": False},
+    {"no": 14, "name": "질향상노력",          "method": "manual", "loc": "-",                          "criteria": "① 인건비 지출비율 준수 ② 제도발전·품질향상 참여 ③ 경영실태조사 참여"},
+    {"no": 15, "name": "건강검진",            "method": "auto",   "loc": "8-10",                       "criteria": "① 전 직원 결핵검진 포함 연 1회 ② 신규입사자 입사 전 검진 제출 탭 입력", "impl": False},
+    {"no": 16, "name": "감염관리",            "method": "auto",   "loc": "6-2 일일점검 / 6-3 정기소독",  "criteria": "① 간호 비품 매일 입력 ② 정기소독 분기별 ③ 위생점검 일지 매일", "impl": False},
+    {"no": 17, "name": "소통노력",            "method": "auto",   "loc": "1-4 상담일지 / 1-5 가정통신문", "criteria": "① 상담일지 분기별 ② 급여반영 여부 ③ 가정통신문 매월 발송", "impl": False},
+    {"no": 18, "name": "정보제공",            "method": "manual", "loc": "-",                          "criteria": "수급자(보호자) 대상 정보 제공 여부"},
+    {"no": 19, "name": "노인인권보호",         "method": "auto",   "loc": "8-7 / 1-6 / 3-1",            "criteria": "① 교육일지 반기별 ② 수급자 안내사항 안전관리 설명 ③ 3-1 특이사항 안전관리 교육 입력", "impl": False},
+    {"no": 20, "name": "욕구사정",            "method": "auto",   "loc": "1-2 전체 기초평가 현황",        "criteria": "기초평가(낙상·욕창·인지) 작성 후 급여제공계획서 작성 순서 (계획일이 평가일보다 앞설 수 없음) + 낙상점수↔욕구사정 신체상태 정합성", "impl": True},
+    {"no": 21, "name": "위험도평가",          "method": "auto",   "loc": "1-2",                        "criteria": "전 수급자 낙상·욕창·인지 평가 각 반기별 1회 이상", "impl": True},
+    {"no": 22, "name": "급여제공계획 수립 및 제공", "method": "auto", "loc": "3-1",                     "criteria": "① 평가 반영 계획 연 1회 수립 ② 서명 후 제공 시작일까지 공단 통보 ③ 계획대로 제공·기록 ④ 상태변화 시 변경", "impl": True},
+    {"no": 23, "name": "투약 및 약품관리",     "method": "auto",   "loc": "6-2 일일점검",                "criteria": "① 약품보관함 잠금 ② 일반의약품 분기별 점검 ③ 적정 투약", "impl": False},
+    {"no": 24, "name": "신체기능 프로그램",     "method": "auto",   "loc": "4-1",                        "criteria": "① 연간계획 ② 주 3회 이상 ③ 의견 반기별 수렴+연 1회 반영", "impl": False},
+    {"no": 25, "name": "인지기능 프로그램",     "method": "auto",   "loc": "4-2",                        "criteria": "① 연간계획 ② 주 3회 이상 ③ 의견 반기별 수렴+연 1회 반영", "impl": False},
+    {"no": 26, "name": "사회적응 프로그램",     "method": "auto",   "loc": "4-3",                        "criteria": "① 연간계획 ② 월 1회 이상 ③ 의견 반기별 수렴+연 1회 반영", "impl": False},
+    {"no": 27, "name": "기능회복훈련",         "method": "auto",   "loc": "3-1 급여제공기록지",           "criteria": "① 수급자별 기능회복훈련 계획 수립 ② 훈련 직원 숙지·제공", "impl": False},
+    {"no": 28, "name": "이동서비스 수칙",      "method": "auto",   "loc": "2-4 차량관리",                "criteria": "① 수칙 구비 ② 차량운행표 제공 ③ 종합보험 유효기간 ④ 수칙 준수", "impl": False},
+    {"no": 29, "name": "사례관리",            "method": "auto",   "loc": "1-4 상담일지",                "criteria": "① 회의 반기별 1회(3인 이상 등 요건) ② 30일 이내 급여 반영·평가", "impl": False},
+    {"no": 30, "name": "외부기관연계",         "method": "auto",   "loc": "1-4 상담일지",                "criteria": "① 의료기관 진료 기록 ② 계약종료 수급자 연계기록지 작성·제공", "impl": False},
+    {"no": 31, "name": "등급현황",            "method": "manual", "loc": "-",                          "criteria": "등급 유지·호전율 75% 이상 여부"},
+    {"no": 32, "name": "백신접종률",          "method": "manual", "loc": "-",                          "criteria": "인플루엔자 예방접종률 100% (2026·2027 평가는 자동 충족)"},
+    {"no": 33, "name": "식사(간식)제공결과",   "method": "auto",   "loc": "6-2 일일점검",                "criteria": "① 기피식품 파악·대체 제공 ② 만족도 반기별 파악 ③ 반영 식사 월 1회 ④ 식단표 게시", "impl": False},
+    {"no": 34, "name": "급여제공 결과평가",    "method": "auto",   "loc": "3-1 급여제공기록지",           "criteria": "① 결과평가 반기별 ② 30일 이내 계획 재작성 ③ 기록지 월 1회 제공 ④ 상태변화 주 1회 기록", "impl": False},
+    {"no": 35, "name": "제도안내",            "method": "manual", "loc": "-",                          "criteria": "연명의료결정 제도 안내 여부(시설장 면담 확인)"},
+    {"no": 36, "name": "급여만족도",          "method": "manual", "loc": "-",                          "criteria": "수급자 면담: 식사·프로그램·이동서비스 만족도"},
+]
+
+BRANCH_CUTOFFS = {
+    "청주 오창점": "2024.07.31",
+    "둔산점": "2024.01.01",
+    "서구점": "2025.01.01",
+    "천안점": "2024.05.31",
+}
