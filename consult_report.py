@@ -135,7 +135,7 @@ def build_message(rows: list[dict], today: date) -> dict:
         {"type": "header", "text": {"type": "plain_text", "text": title, "emoji": True}},
         {"type": "context", "elements": [{"type": "mrkdwn", "text": subtitle}]},
         {"type": "section", "text": {"type": "mrkdwn",
-            "text": "💛 _상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다._"}},
+            "text": "💛 상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다."}},
         {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
         {"type": "context", "elements": [{"type": "mrkdwn",
             "text": "📝 상담시트 입력 부탁드립니다. 상세 명단(연락처 포함)은 엑셀 링크 공지 참조."}]},

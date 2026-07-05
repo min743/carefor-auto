@@ -205,7 +205,7 @@ def main():
             {"type": "context", "elements": [{"type": "mrkdwn",
                 "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 3월~ 누적"}]},
             {"type": "section", "text": {"type": "mrkdwn",
-                "text": "💛 _상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다._"}},
+                "text": "💛 상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다."}},
             {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
             {"type": "section", "text": {"type": "mrkdwn", "text": link_line}},
             {"type": "context", "elements": [{"type": "mrkdwn",
