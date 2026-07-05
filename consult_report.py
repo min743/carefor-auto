@@ -102,9 +102,11 @@ def _row(c: list[str]) -> dict:
 
 
 # ---------- 메시지 생성 ----------
-def build_message(rows: list[dict], today: date) -> str:
+def build_message(rows: list[dict], today: date) -> dict:
+    """슬랙 Block Kit 페이로드 생성 (text는 알림용 폴백)."""
     weekday = "월화수목금토일"[today.weekday()]
-    title = f"📋 신규상담 상담시트 입력 현황 {today.strftime('%Y.%m.%d')}({weekday})"
+    title = "☎️ 신규상담 상담시트 입력 현황"
+    subtitle = f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 3월~ 누적"
 
     by_center = {}
     for r in rows:
@@ -129,11 +131,9 @@ def build_message(rows: list[dict], today: date) -> str:
         lines.append(_rpad(label, LABEL_W) + "".join(_lpad(v, w) for v, w in zip(vals, col_ws)))
     table = "\n".join(lines)
 
-    msg = f"{title}\n\n```\n{table}\n```"
-
     # 지점별 건수 요약 (상세 명단은 엑셀 참조)
-    msg += "\n"
     ym = f"{today.year}년 {today.month:02d}월"
+    center_lines = []
     for short, full in CENTER_ORDER:
         grp = by_center.get(full, [])
         miss = [r for r in grp if r["sheet_entered"] == "N"]
@@ -141,21 +141,33 @@ def build_message(rows: list[dict], today: date) -> str:
             continue
         n_urgent = sum(1 for r in miss if r["admitted"] == "Y")
         n_recent = sum(1 for r in miss if r["yearmonth"] == ym)
-        parts = [f"미입력 {len(miss)}건"]
+        parts = [f"🔴 미입력 {len(miss)}건"]
         if n_urgent:
             parts.append(f"⚠️ 입소완료 {n_urgent}건")
         if n_recent:
-            parts.append(f"{today.month}월 {n_recent}건")
-        msg += f"\n*{full}* — " + " · ".join(parts)
+            parts.append(f"🟡 {today.month}월 {n_recent}건")
+        center_lines.append(f"*{full}*  —  " + " · ".join(parts))
 
-    msg += ("\n\n상담시트 입력 부탁드립니다. 상세 명단(연락처 포함)은 엑셀 파일 참조."
-            "\n(데이터: 주보_충청본부_센터 현황 > 신규상담 세부사항, 전일자 기준)")
-    return msg
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": title, "emoji": True}},
+        {"type": "context", "elements": [{"type": "mrkdwn", "text": subtitle}]},
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
+        {"type": "divider"},
+        {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(center_lines) or "미입력 없음 🎉"}},
+        {"type": "divider"},
+        {"type": "context", "elements": [{"type": "mrkdwn",
+            "text": "📝 상담시트 입력 부탁드립니다. 상세 명단(연락처 포함)은 엑셀 링크 공지 참조.\n"
+                    "데이터: 주보_충청본부_센터 현황 > 신규상담 세부사항"}]},
+    ]
+    fallback = f"{title} {subtitle}"
+    return {"text": fallback, "blocks": blocks}
 
 
 # ---------- 슬랙 전송 (Incoming Webhook — 봇 토큰/유료 불필요) ----------
-def send_via_webhook(webhook_url: str, text: str) -> None:
-    body = json.dumps({"text": text}).encode("utf-8")
+def send_via_webhook(webhook_url: str, payload: dict | str) -> None:
+    if isinstance(payload, str):
+        payload = {"text": payload}
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         webhook_url, data=body,
         headers={"Content-Type": "application/json; charset=utf-8"},
@@ -178,10 +190,10 @@ def main():
     msg = build_message(rows, date.today())
     if os.environ.get("GITHUB_ACTIONS"):
         # 공개 저장소 로그에 연락처가 남지 않도록 전문은 출력하지 않음
-        print(f"메시지 생성 완료 ({len(msg)}자)")
+        print("메시지 생성 완료")
     else:
-        print("--- 메시지 미리보기 ---")
-        print(msg)
+        print("--- 메시지 미리보기 (blocks) ---")
+        print(json.dumps(msg, ensure_ascii=False, indent=1)[:2000])
         print("----------------------")
 
     if args.dry_run:

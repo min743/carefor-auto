@@ -134,12 +134,14 @@ def upload_file(token: str, path: Path, folder_id: str, drive_name: str) -> dict
 
 
 # ---------- 슬랙 ----------
-def send_slack(text: str) -> None:
+def send_slack(payload: dict | str) -> None:
     hook = os.environ.get("SLACK_WEBHOOK_URL") or (
         keyring.get_password("carefor-auto", "slack_webhook_url") if keyring else None)
     if not hook:
         raise SystemExit("slack_webhook_url 자격증명이 없습니다.")
-    body = json.dumps({"text": text}).encode("utf-8")
+    if isinstance(payload, str):
+        payload = {"text": payload}
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(hook, data=body,
                                  headers={"Content-Type": "application/json; charset=utf-8"})
     out = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
@@ -168,14 +170,21 @@ def main():
         print(f"업로드(덮어쓰기): {drive_name}")
 
     weekday = "월화수목금토일"[today.weekday()]
-    lines = [f"📎 상담 상세 명단 엑셀 {today.strftime('%Y.%m.%d')}({weekday})",
-             "각 파일: 신규상담 미입력(구분·연락처 포함) + 상담 대기명단(아웃콜 차수·기한)"]
-    for name, link in links:
-        lines.append(f"· {name}: <{link}|다운로드>")
-    msg = "\n".join(lines)
+    link_lines = "\n".join(f"· *{name}*  →  <{link}|열기/다운로드>" for name, link in links)
+    msg = {
+        "text": f"📎 상담 상세 명단 엑셀 {today.strftime('%Y.%m.%d')}({weekday})",
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "📎 상담 상세 명단 엑셀", "emoji": True}},
+            {"type": "context", "elements": [{"type": "mrkdwn",
+                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 시트: 신규상담 미입력 + 상담 대기명단"}]},
+            {"type": "section", "text": {"type": "mrkdwn", "text": link_lines}},
+            {"type": "context", "elements": [{"type": "mrkdwn",
+                "text": "🔒 링크 열람은 보기 전용 · 링크는 매번 동일, 내용만 최신으로 갱신됩니다."}]},
+        ],
+    }
 
     print("--- 슬랙 메시지 ---")
-    print(msg)
+    print(json.dumps(msg, ensure_ascii=False)[:1500])
     if args.dry_run:
         print("(dry-run: 전송 안 함)")
         return

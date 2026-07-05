@@ -88,9 +88,11 @@ def parse_due(s: str) -> date | None:
     return None
 
 
-def build_message(rows: list[list[str]], today: date) -> str:
+def build_message(rows: list[list[str]], today: date) -> dict:
+    """슬랙 Block Kit 페이로드 생성."""
     weekday = "월화수목금토일"[today.weekday()]
-    title = f"📞 센터별 상담 대기 명단 (예정일 경과·결과 미입력) {today.strftime('%Y.%m.%d')}({weekday})"
+    title = "📞 센터별 상담 대기 명단"
+    subtitle = f"{today.strftime('%Y.%m.%d')}({weekday}) · 예정일 경과·결과 미입력 건"
 
     # 데이터 행은 헤더(2줄) 이후
     items = []
@@ -108,8 +110,12 @@ def build_message(rows: list[list[str]], today: date) -> str:
                 "phone": norm_phone(row[4]),
             })
 
+    header = {"type": "header", "text": {"type": "plain_text", "text": title, "emoji": True}}
+    context = {"type": "context", "elements": [{"type": "mrkdwn", "text": subtitle}]}
+
     if not items:
-        return f"{title}\n\n대기 중인 미처리 상담이 없습니다. 👍"
+        return {"text": title, "blocks": [header, context,
+                {"type": "section", "text": {"type": "mrkdwn", "text": "대기 중인 미처리 상담이 없습니다. 👍"}}]}
 
     n_overdue = sum(1 for it in items if it["overdue"] and it["overdue"] > 0)
 
@@ -117,13 +123,12 @@ def build_message(rows: list[list[str]], today: date) -> str:
     for it in items:
         by_center.setdefault(it["center"], []).append(it)
 
-    lines = [title,
-             f"\n총 {len(items)}건 (기한 지남 {n_overdue}건) · 상담 결과 입력하면 목록에서 자동 제외됩니다."]
+    sections = []
     for center in sorted(by_center):
-        # 기한 많이 지난 순 → 예정일 빠른 순 정렬
+        # 기한 많이 지난 순 정렬
         grp = sorted(by_center[center],
                      key=lambda it: (-(it["overdue"] if it["overdue"] is not None else -999),))
-        lines.append(f"\n*{center}* ({len(grp)}건)")
+        lines = [f"*{center}*  ({len(grp)}건)"]
         for it in grp:
             if it["overdue"] is not None and it["overdue"] > 0:
                 flag = f" ⚠️ 기한 {it['overdue']}일 지남"
@@ -131,13 +136,26 @@ def build_message(rows: list[list[str]], today: date) -> str:
                 flag = " 🔔 오늘"
             else:
                 flag = ""
-            lines.append(f"· {it['round']} | 예정 {it['due']}{flag} | {it['phone']}")
+            # 연락처는 개인정보라 슬랙에 표시하지 않음 — 엑셀 파일 참조
+            lines.append(f"· {it['round']} | 첫상담 {it['first']} | 예정 {it['due']}{flag}")
+        sections.append({"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(lines)}})
 
-    return "\n".join(lines)
+    blocks = [header, context,
+              {"type": "section", "text": {"type": "mrkdwn",
+                  "text": f"총 *{len(items)}건* (⚠️ 기한 지남 {n_overdue}건)"}},
+              {"type": "divider"}]
+    blocks += sections
+    blocks += [{"type": "divider"},
+               {"type": "context", "elements": [{"type": "mrkdwn",
+                   "text": "☎️ 아웃콜 후 상담 결과를 입력하면 목록에서 자동 제외됩니다. "
+                           "연락처는 엑셀 링크 공지에서 확인하세요."}]}]
+    return {"text": f"{title} {subtitle}", "blocks": blocks}
 
 
-def send_via_webhook(webhook_url: str, text: str) -> None:
-    body = json.dumps({"text": text}).encode("utf-8")
+def send_via_webhook(webhook_url: str, payload: dict | str) -> None:
+    if isinstance(payload, str):
+        payload = {"text": payload}
+    body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(webhook_url, data=body,
                                  headers={"Content-Type": "application/json; charset=utf-8"})
     out = urllib.request.urlopen(req, timeout=30).read().decode("utf-8")
@@ -154,10 +172,10 @@ def main():
     msg = build_message(rows, date.today())
 
     if os.environ.get("GITHUB_ACTIONS"):
-        print(f"메시지 생성 완료 ({len(msg)}자)")
+        print("메시지 생성 완료")
     else:
-        print("--- 미리보기 ---")
-        print(msg)
+        print("--- 미리보기 (blocks) ---")
+        print(json.dumps(msg, ensure_ascii=False, indent=1)[:2000])
         print("----------------")
 
     if args.dry_run:
