@@ -31,6 +31,16 @@
   select.mstat { padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; }
   input.memo { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 4px 6px; font-size: 12px; }
   .criteria { color: #555; font-size: 12px; line-height: 1.45; }
+  .subrow { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px dashed #e4e9f2; }
+  .subrow:first-child { border-top: 0; }
+  .sublabel { font-weight: bold; color: #2f5496; min-width: 28px; }
+  .subtext { flex: 1; color: #555; font-size: 12px; line-height: 1.4; }
+  .subscore { min-width: 108px; }
+  select.sc { padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+  select.sc.filled { background: #eaf6ec; border-color: #8fc79a; }
+  select.sc.zero { background: #fdecec; border-color: #e5a0a0; }
+  .itemscore { font-weight: bold; font-size: 13px; white-space: nowrap; }
+  .scorecard b { font-size: 26px !important; }
   .loc { color: #888; font-size: 11px; }
   .btnrow { margin: 12px 0; display: flex; gap: 8px; }
   button { background: #2f5496; color: #fff; border: 0; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: bold; }
@@ -68,6 +78,25 @@ function light(status){
   return '<span class="light g-na"></span><span class="t-na">수집전</span>';
 }
 
+// ---- 점수 계산 (기준별 배점, 해당없음 제외 100점 환산) ----
+function subVal(manual, no, label){
+  const m = manual[no];
+  return m && m.subs ? m.subs[label] : undefined;
+}
+function itemScore(it, manual){
+  if(!it.subs || !it.subs.length) return null;
+  let earned=0, denom=0, filled=0, total=it.subs.length;
+  it.subs.forEach(s=>{
+    const v = subVal(manual, it.no, s.label);
+    if(v === undefined || v === '') return;
+    filled++;
+    if(v === 'NA') return;           // 해당없음: 분모 제외
+    earned += parseFloat(v); denom += s.score;
+  });
+  return {earned, denom, filled, total};
+}
+function fmt(n){ return (Math.round(n*100)/100).toString(); }
+
 function render(){
   document.getElementById('tabs').innerHTML = BRANCHES.map(b=>
     `<div class="tab ${b===cur?'on':''}" onclick="switchTab('${b}')">${b}</div>`).join('');
@@ -85,25 +114,29 @@ function render(){
   }
   html += `</div>`;
 
-  // 요약 카드
-  let nOk=0, nBad=0, nWait=0, nMan=0;
+  // 요약 카드 (자동판정 신호등 + 점수)
+  let nOk=0, nBad=0, nWait=0;
+  let sumEarned=0, sumDenom=0, sumFilled=0, sumSubs=0;
+  const hasScoring = ITEMS.some(it=>it.subs && it.subs.length);
   ITEMS.forEach(it=>{
-    if(it.method==='manual'){
-      const m = manual[it.no];
-      if(m && m.status==='양호') nOk++;
-      else if(m && m.status==='미흡') nBad++;
-      else nMan++;
-    } else {
+    if(it.method!=='manual'){
       const r = d && d.item_results && d.item_results[String(it.no)];
       if(r){ if(r.status==='양호') nOk++; else nBad++; }
       else nWait++;
     }
+    const sc = itemScore(it, manual);
+    if(sc){ sumEarned+=sc.earned; sumDenom+=sc.denom; sumFilled+=sc.filled; sumSubs+=sc.total; }
   });
-  html += `<div class="summary">
-    <div class="card"><b class="t-ok">${nOk}</b>양호</div>
-    <div class="card"><b class="t-bad">${nBad}</b>미흡</div>
+  html += `<div class="summary">`;
+  if(hasScoring){
+    const pct = sumDenom>0 ? sumEarned/sumDenom*100 : null;
+    html += `<div class="card scorecard"><b class="${pct===null?'t-na':(pct>=90?'t-ok':(pct>=70?'t-warn':'t-bad'))}">${pct===null?'-':fmt(pct)}</b>총점(100점 환산)</div>
+      <div class="card"><b>${fmt(sumEarned)} / ${fmt(sumDenom)}</b>득점 / 배점(해당없음 제외)</div>
+      <div class="card"><b class="${sumFilled===sumSubs?'t-ok':'t-man'}">${sumFilled} / ${sumSubs}</b>기준 입력</div>`;
+  }
+  html += `<div class="card"><b class="t-ok">${nOk}</b>자동 양호</div>
+    <div class="card"><b class="t-bad">${nBad}</b>자동 미흡</div>
     <div class="card"><b class="t-na">${nWait}</b>수집전</div>
-    <div class="card"><b class="t-man">${nMan}</b>수기 미입력</div>
   </div>`;
 
   html += `<div class="btnrow">
@@ -111,33 +144,55 @@ function render(){
     <button class="gray" onclick="location.reload()">🔄 새로고침</button>
   </div>`;
 
-  // 36개 항목 테이블
-  html += `<table><tr><th style="width:36px">#</th><th style="width:160px">항목</th><th style="width:80px">방식</th><th style="width:110px">상태</th><th>확인 기준 / 결과</th><th style="width:220px">메모</th></tr>`;
+  // 36개 항목 테이블 (기준별 점수 입력)
+  html += `<table><tr><th style="width:36px">#</th><th style="width:150px">항목</th><th style="width:64px">방식</th><th style="width:96px">자동판정</th><th>평가기준 (기준별 점수 선택)</th><th style="width:92px">점수</th><th style="width:180px">메모</th></tr>`;
   ITEMS.forEach(it=>{
-    let statusHtml='', resultHtml='', memoHtml='';
-    if(it.method==='manual'){
-      const m = manual[it.no] || {};
-      statusHtml = `<select class="mstat" onchange="setManual(${it.no},'status',this.value)">
-        ${['미입력','양호','미흡','해당없음'].map(s=>`<option ${((m.status||'미입력')===s)?'selected':''}>${s}</option>`).join('')}
-      </select>`;
-      resultHtml = `<div class="criteria">${it.criteria}</div><div class="loc">수기 확인 항목</div>`;
-      memoHtml = `<input class="memo" value="${(m.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
-        onchange="setManual(${it.no},'memo',this.value)">`;
+    const m = manual[it.no] || {};
+    const r = d && d.item_results && d.item_results[String(it.no)];
+    const autoHtml = it.method==='manual'
+      ? '<span class="t-man">수기</span>'
+      : (r ? light(r.status) : light(null));
+
+    let bodyHtml = '';
+    if(r) bodyHtml += `<div class="detail-detail">▶ ${r.detail}</div>`;
+    if(it.subs && it.subs.length){
+      bodyHtml += it.subs.map(s=>{
+        const v = subVal(manual, it.no, s.label);
+        const opts = ['<option value="">미입력</option>']
+          .concat(s.steps.map(st=>`<option value="${st}" ${String(v)===String(st)?'selected':''}>${fmt(st)}점${st===s.score?' (충족)':(st===0?' (미충족)':'')}</option>`))
+          .concat([`<option value="NA" ${v==='NA'?'selected':''}>해당없음</option>`]);
+        const cls = v===undefined||v==='' ? '' : (v==='NA' ? '' : (parseFloat(v)===s.score ? 'filled' : 'zero'));
+        return `<div class="subrow">
+          <span class="sublabel">${s.label}</span>
+          <span class="subtext">${s.text} <span class="loc">(배점 ${fmt(s.score)})</span></span>
+          <span class="subscore"><select class="sc ${cls}" onchange="setSub(${it.no},'${s.label}',this.value)">${opts.join('')}</select></span>
+        </div>`;
+      }).join('');
+      bodyHtml += `<details style="margin-top:4px"><summary style="font-size:11px;color:#888">기준 전문 보기</summary><div class="criteria">${it.criteria}</div></details>`;
     } else {
-      const r = d && d.item_results && d.item_results[String(it.no)];
-      statusHtml = r ? light(r.status) : light(null);
-      resultHtml = `<div class="criteria">${it.criteria}</div><div class="loc">케어포 ${it.loc}</div>`
-        + (r ? `<div class="detail-detail">▶ ${r.detail}</div>` : '');
-      const m = manual[it.no] || {};
-      memoHtml = `<input class="memo" value="${(m.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
-        onchange="setManual(${it.no},'memo',this.value)">`;
+      bodyHtml += `<div class="criteria">${it.criteria}</div>`;
     }
+    bodyHtml += `<div class="loc">${it.method==='manual'?'수기 확인 항목':'케어포 '+it.loc}</div>`;
+
+    const sc = itemScore(it, manual);
+    let scoreHtml = '-';
+    if(sc){
+      if(sc.filled===0) scoreHtml = `<span class="t-na">미입력</span>`;
+      else if(sc.denom===0) scoreHtml = `<span class="t-na">해당없음</span>`;
+      else scoreHtml = `<span class="itemscore ${sc.earned>=sc.denom?'t-ok':'t-bad'}">${fmt(sc.earned)} / ${fmt(sc.denom)}</span>`
+        + (sc.filled<sc.total?`<div class="loc">${sc.filled}/${sc.total} 입력</div>`:'');
+    }
+
+    const memoHtml = `<input class="memo" value="${(m.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
+      onchange="setManual(${it.no},'memo',this.value)">`;
+
     html += `<tr>
       <td class="center">${it.no}</td>
       <td><b>${it.name}</b></td>
       <td class="center">${it.method==='manual'?'<span class="t-man">수기</span>':'자동'}</td>
-      <td class="center">${statusHtml}</td>
-      <td>${resultHtml}</td>
+      <td class="center">${it.method==='manual'?'-':(r?light(r.status):light(null))}</td>
+      <td>${bodyHtml}</td>
+      <td class="center">${scoreHtml}</td>
       <td>${memoHtml}</td>
     </tr>`;
   });
@@ -182,6 +237,15 @@ function setManual(no, key, val){
   const m = loadManual(cur);
   m[no] = m[no] || {};
   m[no][key] = val;
+  saveManual(cur, m);
+  render();
+}
+function setSub(no, label, val){
+  const m = loadManual(cur);
+  m[no] = m[no] || {};
+  m[no].subs = m[no].subs || {};
+  if(val === '') delete m[no].subs[label];
+  else m[no].subs[label] = val;
   saveManual(cur, m);
   render();
 }
