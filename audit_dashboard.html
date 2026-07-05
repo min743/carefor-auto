@@ -132,8 +132,7 @@ function render(){
     // 총점 = 득점 누적 합계 (만점 100, 해당없음 배점은 만점에서 차감)
     const possible = sumDenom;  // 입력된 기준 중 해당없음 제외 배점 합
     const pct = possible>0 ? sumEarned/possible*100 : null;
-    html += `<div class="card scorecard"><b class="${sumFilled===0?'t-na':(pct>=90?'t-ok':(pct>=70?'t-warn':'t-bad'))}">${sumFilled===0?'-':fmt(sumEarned)}</b>총점 (누적, 100점 만점)</div>
-      <div class="card"><b>${fmt(possible)}</b>입력된 기준 배점 합<br>(해당없음 제외)</div>
+    html += `<div class="card scorecard"><b class="${sumFilled===0?'t-na':(pct>=90?'t-ok':(pct>=70?'t-warn':'t-bad'))}">${sumFilled===0?'-':fmt(sumEarned)}</b>총점 (100점 만점)</div>
       <div class="card"><b class="${sumFilled===sumSubs?'t-ok':'t-man'}">${sumFilled} / ${sumSubs}</b>기준 입력</div>`;
   }
   html += `<div class="card"><b class="t-ok">${nOk}</b>자동 양호</div>
