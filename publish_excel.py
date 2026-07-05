@@ -135,10 +135,13 @@ def upload_file(token: str, path: Path, folder_id: str, drive_name: str) -> dict
 
 # ---------- 슬랙 ----------
 def send_slack(payload: dict | str) -> None:
-    hook = os.environ.get("SLACK_WEBHOOK_URL") or (
-        keyring.get_password("carefor-auto", "slack_webhook_url") if keyring else None)
+    # 아롱이 앱 웹훅 (없으면 기존 차량관리 웹훅으로 폴백)
+    hook = (os.environ.get("ARONGI_WEBHOOK_URL")
+            or (keyring.get_password("carefor-auto", "arongi_webhook_url") if keyring else None)
+            or os.environ.get("SLACK_WEBHOOK_URL")
+            or (keyring.get_password("carefor-auto", "slack_webhook_url") if keyring else None))
     if not hook:
-        raise SystemExit("slack_webhook_url 자격증명이 없습니다.")
+        raise SystemExit("arongi_webhook_url 자격증명이 없습니다.")
     if isinstance(payload, str):
         payload = {"text": payload}
     body = json.dumps(payload).encode("utf-8")
@@ -199,6 +202,8 @@ def main():
             {"type": "context", "elements": [{"type": "mrkdwn",
                 "text": "엑셀 구성: 요약(집계표) · 신규상담 미입력 상세 · 상담 대기명단(아웃콜 차수·기한·연락처)\n"
                         "🔒 보기 전용 · 링크는 항상 동일, 내용만 최신 갱신 · 상담 결과 입력 시 대기명단에서 자동 제외"}]},
+            {"type": "section", "text": {"type": "mrkdwn",
+                "text": "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏"}},
         ],
     }
 

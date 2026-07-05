@@ -175,9 +175,10 @@ def main():
         print("(dry-run: 전송 안 함)")
         return
 
-    hook = _secret("SLACK_WEBHOOK_URL", "slack_webhook_url")
+    # 아롱이 앱 웹훅 (없으면 기존 차량관리 웹훅으로 폴백)
+    hook = _secret("ARONGI_WEBHOOK_URL", "arongi_webhook_url") or _secret("SLACK_WEBHOOK_URL", "slack_webhook_url")
     if not hook:
-        raise SystemExit("slack_webhook_url 자격증명이 없습니다.")
+        raise SystemExit("arongi_webhook_url 자격증명이 없습니다.")
     send_via_webhook(hook, msg)
     print("전송 완료 → #차량관리 (webhook)")
 
