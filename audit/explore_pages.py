@@ -86,6 +86,8 @@ PAGES = {
     "5-5":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
     "5-6":   ("left_sub5", "/share/program/view.program_annual_plan_sep", "5-6.프로그램 계획"),
     "5-8":   ("left_sub5", "/share/program/view.program_service_yearly", "5-8.프로그램 제공기록 리포트(운영기록지)"),
+    "8-10":  ("left_sub8", "/share/staff/view.staff_yearly_report", "8-10.건강검진관리"),
+    "2-4":   ("left_sub2", "/transport/view.transport_car_manage", "2-4.차량관리"),
 }
 
 
