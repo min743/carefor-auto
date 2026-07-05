@@ -78,20 +78,33 @@ function light(status){
   return '<span class="light g-na"></span><span class="t-na">수집전</span>';
 }
 
-// ---- 점수 계산 (기준별 배점, 해당없음 제외 100점 환산) ----
+// ---- 점수 계산 (기준별 배점, 자동판정 양호 시 자동 만점) ----
 function subVal(manual, no, label){
   const m = manual[no];
   return m && m.subs ? m.subs[label] : undefined;
 }
-function itemScore(it, manual){
+function autoVal(it, s, d){
+  // 자동판정이 '양호'이고 해당 기준이 자동확인 범위(auto_subs)면 만점 자동 부여
+  if(!d || !it.auto_subs || !it.auto_subs.includes(s.label)) return undefined;
+  const r = d.item_results && d.item_results[String(it.no)];
+  return (r && r.status === '양호') ? s.score : undefined;
+}
+function effVal(it, s, manual, d){
+  const v = subVal(manual, it.no, s.label);
+  if(v !== undefined && v !== '') return {v: String(v), auto: false};
+  const a = autoVal(it, s, d);
+  if(a !== undefined) return {v: String(a), auto: true};
+  return {v: undefined, auto: false};
+}
+function itemScore(it, manual, d){
   if(!it.subs || !it.subs.length) return null;
   let earned=0, denom=0, filled=0, total=it.subs.length;
   it.subs.forEach(s=>{
-    const v = subVal(manual, it.no, s.label);
-    if(v === undefined || v === '') return;
+    const e = effVal(it, s, manual, d);
+    if(e.v === undefined) return;
     filled++;
-    if(v === 'NA') return;           // 해당없음: 분모 제외
-    earned += parseFloat(v); denom += s.score;
+    if(e.v === 'NA') return;         // 해당없음: 분모 제외
+    earned += parseFloat(e.v); denom += s.score;
   });
   return {earned, denom, filled, total};
 }
@@ -124,7 +137,7 @@ function render(){
       if(r){ if(r.status==='양호') nOk++; else nBad++; }
       else nWait++;
     }
-    const sc = itemScore(it, manual);
+    const sc = itemScore(it, manual, d);
     if(sc){ sumEarned+=sc.earned; sumDenom+=sc.denom; sumFilled+=sc.filled; sumSubs+=sc.total; }
   });
   html += `<div class="summary">`;
@@ -160,15 +173,17 @@ function render(){
     if(r) bodyHtml += `<div class="detail-detail">▶ ${r.detail}</div>`;
     if(it.subs && it.subs.length){
       bodyHtml += it.subs.map(s=>{
-        const v = subVal(manual, it.no, s.label);
+        const e = effVal(it, s, manual, d);
+        const v = e.v;
         const opts = ['<option value="">미입력</option>']
           .concat(s.steps.map(st=>`<option value="${st}" ${String(v)===String(st)?'selected':''}>${fmt(st)}점${st===s.score?' (충족)':(st===0?' (미충족)':'')}</option>`))
           .concat([`<option value="NA" ${v==='NA'?'selected':''}>해당없음</option>`]);
         const cls = v===undefined||v==='' ? '' : (v==='NA' ? '' : (parseFloat(v)===s.score ? 'filled' : 'zero'));
+        const badge = e.auto ? ' <span style="font-size:10px;color:#2c8a41;font-weight:bold">🤖자동</span>' : '';
         return `<div class="subrow">
           <span class="sublabel">${s.label}</span>
           <span class="subtext">${s.text} <span class="loc">(배점 ${fmt(s.score)})</span></span>
-          <span class="subscore"><select class="sc ${cls}" onchange="setSub(${it.no},'${s.label}',this.value)">${opts.join('')}</select></span>
+          <span class="subscore"><select class="sc ${cls}" onchange="setSub(${it.no},'${s.label}',this.value)">${opts.join('')}</select>${badge}</span>
         </div>`;
       }).join('');
       bodyHtml += `<details style="margin-top:4px"><summary style="font-size:11px;color:#888">기준 전문 보기</summary><div class="criteria">${it.criteria}</div></details>`;
@@ -177,7 +192,7 @@ function render(){
     }
     bodyHtml += `<div class="loc">${it.method==='manual'?'수기 확인 항목':'케어포 '+it.loc}</div>`;
 
-    const sc = itemScore(it, manual);
+    const sc = itemScore(it, manual, d);
     let scoreHtml = '-';
     if(sc){
       if(sc.filled===0) scoreHtml = `<span class="t-na">미입력</span>`;
@@ -257,16 +272,17 @@ const SCORES_HOOK = 'https://script.google.com/macros/s/AKfycbxCaMyM26xaLNlYUof-
 const SCORES_TOKEN = 'audit-scores-2026-cheongju';
 function buildScoreData(branch){
   const manual = loadManual(branch);
+  const d = DATA[branch];
   let earned=0, denom=0, filled=0, total=0, naPts=0;
   const per_item = {};
   ITEMS.forEach(it=>{
-    const sc = itemScore(it, manual);
+    const sc = itemScore(it, manual, d);
     if(!sc) return;
     total += it.subs.length; filled += sc.filled;
     earned += sc.earned; denom += sc.denom;
     it.subs.forEach(s=>{
-      const v = subVal(manual, it.no, s.label);
-      if(v==='NA') naPts += s.score;
+      const e = effVal(it, s, manual, d);
+      if(e.v==='NA') naPts += s.score;
     });
     per_item[it.no] = {earned: sc.earned, denom: sc.denom, filled: sc.filled, subs: it.subs.length};
   });
