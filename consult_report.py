@@ -105,7 +105,7 @@ def _row(c: list[str]) -> dict:
 def build_message(rows: list[dict], today: date) -> dict:
     """슬랙 Block Kit 페이로드 생성 (text는 알림용 폴백)."""
     weekday = "월화수목금토일"[today.weekday()]
-    title = "☎️ 신규상담 상담시트 입력 현황"
+    title = "☎️ 신규상담 시트 입력 현황(아롱이)"
     subtitle = f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 3월~ 누적"
 
     by_center = {}
@@ -131,33 +131,12 @@ def build_message(rows: list[dict], today: date) -> dict:
         lines.append(_rpad(label, LABEL_W) + "".join(_lpad(v, w) for v, w in zip(vals, col_ws)))
     table = "\n".join(lines)
 
-    # 지점별 건수 요약 (상세 명단은 엑셀 참조)
-    ym = f"{today.year}년 {today.month:02d}월"
-    center_lines = []
-    for short, full in CENTER_ORDER:
-        grp = by_center.get(full, [])
-        miss = [r for r in grp if r["sheet_entered"] == "N"]
-        if not miss:
-            continue
-        n_urgent = sum(1 for r in miss if r["admitted"] == "Y")
-        n_recent = sum(1 for r in miss if r["yearmonth"] == ym)
-        parts = [f"🔴 미입력 {len(miss)}건"]
-        if n_urgent:
-            parts.append(f"⚠️ 입소완료 {n_urgent}건")
-        if n_recent:
-            parts.append(f"🟡 {today.month}월 {n_recent}건")
-        center_lines.append(f"*{full}*  —  " + " · ".join(parts))
-
     blocks = [
         {"type": "header", "text": {"type": "plain_text", "text": title, "emoji": True}},
         {"type": "context", "elements": [{"type": "mrkdwn", "text": subtitle}]},
         {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
-        {"type": "divider"},
-        {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(center_lines) or "미입력 없음 🎉"}},
-        {"type": "divider"},
         {"type": "context", "elements": [{"type": "mrkdwn",
-            "text": "📝 상담시트 입력 부탁드립니다. 상세 명단(연락처 포함)은 엑셀 링크 공지 참조.\n"
-                    "데이터: 주보_충청본부_센터 현황 > 신규상담 세부사항"}]},
+            "text": "📝 상담시트 입력 부탁드립니다. 상세 명단(연락처 포함)은 엑셀 링크 공지 참조."}]},
     ]
     fallback = f"{title} {subtitle}"
     return {"text": fallback, "blocks": blocks}

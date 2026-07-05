@@ -155,7 +155,7 @@ def main():
     args = ap.parse_args()
 
     today = date.today()
-    out_dir, paths = consult_excel.generate(today)
+    out_dir, paths, summaries = consult_excel.generate(today)
 
     token = google_token()
     root_id = find_or_create_folder(token, ROOT_FOLDER)
@@ -170,16 +170,35 @@ def main():
         print(f"업로드(덮어쓰기): {drive_name}")
 
     weekday = "월화수목금토일"[today.weekday()]
-    link_lines = "\n".join(f"· *{name}*  →  <{link}|열기/다운로드>" for name, link in links)
+    link_map = dict(links)
+
+    # 지점별 한 줄 요약 + 해당 지점 엑셀 링크 (집계표·상세 명단은 전부 엑셀 안에)
+    center_lines = []
+    for s in summaries:
+        extra_txt = f" (입소완료 {s['urgent']}건)" if s["urgent"] else ""
+        link = link_map.get(s["center"], "")
+        center_lines.append(
+            f"*{s['center']}*  —  미입력 {s['miss']}건 · 대기 {s['wait']}건{extra_txt}"
+            f"  →  <{link}|📎 엑셀>")
+
+    total_miss = sum(s["miss"] for s in summaries)
+    total_wait = sum(s["wait"] for s in summaries)
+
     msg = {
-        "text": f"📎 상담 상세 명단 엑셀 {today.strftime('%Y.%m.%d')}({weekday})",
+        "text": f"☎️ 상담 관리 공지 {today.strftime('%Y.%m.%d')}({weekday})",
         "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "text": "📎 상담 상세 명단 엑셀", "emoji": True}},
+            {"type": "header", "text": {"type": "plain_text", "text": "☎️ 상담 관리 공지", "emoji": True}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 시트: 신규상담 미입력 + 상담 대기명단"}]},
-            {"type": "section", "text": {"type": "mrkdwn", "text": link_lines}},
+                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · "
+                        f"상담시트 미입력 *{total_miss}건* · 상담 대기 *{total_wait}건*"}]},
+            {"type": "divider"},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(center_lines)}},
+            {"type": "section", "text": {"type": "mrkdwn",
+                "text": f"전체 통합본  →  <{link_map.get('전체', '')}|📎 엑셀>"}},
+            {"type": "divider"},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": "🔒 링크 열람은 보기 전용 · 링크는 매번 동일, 내용만 최신으로 갱신됩니다."}]},
+                "text": "엑셀 구성: 요약(집계표) · 신규상담 미입력 상세 · 상담 대기명단(아웃콜 차수·기한·연락처)\n"
+                        "🔒 보기 전용 · 링크는 항상 동일, 내용만 최신 갱신 · 상담 결과 입력 시 대기명단에서 자동 제외"}]},
         ],
     }
 

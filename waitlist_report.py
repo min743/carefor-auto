@@ -123,32 +123,25 @@ def build_message(rows: list[list[str]], today: date) -> dict:
     for it in items:
         by_center.setdefault(it["center"], []).append(it)
 
-    sections = []
+    # 지점별 요약 한 줄씩 (건별 상세는 엑셀 '상담 대기명단' 시트 참조)
+    center_lines = []
     for center in sorted(by_center):
-        # 기한 많이 지난 순 정렬
-        grp = sorted(by_center[center],
-                     key=lambda it: (-(it["overdue"] if it["overdue"] is not None else -999),))
-        lines = [f"*{center}*  ({len(grp)}건)"]
+        grp = by_center[center]
+        rounds = {}
         for it in grp:
-            if it["overdue"] is not None and it["overdue"] > 0:
-                flag = f" ⚠️ 기한 {it['overdue']}일 지남"
-            elif it["overdue"] == 0:
-                flag = " 🔔 오늘"
-            else:
-                flag = ""
-            # 연락처는 개인정보라 슬랙에 표시하지 않음 — 엑셀 파일 참조
-            lines.append(f"· {it['round']} | 첫상담 {it['first']} | 예정 {it['due']}{flag}")
-        sections.append({"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(lines)}})
+            rounds[it["round"]] = rounds.get(it["round"], 0) + 1
+        breakdown = " · ".join(f"{k} {v}건" for k, v in sorted(rounds.items()))
+        center_lines.append(f"*{center}*  —  {len(grp)}건 ({breakdown})")
 
     blocks = [header, context,
               {"type": "section", "text": {"type": "mrkdwn",
-                  "text": f"총 *{len(items)}건* (⚠️ 기한 지남 {n_overdue}건)"}},
-              {"type": "divider"}]
-    blocks += sections
-    blocks += [{"type": "divider"},
-               {"type": "context", "elements": [{"type": "mrkdwn",
-                   "text": "☎️ 아웃콜 후 상담 결과를 입력하면 목록에서 자동 제외됩니다. "
-                           "연락처는 엑셀 링크 공지에서 확인하세요."}]}]
+                  "text": f"총 *{len(items)}건*"}},
+              {"type": "divider"},
+              {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(center_lines)}},
+              {"type": "divider"},
+              {"type": "context", "elements": [{"type": "mrkdwn",
+                  "text": "☎️ 건별 상세(첫상담일·예정일·연락처)는 엑셀 링크 공지 참조. "
+                          "결과 입력 시 목록에서 자동 제외됩니다."}]}]
     return {"text": f"{title} {subtitle}", "blocks": blocks}
 
 

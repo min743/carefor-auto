@@ -34,6 +34,8 @@ TODAY_FILL = PatternFill("solid", fgColor="FFEB9C")    # 오늘 예정
 
 MISS_COLS = ["센터명", "구분", "연월", "해당 주차", "상담일자", "급여개시일자", "고객 번호", "입소 여부", "AI 요약"]
 WAIT_COLS = ["센터명", "아웃콜 차수", "예정일자", "기한 경과(일)", "연락처", "첫 상담일"]
+SUMMARY_COLS = ["센터", "신규상담(누적)", "시트 미입력", "미입력률", "⚠️ 입소완료 미입력", "당월 미입력",
+                "상담 대기", "기한 지남"]
 
 
 def _style_sheet(ws, widths: list[int]) -> None:
@@ -50,6 +52,18 @@ def _style_sheet(ws, widths: list[int]) -> None:
             cell.alignment = center_wrap
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
+
+
+def add_summary_sheet(wb: Workbook, srows: list[dict]) -> None:
+    ws = wb.create_sheet("요약")
+    ws.append(SUMMARY_COLS)
+    for s in srows:
+        ws.append([s["center"], s["total"], s["miss"], s["rate"],
+                   s["urgent"], s["recent"], s["wait"], s["overdue"]])
+        if s["center"] == "합계":
+            for cell in ws[ws.max_row]:
+                cell.font = Font(bold=True)
+    _style_sheet(ws, [13, 14, 12, 10, 17, 11, 10, 10])
 
 
 def add_miss_sheet(wb: Workbook, rows: list[dict], ym: str) -> None:
@@ -86,16 +100,32 @@ def add_wait_sheet(wb: Workbook, items: list[dict]) -> None:
     _style_sheet(ws, [12, 14, 14, 13, 15, 13])
 
 
-def make_book(path: Path, miss: list[dict], wait: list[dict], ym: str) -> None:
+def make_book(path: Path, srows: list[dict], miss: list[dict], wait: list[dict], ym: str) -> None:
     wb = Workbook()
     wb.remove(wb.active)
+    add_summary_sheet(wb, srows)
     add_miss_sheet(wb, miss, ym)
     add_wait_sheet(wb, wait)
     wb.save(path)
 
 
-def generate(today: date | None = None) -> tuple[Path, list[Path]]:
-    """엑셀 파일들 생성. (출력폴더, [전체본, 센터별...]) 반환."""
+def _summary_row(name: str, grp: list[dict], wait: list[dict], ym: str) -> dict:
+    miss = [r for r in grp if r["sheet_entered"] == "N"]
+    total = len(grp)
+    return {
+        "center": name,
+        "total": total,
+        "miss": len(miss),
+        "rate": f"{round(len(miss) / total * 100)}%" if total else "-",
+        "urgent": sum(1 for r in miss if r["admitted"] == "Y"),
+        "recent": sum(1 for r in miss if r["yearmonth"] == ym),
+        "wait": len(wait),
+        "overdue": sum(1 for it in wait if it["overdue"] and it["overdue"] > 0),
+    }
+
+
+def generate(today: date | None = None) -> tuple[Path, list[Path], list[dict]]:
+    """엑셀 파일들 생성. (출력폴더, [전체본, 센터별...], 센터별 요약) 반환."""
     today = today or date.today()
 
     # 데이터 로드 (공지 스크립트와 동일 소스)
@@ -124,24 +154,34 @@ def generate(today: date | None = None) -> tuple[Path, list[Path]]:
     ym = f"{today.year}년 {today.month:02d}월"
     paths = []
 
-    # 전체 통합본
-    total_path = out_dir / f"전체_상담공지_{today:%Y%m%d}.xlsx"
-    make_book(total_path, miss_all, wait_all, ym)
-    paths.append(total_path)
-    print(f"생성: {total_path.name}  (미입력 {len(miss_all)} / 대기 {len(wait_all)})")
-
-    # 지점별 파일 — 신규상담 센터명과 대기명단 센터명 매칭 (둔산점 ↔ 대전둔산점)
+    # 센터별 요약 계산
+    summaries = []
+    center_data = {}
     for short, full in cr.CENTER_ORDER:
+        grp = [r for r in a_rows if r["center"] == full]
         miss = [r for r in miss_all if r["center"] == full]
         # 대기명단 센터명은 '둔산점'/'서구점' 식 — 공백 제거 후 접두 매칭
         wait = [it for it in wait_all if it["center"].replace(" ", "").startswith(short)]
+        center_data[full] = (miss, wait)
+        summaries.append(_summary_row(full, grp, wait, ym))
+    total_summary = _summary_row("합계", a_rows, wait_all, ym)
+
+    # 전체 통합본 (요약 시트에 센터별 + 합계)
+    total_path = out_dir / f"전체_상담공지_{today:%Y%m%d}.xlsx"
+    make_book(total_path, summaries + [total_summary], miss_all, wait_all, ym)
+    paths.append(total_path)
+    print(f"생성: {total_path.name}  (미입력 {len(miss_all)} / 대기 {len(wait_all)})")
+
+    # 지점별 파일
+    for s, (short, full) in zip(summaries, cr.CENTER_ORDER):
+        miss, wait = center_data[full]
         p = out_dir / f"{full}_상담공지_{today:%Y%m%d}.xlsx"
-        make_book(p, miss, wait, ym)
+        make_book(p, [s], miss, wait, ym)
         paths.append(p)
         print(f"생성: {p.name}  (미입력 {len(miss)} / 대기 {len(wait)})")
 
     print(f"\n저장 위치: {out_dir}")
-    return out_dir, paths
+    return out_dir, paths, summaries
 
 
 def main():
