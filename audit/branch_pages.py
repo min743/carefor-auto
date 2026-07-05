@@ -27,6 +27,7 @@ PAGES = {
     "plan":      ("left_sub5", "/share/program/view.program_annual_plan_sep", "5-6.프로그램 계획"),
     "opinion":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
     "health":    ("left_sub8", "/share/staff/view.staff_yearly_report", "8-10.건강검진관리"),
+    "master":    ("left_sub9", "/basic/view.center_master", "9-1.시설정보설정"),
 }
 
 # 6-2 일일점검: 행(일자)×열(위생점검1/주방소독2/간호비품3/급식4) — class complete/none 로 작성 여부
@@ -101,7 +102,20 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
     """지점 단위 페이지 순회 수집 (연도별/월별)."""
     from datetime import date as _date
     out = {"edu": {}, "checks": {}, "refresher": None, "rights": None,
-           "daily": {}, "plan": {}, "opinion": {}}
+           "daily": {}, "plan": {}, "opinion": {}, "opened": None}
+
+    # 9-1 기관 지정일자 (오픈일 — 이전 기간은 판정 제외)
+    try:
+        _goto(page, "master", g_pammgno)
+        txt = page.evaluate(GET_TEXT_JS)
+        m = re.search(r"기관\s*지정일자[\s\S]{0,30}?(\d{4}\.\d{2}\.\d{2})", txt)
+        if m:
+            out["opened"] = m.group(1)
+            progress_cb(f"  9-1 기관 지정일자: {out['opened']}")
+        else:
+            progress_cb("  9-1 지정일자 파싱 실패 — 기준일만 사용")
+    except Exception as e:
+        progress_cb(f"  9-1 수집 실패(기준일만 사용): {e}")
 
     _goto(page, "edu", g_pammgno)
     for y in years:
@@ -415,6 +429,23 @@ def _half_of(d: str) -> str:
 def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> dict:
     today = today or date.today()
     cut = datetime.strptime(cutoff, "%Y.%m.%d").date()
+    # 기관 지정일자(오픈일) 반영 — 개소 전 기간은 판정 제외
+    opened = None
+    if data.get("opened"):
+        try:
+            opened = datetime.strptime(data["opened"], "%Y.%m.%d").date()
+        except ValueError:
+            pass
+    eff = max(cut, opened) if opened else cut
+
+    def _period_ok(start_d: date, end_d: date, min_days: int = 30) -> bool:
+        """개소일·기준일 이후 해당 기간의 실제 운영일이 min_days 이상일 때만 판정 대상."""
+        lo = max(start_d, eff)
+        hi = min(end_d, today)
+        if lo > hi:
+            return False
+        return (hi - lo).days >= min_days
+
     years = sorted(int(y) for y in data.get("edu", {}).keys())
 
     edu_parsed = {y: parse_edu(data["edu"][str(y)]) for y in years}
@@ -425,11 +456,11 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     disaster_miss = []
     for y in years:
         recs = [r for r in edu_parsed[y]["records"] if "재난" in r["name"]]
-        for half, due, lo, hi, end in (
-            ("상반기", date(y, 5, 1), f"{y}.01.01", f"{y}.06.30", date(y, 6, 30)),
-            ("하반기", date(y, 11, 1), f"{y}.07.01", f"{y}.12.31", date(y, 12, 31)),
+        for half, due, lo, hi, h_start, end in (
+            ("상반기", date(y, 5, 1), f"{y}.01.01", f"{y}.06.30", date(y, 1, 1), date(y, 6, 30)),
+            ("하반기", date(y, 11, 1), f"{y}.07.01", f"{y}.12.31", date(y, 7, 1), date(y, 12, 31)),
         ):
-            if today < due or end < cut:
+            if today < due or not _period_ok(h_start, end):
                 continue
             if not any(lo <= r["date"] <= hi for r in recs):
                 disaster_miss.append(f"{y} {half}")
@@ -439,11 +470,11 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     rights_note = []
     for y in years:
         recs = [r for r in edu_parsed[y]["records"] if "노인인권" in r["name"] or "학대" in r["name"]]
-        for half, lo, hi, end in (
-            ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 6, 30)),
-            ("하반기", f"{y}.07.01", f"{y}.12.31", date(y, 12, 31)),
+        for half, lo, hi, h_start, end in (
+            ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 1, 1), date(y, 6, 30)),
+            ("하반기", f"{y}.07.01", f"{y}.12.31", date(y, 7, 1), date(y, 12, 31)),
         ):
-            if end < cut:
+            if not _period_ok(h_start, end):
                 continue
             has = any(lo <= r["date"] <= hi for r in recs)
             if not has:
@@ -459,7 +490,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     # ---- 항목 6: 운영규정 교육(연1회) + 급여제공지침교육(연1회) + 신규직원 7일 ----
     edu6_miss = []
     for y in years:
-        if date(y, 12, 31) < cut:
+        if not _period_ok(date(y, 1, 1), date(y, 12, 31)):
             continue
         recs = edu_parsed[y]["records"]
         if not any("운영규정" in r["name"] for r in recs):
@@ -489,7 +520,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             continue
         for mth in range(1, 13):
             m_end = date(y, mth, 28)
-            if m_end < cut or m_end > today:
+            if m_end < eff or m_end > today:
                 continue
             if not fire[mth - 1]:
                 fire_miss.append(f"{y}.{mth:02d}")
@@ -502,7 +533,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         med = chk_parsed[y]["med"]
         for q, (mm, dd) in q_ends.items():
             q_end = date(y, mm, dd)
-            if q_end < cut or q_end > today:
+            q_start = date(y, mm - 2, 1)
+            if q_end > today or not _period_ok(q_start, q_end):
                 continue
             if dis and not dis[q - 1]:
                 dis_miss.append(f"{y} {q}분기")
@@ -513,8 +545,10 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     supply_miss_m, hygiene_miss_m = [], []
     for ym_key in sorted(data.get("daily", {})):
         y, m = int(ym_key[:4]), int(ym_key[5:7])
+        if (y, m) < (eff.year, eff.month):
+            continue  # 개소·기준일 이전 달 제외
         d = parse_daily(data["daily"][ym_key], ym_key)
-        lo = cut.day if (y, m) == (cut.year, cut.month) else 1
+        lo = eff.day if (y, m) == (eff.year, eff.month) else 1
         hi = today.day - 1 if (y, m) == (today.year, today.month) else 31
         sup = [dd for dd in d["supply_miss"] if lo <= dd <= hi]
         hyg = [dd for dd in d["hygiene_miss"] if lo <= dd <= hi]
@@ -530,17 +564,17 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     prog_note = {t: [] for t in PROG_TYPES}
     for y in sorted(plan_parsed):
         # 5-5/5-6은 2026년 개편 화면부터 유형별 관리 — 이전 연도는 구버전이라 제외
-        if y < 2026 or date(y, 12, 31) < cut:
+        if y < 2026 or not _period_ok(date(y, 1, 1), date(y, 12, 31)):
             continue
         for t in PROG_TYPES:
             if plan_parsed.get(y) is not None and not plan_parsed[y].get(t):
                 prog_miss[t].append(f"{y} 연간계획 없음")
             op = op_parsed.get(y, {}).get(t, {"collect_dates": [], "reflect": False})
-            for half, lo_d, hi_d, end in (
-                ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 6, 30)),
-                ("하반기", f"{y}.07.01", f"{y}.12.31", date(y, 12, 31)),
+            for half, lo_d, hi_d, h_start, end in (
+                ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 1, 1), date(y, 6, 30)),
+                ("하반기", f"{y}.07.01", f"{y}.12.31", date(y, 7, 1), date(y, 12, 31)),
             ):
-                if end < cut or end > today:
+                if end > today or not _period_ok(h_start, end):
                     continue
                 if not any(lo_d <= dd <= hi_d for dd in op["collect_dates"]):
                     prog_miss[t].append(f"{y} {half} 의견수렴 없음")
@@ -565,7 +599,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     health_parsed = {int(y): parse_health(t) for y, t in (data.get("health") or {}).items()}
     health_miss, health_note = [], []
     for y in sorted(health_parsed):
-        if date(y, 12, 31) < cut:
+        if not _period_ok(date(y, 1, 1), date(y, 12, 31)):
             continue
         rows = health_parsed[y]["rows"]
         miss_names = [r["name"] for r in rows if r["health"] == "미작성" and r["status"] != "퇴사"]
@@ -664,6 +698,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
 
     return {
         "item_results": item_results,
+        "opened": data.get("opened"),
         "detail": {
             "edu_records": {y: edu_parsed[y]["records"] for y in years},
             "newstaff": cur_ns,
