@@ -110,7 +110,7 @@ def run_branch_audit(
             from .branch_pages import scrape_branch_pages, analyze_branch_pages
             years = list(range(cut_year, date.today().year + 1))
             progress_cb(f"[{branch_name}] 지점 페이지 수집 (8-7 교육, 8-7-1 보수교육, 6-3 점검)...")
-            bp_raw = scrape_branch_pages(page, g_pammgno, years, progress_cb)
+            bp_raw = scrape_branch_pages(page, g_pammgno, years, progress_cb, cutoff=cutoff)
             branch_pages = analyze_branch_pages(bp_raw, cutoff)
         except Exception as e:
             progress_cb(f"[{branch_name}] 지점 페이지 수집 실패(수급자 분석은 계속): {e}")

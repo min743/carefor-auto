@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""지점 단위 페이지 수집·판정 — 그룹 A(8-7 교육, 8-7-1 보수교육) + 그룹 D(6-3 정기점검).
+"""지점 단위 페이지 수집·판정.
 
-수급자별 스캔과 달리 팝업 없이 페이지 DOM 텍스트를 그대로 파싱한다.
-연도 전환은 페이지 내 reloadPage({'yy':'YYYY'}) 호출.
+수급자별 스캔과 달리 팝업 없이 페이지 DOM 텍스트/구조를 그대로 파싱한다.
+연도 전환 reloadPage({'yy'}), 월 전환 reloadPage({'yy','mm'}).
 
-판정 항목: 5(보수교육) 6(직원교육) 11(재난대응) 13(시설안전)
-           16②(정기소독, 부분) 19①(노인인권 교육, 부분)
+판정 항목:
+  5(보수교육, 8-7-1)  6(직원교육, 8-7)  7(직원인권보호, 1-6탭)  11(재난대응, 8-7)
+  13(시설안전, 6-3)  16(감염관리 ①③6-2·②6-3)  19①(노인인권 교육, 부분)
+  23②(약품 분기점검, 부분)  24·25·26(프로그램 ①계획·③의견, 부분, 2026~)
 """
 from __future__ import annotations
 
@@ -21,7 +23,30 @@ PAGES = {
     "refresher": ("left_sub8", "/share/staff/view.staff_refresher_training", "8-7-1.요양보호사 보수교육"),
     "checks":    ("left_sub6", "/share/safe/view.regularly_check", "6-3.정기점검"),
     "guide":     ("left_sub1", "/patient/view.patient_guide", "1-6.수급자 안내사항/예방접종"),
+    "daily":     ("left_sub6", "/share/safe/view.daily_check", "6-2.일일점검"),
+    "plan":      ("left_sub5", "/share/program/view.program_annual_plan_sep", "5-6.프로그램 계획"),
+    "opinion":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
 }
+
+# 6-2 일일점검: 행(일자)×열(위생점검1/주방소독2/간호비품3/급식4) — class complete/none 로 작성 여부
+DAILY_PARSE_JS = """
+(() => {
+  const b = document.querySelector('#r_padding g-b[data-gt-row-count]');
+  if (!b) return [];
+  const rows = parseInt(b.getAttribute('data-gt-row-count')) || 0;
+  const out = [];
+  for (let r = 0; r < rows; r++) {
+    const cells = {};
+    b.querySelectorAll('[data-gt-row="' + r + '"]').forEach(el => {
+      const c = el.getAttribute('data-gt-col');
+      if (c === null) return;
+      cells[c] = { cls: el.className || '', txt: (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) };
+    });
+    if (cells['0'] && /\\d+일/.test(cells['0'].txt)) out.push(cells);
+  }
+  return out;
+})()
+"""
 
 CLOSE_MODAL_JS = """
 (() => {
@@ -52,9 +77,30 @@ def _set_year(page, year: int) -> None:
     page.wait_for_timeout(3000)
 
 
-def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=print) -> dict:
-    """세 페이지를 연도별로 순회하며 innerText 원문 수집."""
-    out = {"edu": {}, "checks": {}, "refresher": None, "rights": None}
+def _set_month(page, year: int, month: int) -> None:
+    page.evaluate(f"reloadPage({{'yy':'{year}','mm':'{month:02d}'}})")
+    page.wait_for_timeout(2500)
+
+
+def _month_range(cutoff: str, today) -> list[tuple[int, int]]:
+    """기준일이 속한 달부터 이번 달까지 (y, m) 목록."""
+    cy, cm = int(cutoff[:4]), int(cutoff[5:7])
+    months = []
+    y, m = cy, cm
+    while (y, m) <= (today.year, today.month):
+        months.append((y, m))
+        m += 1
+        if m > 12:
+            y, m = y + 1, 1
+    return months
+
+
+def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=print,
+                        cutoff: str | None = None) -> dict:
+    """지점 단위 페이지 순회 수집 (연도별/월별)."""
+    from datetime import date as _date
+    out = {"edu": {}, "checks": {}, "refresher": None, "rights": None,
+           "daily": {}, "plan": {}, "opinion": {}}
 
     _goto(page, "edu", g_pammgno)
     for y in years:
@@ -71,6 +117,28 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         _set_year(page, y)
         out["checks"][str(y)] = page.evaluate(GET_TEXT_JS)
         progress_cb(f"  6-3 정기점검 {y}년 수집")
+
+    # 5-6 프로그램 계획 + 5-5 의견수렴 (연도별)
+    _goto(page, "plan", g_pammgno)
+    for y in years:
+        _set_year(page, y)
+        out["plan"][str(y)] = page.evaluate(GET_TEXT_JS)
+        progress_cb(f"  5-6 프로그램 계획 {y}년 수집")
+
+    _goto(page, "opinion", g_pammgno)
+    for y in years:
+        _set_year(page, y)
+        out["opinion"][str(y)] = page.evaluate(GET_TEXT_JS)
+        progress_cb(f"  5-5 의견수렴 {y}년 수집")
+
+    # 6-2 일일점검 (기준일 이후 월별 순회)
+    if cutoff:
+        _goto(page, "daily", g_pammgno)
+        months = _month_range(cutoff, _date.today())
+        for (y, m) in months:
+            _set_month(page, y, m)
+            out["daily"][f"{y}-{m:02d}"] = page.evaluate(DAILY_PARSE_JS)
+        progress_cb(f"  6-2 일일점검 {len(months)}개월 수집")
 
     # 1-6 직원인권 보호지침 탭 (2026 신설 지표 — 2026년부터만)
     if max(years) >= 2026:
@@ -227,6 +295,68 @@ def parse_rights(text: str) -> dict:
     return {"done": done, "total": total, "rows": rows}
 
 
+PROG_TYPES = ("신체기능", "인지기능", "사회적응")
+
+
+def parse_plan(text: str) -> dict:
+    """5-6: 유형별 연간계획 작성일. {유형: 'YYYY.MM.DD' | None}"""
+    out = {t: None for t in PROG_TYPES}
+    lines = [ln.strip() for ln in text.split("\n")]
+    for i, ln in enumerate(lines):
+        for t in PROG_TYPES:
+            if ln == f"{t} 프로그램" and out[t] is None:
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    if re.match(r"^\d{4}\.\d{2}\.\d{2}$", lines[j]):
+                        out[t] = lines[j]
+                        break
+    return out
+
+
+def parse_opinion(text: str) -> dict:
+    """5-5: 유형별 [수렴 작성일들, 반영 작성 여부]. 유형 블록을 앵커로 분할."""
+    lines = [ln.strip() for ln in text.split("\n")]
+    # 유형 앵커 위치 (헤더 이후 본문 블록: '신체기능' 단독 줄)
+    anchors = []
+    for i, ln in enumerate(lines):
+        if ln in PROG_TYPES:
+            anchors.append((ln, i))
+    out = {t: {"collect_dates": [], "reflect": False} for t in PROG_TYPES}
+    for k, (t, i) in enumerate(anchors):
+        end = anchors[k + 1][1] if k + 1 < len(anchors) else len(lines)
+        seg = lines[i:end]
+        for j, s in enumerate(seg):
+            if s == "의견수렴 내용":
+                for b in range(j - 1, max(0, j - 6), -1):
+                    if re.match(r"^\d{4}\.\d{2}\.\d{2}$", seg[b]):
+                        out[t]["collect_dates"].append(seg[b])
+                        break
+            if s == "의견반영 내용":
+                out[t]["reflect"] = True
+    return out
+
+
+def parse_daily(cells_rows: list[dict], ym: str) -> dict:
+    """6-2 한 달 데이터: 일자별 [위생(1), 간호비품(3)] 작성 여부.
+    반환: {"hygiene_miss": [일...], "supply_miss": [일...], "days": N}"""
+    hygiene_miss, supply_miss = [], []
+    for row in cells_rows or []:
+        c0 = row.get("0", {}).get("txt", "")
+        m = re.match(r"(\d+)일", c0)
+        if not m:
+            continue
+        if "(일)" in c0:  # 일요일(휴무일)은 미작성 대상에서 제외
+            continue
+        day = int(m.group(1))
+        c1 = row.get("1", {})
+        c3 = row.get("3", {})
+        closed = c3.get("txt", "") == "-"  # 간호비품 '-' = 휴무일(토·공휴일) 추정 → 제외
+        if not closed and "none" in c1.get("cls", "") and "미작성" in c1.get("txt", ""):
+            hygiene_miss.append(day)
+        if "none" in c3.get("cls", "") and "미작성" in c3.get("txt", ""):
+            supply_miss.append(day)
+    return {"hygiene_miss": hygiene_miss, "supply_miss": supply_miss, "days": len(cells_rows or [])}
+
+
 # ---------------- 판정 ----------------
 
 def _half_of(d: str) -> str:
@@ -315,20 +445,60 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             if not fire[mth - 1]:
                 fire_miss.append(f"{y}.{mth:02d}")
 
-    # ---- 항목 16②: 정기소독 분기별 ----
-    dis_miss = []
+    # ---- 항목 16②: 정기소독 분기별 / 항목 23②: 일반의약품 분기별 ----
+    dis_miss, med_miss = [], []
     q_ends = {1: (3, 31), 2: (6, 30), 3: (9, 30), 4: (12, 31)}
     for y in years:
         dis = chk_parsed[y]["disinfect"]
-        if not dis:
-            dis_miss.append(f"{y}년 데이터 파싱 실패")
-            continue
+        med = chk_parsed[y]["med"]
         for q, (mm, dd) in q_ends.items():
             q_end = date(y, mm, dd)
             if q_end < cut or q_end > today:
                 continue
-            if not dis[q - 1]:
+            if dis and not dis[q - 1]:
                 dis_miss.append(f"{y} {q}분기")
+            if med and not med[q - 1]:
+                med_miss.append(f"{y} {q}분기")
+
+    # ---- 항목 16①③: 6-2 일일점검 (간호비품 매일 · 위생점검 매일, 전일까지) ----
+    supply_miss_m, hygiene_miss_m = [], []
+    for ym_key in sorted(data.get("daily", {})):
+        y, m = int(ym_key[:4]), int(ym_key[5:7])
+        d = parse_daily(data["daily"][ym_key], ym_key)
+        lo = cut.day if (y, m) == (cut.year, cut.month) else 1
+        hi = today.day - 1 if (y, m) == (today.year, today.month) else 31
+        sup = [dd for dd in d["supply_miss"] if lo <= dd <= hi]
+        hyg = [dd for dd in d["hygiene_miss"] if lo <= dd <= hi]
+        if sup:
+            supply_miss_m.append(f"{ym_key}({len(sup)}일)")
+        if hyg:
+            hygiene_miss_m.append(f"{ym_key}({len(hyg)}일)")
+
+    # ---- 항목 24·25·26: 프로그램 (①연간계획 + ③의견 반기수렴·연1회 반영) ----
+    plan_parsed = {int(y): parse_plan(t) for y, t in data.get("plan", {}).items()}
+    op_parsed = {int(y): parse_opinion(t) for y, t in data.get("opinion", {}).items()}
+    prog_miss = {t: [] for t in PROG_TYPES}
+    prog_note = {t: [] for t in PROG_TYPES}
+    for y in sorted(plan_parsed):
+        # 5-5/5-6은 2026년 개편 화면부터 유형별 관리 — 이전 연도는 구버전이라 제외
+        if y < 2026 or date(y, 12, 31) < cut:
+            continue
+        for t in PROG_TYPES:
+            if plan_parsed.get(y) is not None and not plan_parsed[y].get(t):
+                prog_miss[t].append(f"{y} 연간계획 없음")
+            op = op_parsed.get(y, {}).get(t, {"collect_dates": [], "reflect": False})
+            for half, lo_d, hi_d, end in (
+                ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 6, 30)),
+                ("하반기", f"{y}.07.01", f"{y}.12.31", date(y, 12, 31)),
+            ):
+                if end < cut or end > today:
+                    continue
+                if not any(lo_d <= dd <= hi_d for dd in op["collect_dates"]):
+                    prog_miss[t].append(f"{y} {half} 의견수렴 없음")
+            if y < today.year and not op["reflect"]:
+                prog_miss[t].append(f"{y} 의견반영 없음")
+            elif y == today.year and not op["reflect"]:
+                prog_note[t].append(f"{y} 의견반영 미작성(진행중)")
 
     # ---- 항목 7: 직원인권 보호지침 (2026 신설 — 2026년부터) ----
     rights = parse_rights(data.get("rights") or "")
@@ -381,10 +551,34 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "detail": ("소방점검 누락: " + ", ".join(fire_miss)) if fire_miss else "매월 소방시설 점검 입력 확인",
         },
         "16": {
-            "status": st(dis_miss),
-            "detail": "[부분판정: ②정기소독만] "
-                      + (("누락: " + ", ".join(dis_miss)) if dis_miss else "분기별 정기소독 입력 확인")
-                      + " (①③ 일일점검은 2차 구현 예정)",
+            "status": st(supply_miss_m + hygiene_miss_m + dis_miss),
+            "detail": ("① 간호비품 미작성: " + (", ".join(supply_miss_m) or "없음")
+                       + " · ② 정기소독 누락: " + (", ".join(dis_miss) or "없음")
+                       + " · ③ 위생점검 미작성: " + (", ".join(hygiene_miss_m) or "없음")),
+        },
+        "23": {
+            "status": st(med_miss),
+            "detail": "[부분판정: ②분기점검만] 일반의약품 분기 점검 "
+                      + (("누락: " + ", ".join(med_miss)) if med_miss else "충족")
+                      + " (①보관함 잠금·③적정투약은 현장/수기 확인)",
+        },
+        "24": {
+            "status": st(prog_miss["신체기능"]),
+            "detail": "[부분판정: ①계획·③의견, 2026년~] "
+                      + ("; ".join(prog_miss["신체기능"] + prog_note["신체기능"]) or "연간계획·의견수렴/반영 충족")
+                      + " (②주3회 실시는 다음 단계)",
+        },
+        "25": {
+            "status": st(prog_miss["인지기능"]),
+            "detail": "[부분판정: ①계획·③의견, 2026년~] "
+                      + ("; ".join(prog_miss["인지기능"] + prog_note["인지기능"]) or "연간계획·의견수렴/반영 충족")
+                      + " (②주3회 실시는 다음 단계)",
+        },
+        "26": {
+            "status": st(prog_miss["사회적응"]),
+            "detail": "[부분판정: ①계획·③의견, 2026년~] "
+                      + ("; ".join(prog_miss["사회적응"] + prog_note["사회적응"]) or "연간계획·의견수렴/반영 충족")
+                      + " (②월1회 실시는 다음 단계)",
         },
         "19": {
             "status": st(rights_miss),
@@ -403,5 +597,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "refresher": refresher,
             "checks": {y: chk_parsed[y] for y in years},
             "rights": rights,
+            "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},
+            "programs": {"plan": plan_parsed, "opinion": op_parsed},
         },
     }

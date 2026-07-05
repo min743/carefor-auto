@@ -82,6 +82,10 @@ PAGES = {
     "6-3":   ("left_sub6", "/share/safe/view.regularly_check", "6-3.정기점검"),
     "6-2":   ("left_sub6", "/share/safe/view.daily_check", "6-2.일일점검"),
     "1-6":   ("left_sub1", "/patient/view.patient_guide", "1-6.수급자 안내사항/예방접종"),
+    "5-1":   ("left_sub5", "/share/program/view.program_service_daily", "5-1.프로그램 제공기록"),
+    "5-5":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
+    "5-6":   ("left_sub5", "/share/program/view.program_annual_plan_sep", "5-6.프로그램 계획"),
+    "5-8":   ("left_sub5", "/share/program/view.program_service_yearly", "5-8.프로그램 제공기록 리포트(운영기록지)"),
 }
 
 
@@ -163,7 +167,7 @@ def main():
             g = extract_g_pammgno(page)
             cutoff = BRANCH_CUTOFFS.get(b.name, "2024.01.01")
             years = list(range(int(cutoff[:4]), date.today().year + 1))
-            data = scrape_branch_pages(page, g, years)
+            data = scrape_branch_pages(page, g, years, cutoff=cutoff)
             (OUT_DIR / "branch_pages_raw.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
             res = analyze_branch_pages(data, cutoff)
             print(json.dumps(res["item_results"], ensure_ascii=False, indent=1))
