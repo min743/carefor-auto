@@ -123,9 +123,14 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         out["edu"][str(y)] = page.evaluate(GET_TEXT_JS)
         progress_cb(f"  8-7 교육일지 {y}년 수집")
 
+    # 보수교육: 평가 채점 대상은 전년도(매뉴얼 적용기간) — 전년도+당해 모두 수집
     _goto(page, "refresher", g_pammgno)
-    out["refresher"] = page.evaluate(GET_TEXT_JS)
-    progress_cb("  8-7-1 보수교육 수집")
+    out["refresher"] = {}
+    ref_years = [y for y in (_date.today().year - 1, _date.today().year) if y >= min(years)]
+    for y in ref_years:
+        _set_year(page, y)
+        out["refresher"][str(y)] = page.evaluate(GET_TEXT_JS)
+    progress_cb(f"  8-7-1 보수교육 수집 ({', '.join(map(str, ref_years))})")
 
     _goto(page, "checks", g_pammgno)
     for y in years:
@@ -450,7 +455,16 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
 
     edu_parsed = {y: parse_edu(data["edu"][str(y)]) for y in years}
     chk_parsed = {y: parse_checks(data["checks"].get(str(y), "")) for y in years}
-    refresher = parse_refresher(data.get("refresher") or "")
+    # 보수교육: 구버전 raw(str) 호환 — dict{연도: text}로 정규화
+    ref_raw = data.get("refresher") or {}
+    if isinstance(ref_raw, str):
+        ref_raw = {str(today.year): ref_raw}
+    refresher_by_year = {int(y): parse_refresher(t) for y, t in ref_raw.items()}
+    prev_year = today.year - 1
+    # 채점 대상: 전년도(매뉴얼 적용기간). 전년도 데이터 없으면(개소 전 등) 당해로 폴백
+    ref_score_year = prev_year if prev_year in refresher_by_year and refresher_by_year[prev_year]["rows"] else today.year
+    refresher = refresher_by_year.get(ref_score_year, {"target": None, "done": None, "rows": []})
+    refresher_cur = refresher_by_year.get(today.year, {"target": None, "done": None, "rows": []})
 
     # ---- 항목 11: 재난대응훈련 반기별 (기준일 5/1, 11/1) ----
     disaster_miss = []
@@ -510,6 +524,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     # ---- 항목 5: 보수교육 ----
     ref_miss = [r["name"] for r in refresher["rows"] if r["status"] == "미작성"]
     ref_target, ref_done = refresher.get("target"), refresher.get("done")
+    ref_cur_miss = [r["name"] for r in refresher_cur["rows"] if r["status"] == "미작성"]
 
     # ---- 항목 13: 소방시설 월 1회 (매월 28일 기준) ----
     fire_miss = []
@@ -560,7 +575,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     # ---- 항목 24·25·26: 프로그램 (①연간계획 + ③의견 반기수렴·연1회 반영) ----
     plan_parsed = {int(y): parse_plan(t) for y, t in data.get("plan", {}).items()}
     op_parsed = {int(y): parse_opinion(t) for y, t in data.get("opinion", {}).items()}
-    prog_miss = {t: [] for t in PROG_TYPES}
+    prog_plan_miss = {t: [] for t in PROG_TYPES}   # ① 연간계획
+    prog_op_miss = {t: [] for t in PROG_TYPES}     # ③ 의견수렴·반영
     prog_note = {t: [] for t in PROG_TYPES}
     for y in sorted(plan_parsed):
         # 5-5/5-6은 2026년 개편 화면부터 유형별 관리 — 이전 연도는 구버전이라 제외
@@ -568,7 +584,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             continue
         for t in PROG_TYPES:
             if plan_parsed.get(y) is not None and not plan_parsed[y].get(t):
-                prog_miss[t].append(f"{y} 연간계획 없음")
+                prog_plan_miss[t].append(f"{y} 연간계획 없음")
             op = op_parsed.get(y, {}).get(t, {"collect_dates": [], "reflect": False})
             for half, lo_d, hi_d, h_start, end in (
                 ("상반기", f"{y}.01.01", f"{y}.06.30", date(y, 1, 1), date(y, 6, 30)),
@@ -577,11 +593,12 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
                 if end > today or not _period_ok(h_start, end):
                     continue
                 if not any(lo_d <= dd <= hi_d for dd in op["collect_dates"]):
-                    prog_miss[t].append(f"{y} {half} 의견수렴 없음")
+                    prog_op_miss[t].append(f"{y} {half} 의견수렴 없음")
             if y < today.year and not op["reflect"]:
-                prog_miss[t].append(f"{y} 의견반영 없음")
+                prog_op_miss[t].append(f"{y} 의견반영 없음")
             elif y == today.year and not op["reflect"]:
                 prog_note[t].append(f"{y} 의견반영 미작성(진행중)")
+    prog_miss = {t: prog_plan_miss[t] + prog_op_miss[t] for t in PROG_TYPES}
 
     # ---- 항목 7: 직원인권 보호지침 (2026 신설 — 2026년부터) ----
     rights = parse_rights(data.get("rights") or "")
@@ -615,10 +632,17 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     def st(miss):
         return "양호" if not miss else "미흡"
 
+    # 항목 6 기준별 분리: ②운영규정 교육(신규직원 기한 포함) / ③급여제공지침 교육
+    e6_op = [e for e in edu6_miss if "운영규정" in e]
+    e6_guide = [e for e in edu6_miss if "급여제공지침" in e]
+    e6_op_cur = [e for e in e6_op if "진행중" not in e]
+    e6_guide_cur = [e for e in e6_guide if "진행중" not in e]
+
     item_results = {}
     if health_parsed:
         item_results["15"] = {
             "status": st(health_miss),
+            "sub_status": {"①": st(health_miss)},
             "detail": "[부분판정: ①연1회 검진] "
                       + ("; ".join(health_miss + health_note) or "완결 연도 전 직원 검진 작성 확인")
                       + " (②입사전 검진 제출 탭은 추후 구현)",
@@ -635,66 +659,68 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             parts.append("전 수급자 제공 확인 (안내 전 퇴소자 제외)")
         item_results["7"] = {
             "status": st(r7_missing + r7_late),
+            "sub_status": {"②": st(r7_missing + r7_late)},
             "detail": "2026년 기준 — " + " · ".join(parts),
         }
 
     item_results |= {
         "5": {
             "status": st(ref_miss),
-            "detail": (f"대상 {ref_target}명 중 작성 {ref_done}명"
-                       + (f", 미작성: {', '.join(ref_miss)}" if ref_miss else " — 전원 이수/작성")),
+            "sub_status": {"①": st(ref_miss)},
+            "detail": (f"[채점연도 {ref_score_year}] 대상 {ref_target}명 중 작성 {ref_done}명"
+                       + (f", 미작성: {', '.join(ref_miss)}" if ref_miss else " — 전원 이수/작성")
+                       + (f" / {today.year}년 진행: 미작성 {len(ref_cur_miss)}명"
+                          + (f"({', '.join(ref_cur_miss)})" if ref_cur_miss else "")
+                          if ref_score_year != today.year else "")),
         },
         "6": {
             "status": st(edu6_cur),
+            "sub_status": {"②": st(e6_op_cur), "③": st(e6_guide_cur)},
             "detail": ("; ".join(edu6_miss) or "운영규정·급여제공지침 교육 연 1회 충족")
                       + " (①지침 12항목 비치는 수기 확인)",
         },
         "11": {
             "status": st(disaster_miss),
+            "sub_status": {"①": st(disaster_miss)},
             "detail": ("누락: " + ", ".join(disaster_miss)) if disaster_miss else "반기별 재난대응훈련 실시 확인",
         },
         "13": {
             "status": st(fire_miss),
+            "sub_status": {"①": st(fire_miss)},
             "detail": ("소방점검 누락: " + ", ".join(fire_miss)) if fire_miss else "매월 소방시설 점검 입력 확인",
         },
         "16": {
             "status": st(supply_miss_m + hygiene_miss_m + dis_miss),
+            "sub_status": {"①": st(supply_miss_m), "②": st(dis_miss), "④": st(hygiene_miss_m)},
             "detail": ("① 간호비품 미작성: " + (", ".join(supply_miss_m) or "없음")
                        + " · ② 정기소독 누락: " + (", ".join(dis_miss) or "없음")
-                       + " · ③ 위생점검 미작성: " + (", ".join(hygiene_miss_m) or "없음")),
+                       + " · ④ 위생점검일지 미작성: " + (", ".join(hygiene_miss_m) or "없음")
+                       + " (③감염 대응체계는 수기)"),
         },
         "23": {
             "status": st(med_miss),
+            "sub_status": {"②": st(med_miss)},
             "detail": "[부분판정: ②분기점검만] 일반의약품 분기 점검 "
                       + (("누락: " + ", ".join(med_miss)) if med_miss else "충족")
                       + " (①보관함 잠금·③적정투약은 현장/수기 확인)",
         },
-        "24": {
-            "status": st(prog_miss["신체기능"]),
-            "detail": "[부분판정: ①계획·③의견, 2026년~] "
-                      + ("; ".join(prog_miss["신체기능"] + prog_note["신체기능"]) or "연간계획·의견수렴/반영 충족")
-                      + " (②주3회 실시는 다음 단계)",
-        },
-        "25": {
-            "status": st(prog_miss["인지기능"]),
-            "detail": "[부분판정: ①계획·③의견, 2026년~] "
-                      + ("; ".join(prog_miss["인지기능"] + prog_note["인지기능"]) or "연간계획·의견수렴/반영 충족")
-                      + " (②주3회 실시는 다음 단계)",
-        },
-        "26": {
-            "status": st(prog_miss["사회적응"]),
-            "detail": "[부분판정: ①계획·③의견, 2026년~] "
-                      + ("; ".join(prog_miss["사회적응"] + prog_note["사회적응"]) or "연간계획·의견수렴/반영 충족")
-                      + " (②월1회 실시는 다음 단계)",
-        },
         "19": {
             "status": st(rights_miss),
+            "sub_status": {"①": st(rights_miss)},
             "detail": "[부분판정: ①교육일지만] "
                       + (("누락: " + ", ".join(rights_miss)) if rights_miss else "반기별 노인인권 교육 확인")
                       + (" / " + "; ".join(rights_note) if rights_note else "")
                       + " (②안내사항·③기록지는 3~4차 구현 예정)",
         },
     }
+    for no, t, freq in (("24", "신체기능", "주3회"), ("25", "인지기능", "주3회"), ("26", "사회적응", "월1회")):
+        item_results[no] = {
+            "status": st(prog_miss[t]),
+            "sub_status": {"①": st(prog_plan_miss[t]), "③": st(prog_op_miss[t])},
+            "detail": "[부분판정: ①계획·③의견, 2026년~] "
+                      + ("; ".join(prog_miss[t] + prog_note[t]) or "연간계획·의견수렴/반영 충족")
+                      + f" (②{freq} 실시는 다음 단계)",
+        }
 
     return {
         "item_results": item_results,

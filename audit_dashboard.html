@@ -84,10 +84,14 @@ function subVal(manual, no, label){
   return m && m.subs ? m.subs[label] : undefined;
 }
 function autoVal(it, s, d){
-  // 자동판정이 '양호'이고 해당 기준이 자동확인 범위(auto_subs)면 만점 자동 부여
+  // 자동판정 결과로 자동 만점 부여 — 기준(sub) 단위 판정(sub_status) 우선, 없으면 항목 status
   if(!d || !it.auto_subs || !it.auto_subs.includes(s.label)) return undefined;
   const r = d.item_results && d.item_results[String(it.no)];
-  return (r && r.status === '양호') ? s.score : undefined;
+  if(!r) return undefined;
+  if(r.sub_status && r.sub_status[s.label] !== undefined){
+    return r.sub_status[s.label] === '양호' ? s.score : undefined;
+  }
+  return r.status === '양호' ? s.score : undefined;
 }
 function effVal(it, s, manual, d){
   const v = subVal(manual, it.no, s.label);

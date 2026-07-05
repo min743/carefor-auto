@@ -208,17 +208,30 @@ def analyze(results: list[dict], cutoff: str) -> dict:
     def status_of(n_bad, warn=1):
         return "양호" if n_bad == 0 else ("미흡" if n_bad >= warn else "주의")
 
+    # 항목 21 기준별(낙상①/욕창②/인지③) 누락 분리
+    half_by_kind = {"낙상": 0, "욕창": 0, "인지": 0}
+    for r in halfyear_miss:
+        if r[3] in half_by_kind:
+            half_by_kind[r[3]] += 1
+
+    def st(n):
+        return "양호" if n == 0 else "미흡"
+
     item_results = {
         "20": {
             "status": "양호" if (n_disc == 0 and n_order == 0) else "미흡",
+            "sub_status": {"①": "양호" if (n_disc == 0 and n_order == 0) else "미흡"},
             "detail": f"낙상↔욕구사정 불일치 {n_disc}건, 계획-평가 순서 위반 {n_order}건",
         },
         "21": {
             "status": status_of(n_half),
-            "detail": f"반기별 낙상·욕창·인지 누락 {n_half}건",
+            "sub_status": {"①": st(half_by_kind["낙상"]), "②": st(half_by_kind["욕창"]), "③": st(half_by_kind["인지"])},
+            "detail": (f"반기별 누락 {n_half}건 — 낙상 {half_by_kind['낙상']}, "
+                       f"욕창 {half_by_kind['욕창']}, 인지 {half_by_kind['인지']}"),
         },
         "22": {
             "status": status_of(n_plan),
+            "sub_status": {"②": status_of(n_plan)},
             "detail": f"급여제공계획 발송·서명 문제 {n_plan}건",
         },
     }
