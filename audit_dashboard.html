@@ -141,8 +141,10 @@ function render(){
   </div>`;
 
   html += `<div class="btnrow">
-    <button onclick="exportAll()">📥 점검표 내보내기(JSON)</button>
+    <button onclick="uploadScores()">📤 본부 공유 (점수 업로드)</button>
+    <button class="gray" onclick="exportAll()">📥 점검표 내보내기(JSON)</button>
     <button class="gray" onclick="location.reload()">🔄 새로고침</button>
+    <span id="upmsg" style="align-self:center;font-size:12px;color:#2c8a41"></span>
   </div>`;
 
   // 36개 항목 테이블 (기준별 점수 입력)
@@ -249,6 +251,45 @@ function setSub(no, label, val){
   else m[no].subs[label] = val;
   saveManual(cur, m);
   render();
+}
+// ---- 점수 본부 공유 (Apps Script 웹훅) ----
+const SCORES_HOOK = 'https://script.google.com/macros/s/AKfycbxCaMyM26xaLNlYUof-Jxac88jfWggzphLDvBEIRlDY-2Bn8S9wF5HWt52QupXWkxlO/exec';
+const SCORES_TOKEN = 'audit-scores-2026-cheongju';
+async function uploadScores(){
+  const manual = loadManual(cur);
+  let earned=0, denom=0, filled=0, total=0, naPts=0;
+  const per_item = {};
+  ITEMS.forEach(it=>{
+    const sc = itemScore(it, manual);
+    if(!sc) return;
+    total += it.subs.length; filled += sc.filled;
+    earned += sc.earned; denom += sc.denom;
+    it.subs.forEach(s=>{
+      const v = subVal(manual, it.no, s.label);
+      if(v==='NA') naPts += s.score;
+    });
+    per_item[it.no] = {earned: sc.earned, denom: sc.denom, filled: sc.filled, subs: it.subs.length};
+  });
+  const memos = {};
+  Object.keys(manual).forEach(no=>{ if(manual[no] && manual[no].memo) memos[no] = manual[no].memo; });
+  const data = {total_earned: Math.round(earned*100)/100, filled, total_subs: total,
+                na_points: Math.round(naPts*100)/100, per_item, memos};
+  const msg = document.getElementById('upmsg');
+  msg.textContent = '업로드 중...';
+  try{
+    const res = await fetch(SCORES_HOOK, {method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({token: SCORES_TOKEN, branch: cur, data})});
+    const out = await res.json();
+    msg.textContent = out.ok ? `✅ ${cur} 점수 공유 완료 (총점 ${data.total_earned}, 입력 ${filled}/${total})` : '❌ 실패: '+out.error;
+  }catch(e){
+    try{
+      await fetch(SCORES_HOOK, {method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({token: SCORES_TOKEN, branch: cur, data})});
+      msg.textContent = `✅ ${cur} 점수 공유 요청 보냄 (총점 ${data.total_earned})`;
+    }catch(e2){ msg.textContent = '❌ 업로드 실패: ' + e2; }
+  }
 }
 function exportAll(){
   const out = {};

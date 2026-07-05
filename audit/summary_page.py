@@ -101,17 +101,36 @@ document.getElementById('pin').addEventListener('input', e => {
 });
 if(sessionStorage.getItem('ap')==='1') document.getElementById('gate').style.display='none';
 document.getElementById('gen').textContent = '생성: ' + DATA.generated;
-const cards = document.getElementById('cards');
-BR.forEach(b => {
-  const d = DATA.branches[b];
-  const el = document.createElement('div'); el.className='bcard';
-  if(!d){ el.innerHTML = `<h3>${b}</h3><div class="meta">수집 전</div>`; cards.appendChild(el); return; }
-  const c = d.counts;
-  el.innerHTML = `<h3>${b}</h3><div class="meta">수집 ${d.run_at} · 기준일 ${d.cutoff} · ${d.people}명</div>
-  <div class="nums">낙상↔욕구 불일치 <b class="bad">${c.불일치}</b>/${c.대조회차}회차<br>
-  반기별 평가 누락 <b class="bad">${c.반기누락}</b>건 · 계획 문제 <b class="bad">${c.계획문제}</b>건</div>`;
-  cards.appendChild(el);
-});
+
+// 지점별 채점 점수 (대시보드에서 "본부 공유" 버튼으로 업로드된 것)
+const SCORES_HOOK = 'https://script.google.com/macros/s/AKfycbxCaMyM26xaLNlYUof-Jxac88jfWggzphLDvBEIRlDY-2Bn8S9wF5HWt52QupXWkxlO/exec?token=audit-scores-2026-cheongju';
+let SCORES = {};
+function drawCards(){
+  const cards = document.getElementById('cards');
+  cards.innerHTML = '';
+  BR.forEach(b => {
+    const d = DATA.branches[b];
+    const s = SCORES[b];
+    const el = document.createElement('div'); el.className='bcard';
+    let scoreLine = '';
+    if(s){
+      const pct = s.total_earned;
+      const cls = pct>=90?'ok':(pct>=70?'':'bad');
+      scoreLine = `<div style="font-size:20px;margin:4px 0"><b class="${cls}">${s.total_earned}점</b>
+        <span style="font-size:11px;color:#888">/ 100점 · 기준 ${s.filled}/${s.total_subs} 입력 · ${(s.saved_at||'').slice(0,10)} 채점</span></div>`;
+    } else {
+      scoreLine = `<div style="font-size:12px;color:#999;margin:4px 0">채점 미공유 (대시보드에서 📤 본부 공유 클릭)</div>`;
+    }
+    if(!d){ el.innerHTML = `<h3>${b}</h3>${scoreLine}<div class="meta">자동수집 전</div>`; cards.appendChild(el); return; }
+    const c = d.counts;
+    el.innerHTML = `<h3>${b}</h3>${scoreLine}<div class="meta">수집 ${d.run_at} · 기준일 ${d.cutoff} · ${d.people}명</div>
+    <div class="nums">낙상↔욕구 불일치 <b class="bad">${c.불일치}</b>/${c.대조회차}회차<br>
+    반기별 평가 누락 <b class="bad">${c.반기누락}</b>건 · 계획 문제 <b class="bad">${c.계획문제}</b>건</div>`;
+    cards.appendChild(el);
+  });
+}
+drawCards();
+fetch(SCORES_HOOK).then(r=>r.json()).then(j=>{ if(j.ok){ SCORES=j.scores||{}; drawCards(); drawTable(); } }).catch(e=>{});
 function cell(b, it){
   const d = DATA.branches[b];
   if(it.method==='manual') return '<span class="dot d-man"></span><span class="man">수기</span>';
@@ -121,14 +140,25 @@ function cell(b, it){
   if(r.status==='양호') return '<span class="dot d-ok"></span><span class="ok">양호</span>';
   return `<span class="dot d-bad"></span><span class="bad" title="${r.detail}">미흡</span>`;
 }
-let h = '<tr><th style="width:30px">#</th><th style="width:190px">항목</th><th style="width:44px">배점</th>' + BR.map(b=>`<th>${b}</th>`).join('') + '</tr>';
-DATA.items.forEach(it => {
-  h += `<tr><td>${it.no}</td>
-    <td class="name"><details><summary style="cursor:pointer"><b>${it.name}</b> <span style="color:#999;font-size:11px">${it.method==='manual'?'수기':'자동'}</span></summary>
-      <div style="font-size:11px;color:#666;line-height:1.5;margin-top:4px;white-space:normal">${it.criteria}</div></details></td>
-    <td>${it.total||'-'}</td>` + BR.map(b=>`<td>${cell(b,it)}</td>`).join('') + '</tr>';
-});
-document.getElementById('tbl').innerHTML = h;
+function scoreCell(b, it){
+  const s = SCORES[b];
+  if(!s || !s.per_item || !s.per_item[it.no]) return '';
+  const p = s.per_item[it.no];
+  if(p.filled === 0) return '';
+  const cls = p.earned >= p.denom ? 'ok' : 'bad';
+  return `<div style="font-size:11px;margin-top:2px"><b class="${cls}">${p.earned}</b><span style="color:#999">/${it.total||p.denom}점</span></div>`;
+}
+function drawTable(){
+  let h = '<tr><th style="width:30px">#</th><th style="width:190px">항목</th><th style="width:44px">배점</th>' + BR.map(b=>`<th>${b}</th>`).join('') + '</tr>';
+  DATA.items.forEach(it => {
+    h += `<tr><td>${it.no}</td>
+      <td class="name"><details><summary style="cursor:pointer"><b>${it.name}</b> <span style="color:#999;font-size:11px">${it.method==='manual'?'수기':'자동'}</span></summary>
+        <div style="font-size:11px;color:#666;line-height:1.5;margin-top:4px;white-space:normal">${it.criteria}</div></details></td>
+      <td>${it.total||'-'}</td>` + BR.map(b=>`<td>${cell(b,it)}${scoreCell(b,it)}</td>`).join('') + '</tr>';
+  });
+  document.getElementById('tbl').innerHTML = h;
+}
+drawTable();
 </script></body></html>"""
     html = html.replace("__PAYLOAD__", payload).replace("__PIN__", PIN)
     OUT.write_text(html, encoding="utf-8")
