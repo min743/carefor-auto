@@ -28,15 +28,9 @@ def main():
     args = ap.parse_args()
     argv = ["--dry-run"] if args.dry_run else []
 
-    print("=== ① 신규상담 입력현황 ===")
-    sys.argv = ["consult_report.py"] + argv
-    consult_report.main()
-
-    print("\n=== ② 상담 대기명단 ===")
-    sys.argv = ["waitlist_report.py"] + argv
-    waitlist_report.main()
-
-    print("\n=== ③ 엑셀 생성·업로드·링크 공지 ===")
+    # 한 페이지 통합 공지 하나만 발송 (집계표 + 상담 대기 + 엑셀 링크)
+    # ①consult_report.py ②waitlist_report.py 는 개별 실행용으로만 유지
+    print("=== 통합 공지 (엑셀 생성·업로드 포함) ===")
     sys.argv = ["publish_excel.py"] + argv
     publish_excel.main()
 

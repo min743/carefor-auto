@@ -175,35 +175,42 @@ def main():
     weekday = "월화수목금토일"[today.weekday()]
     link_map = dict(links)
 
-    # 지점별 한 줄 요약 + 해당 지점 엑셀 링크 (집계표·상세 명단은 전부 엑셀 안에)
-    center_lines = []
-    for s in summaries:
-        extra_txt = f" (입소완료 {s['urgent']}건)" if s["urgent"] else ""
-        link = link_map.get(s["center"], "")
-        center_lines.append(
-            f"*{s['center']}*  —  미입력 {s['miss']}건 · 대기 {s['wait']}건{extra_txt}"
-            f"  →  <{link}|📎 엑셀>")
+    # 집계표 (센터별 요약 + 상담 대기 줄 포함) — 한 페이지 통합 공지
+    import consult_report as cr
+    shorts = [short for short, _ in cr.CENTER_ORDER]
+    smap = {s["center"]: s for s in summaries}
+    cols = [smap[full] for _, full in cr.CENTER_ORDER]
+    LABEL_W = 16
+    col_ws = [max(cr._w(n), 4) + 2 for n in shorts]
+    table_lines = [
+        cr._rpad("", LABEL_W) + "".join(cr._lpad(n, w) for n, w in zip(shorts, col_ws)),
+        "─" * (LABEL_W + sum(col_ws)),
+    ]
+    for label, key in [("신규상담(누적)", "total"), ("시트 미입력", "miss"),
+                       ("미입력률", "rate"), ("상담 대기", "wait")]:
+        table_lines.append(cr._rpad(label, LABEL_W) + "".join(
+            cr._lpad(str(s[key]), w) for s, w in zip(cols, col_ws)))
+    table = "\n".join(table_lines)
 
-    total_miss = sum(s["miss"] for s in summaries)
-    total_wait = sum(s["wait"] for s in summaries)
+    # 지점별 엑셀 링크 한 줄
+    link_parts = [f"<{link_map.get(full, '')}|{short}>" for short, full in cr.CENTER_ORDER]
+    link_line = "📎 *상세 명단(엑셀)*:  " + "  ·  ".join(link_parts) \
+                + f"  ·  <{link_map.get('전체', '')}|전체>"
 
     msg = {
-        "text": f"☎️ 상담 관리 공지 {today.strftime('%Y.%m.%d')}({weekday})",
+        "text": f"☎️ 신규상담 시트 입력 현황(아롱이) {today.strftime('%Y.%m.%d')}({weekday})",
         "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "text": "☎️ 상담 관리 공지", "emoji": True}},
+            {"type": "header", "text": {"type": "plain_text",
+                "text": "☎️ 신규상담 시트 입력 현황(아롱이)", "emoji": True}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · "
-                        f"상담시트 미입력 *{total_miss}건* · 상담 대기 *{total_wait}건*"}]},
-            {"type": "divider"},
-            {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(center_lines)}},
+                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 3월~ 누적"}]},
             {"type": "section", "text": {"type": "mrkdwn",
-                "text": f"전체 통합본  →  <{link_map.get('전체', '')}|📎 엑셀>"}},
-            {"type": "divider"},
+                "text": "💛 _상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다._"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": link_line}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": "엑셀 구성: 요약(집계표) · 신규상담 미입력 상세 · 상담 대기명단(아웃콜 차수·기한·연락처)\n"
-                        "🔒 보기 전용 · 링크는 항상 동일, 내용만 최신 갱신 · 상담 결과 입력 시 대기명단에서 자동 제외"}]},
-            {"type": "section", "text": {"type": "mrkdwn",
-                "text": "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏"}},
+                "text": "📝 상담시트 입력 부탁드립니다. 연락처·아웃콜 차수 등 상세는 엑셀(보기 전용, 링크 고정) 참조.\n"
+                        "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏"}]},
         ],
     }
 
