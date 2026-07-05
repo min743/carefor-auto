@@ -55,7 +55,7 @@ jobs:
           AUDIT_WEBHOOK_URL: ${{ secrets.AUDIT_WEBHOOK_URL }}
           AUDIT_LIMIT:       ${{ github.event.inputs.limit || '0' }}
           AUDIT_TEST:        ${{ github.event.inputs.test_mode || 'false' }}
-          AUDIT_BRANCH:      ${{ github.event.inputs.branch == '전체' && '' || github.event.inputs.branch }}
+          AUDIT_BRANCH:      ${{ github.event.inputs.branch }}
           CI: "true"
         run: python run_audit_headless.py
 

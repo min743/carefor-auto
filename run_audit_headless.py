@@ -58,7 +58,7 @@ if test_mode:
     print("🧪 테스트 모드 — 결과 저장/구글시트 업로드/요약페이지 갱신을 모두 생략합니다.", flush=True)
 
 branches = cfg.branches
-if branch_filter:
+if branch_filter and branch_filter != "전체":
     branches = [b for b in branches if branch_filter in b.name]
     if not branches:
         print(f"ERROR: 지점 '{branch_filter}' 을 찾을 수 없습니다.")
