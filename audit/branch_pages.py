@@ -26,6 +26,7 @@ PAGES = {
     "daily":     ("left_sub6", "/share/safe/view.daily_check", "6-2.일일점검"),
     "plan":      ("left_sub5", "/share/program/view.program_annual_plan_sep", "5-6.프로그램 계획"),
     "opinion":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
+    "health":    ("left_sub8", "/share/staff/view.staff_yearly_report", "8-10.건강검진관리"),
 }
 
 # 6-2 일일점검: 행(일자)×열(위생점검1/주방소독2/간호비품3/급식4) — class complete/none 로 작성 여부
@@ -118,46 +119,65 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         out["checks"][str(y)] = page.evaluate(GET_TEXT_JS)
         progress_cb(f"  6-3 정기점검 {y}년 수집")
 
-    # 5-6 프로그램 계획 + 5-5 의견수렴 (연도별)
-    _goto(page, "plan", g_pammgno)
-    for y in years:
-        _set_year(page, y)
-        out["plan"][str(y)] = page.evaluate(GET_TEXT_JS)
-        progress_cb(f"  5-6 프로그램 계획 {y}년 수집")
+    # 연도별 텍스트 페이지들 (한 페이지 실패해도 나머지는 계속)
+    def _yearly(key: str, label: str) -> None:
+        try:
+            _goto(page, key, g_pammgno)
+            for y in years:
+                _set_year(page, y)
+                out[key][str(y)] = page.evaluate(GET_TEXT_JS)
+            progress_cb(f"  {label} {len(years)}개년 수집")
+        except Exception as e:
+            progress_cb(f"  {label} 수집 실패(건너뜀): {e}")
 
-    _goto(page, "opinion", g_pammgno)
-    for y in years:
-        _set_year(page, y)
-        out["opinion"][str(y)] = page.evaluate(GET_TEXT_JS)
-        progress_cb(f"  5-5 의견수렴 {y}년 수집")
+    out["health"] = {}
+    _yearly("plan", "5-6 프로그램 계획")
+    _yearly("opinion", "5-5 의견수렴")
+    _yearly("health", "8-10 건강검진")
 
     # 6-2 일일점검 (기준일 이후 월별 순회)
     if cutoff:
-        _goto(page, "daily", g_pammgno)
-        months = _month_range(cutoff, _date.today())
-        for (y, m) in months:
-            _set_month(page, y, m)
-            out["daily"][f"{y}-{m:02d}"] = page.evaluate(DAILY_PARSE_JS)
-        progress_cb(f"  6-2 일일점검 {len(months)}개월 수집")
+        try:
+            _goto(page, "daily", g_pammgno)
+            months = _month_range(cutoff, _date.today())
+            for (y, m) in months:
+                _set_month(page, y, m)
+                out["daily"][f"{y}-{m:02d}"] = page.evaluate(DAILY_PARSE_JS)
+            progress_cb(f"  6-2 일일점검 {len(months)}개월 수집")
+        except Exception as e:
+            progress_cb(f"  6-2 일일점검 수집 실패(건너뜀): {e}")
 
     # 1-6 직원인권 보호지침 탭 (2026 신설 지표 — 2026년부터만)
     if max(years) >= 2026:
         try:
-            _goto(page, "guide", g_pammgno)
-            page.evaluate(CLOSE_MODAL_JS)
-            page.wait_for_timeout(800)
-            page.click(".tabmenu2 li:has-text('직원인권')", timeout=10000)
-            page.wait_for_timeout(4000)
-            out["rights"] = page.evaluate(
-                "(() => { const el = document.querySelector('#tab_div_guide_offer_when_join');"
-                " return el ? el.innerText : ''; })()"
-            )
-            progress_cb("  1-6 직원인권 보호지침 수집")
+            out["rights"] = scrape_rights(page, g_pammgno)
+            progress_cb("  1-6 직원인권 보호지침 수집"
+                        + ("" if out["rights"] else " — 내용 비어있음(실패)"))
         except Exception as e:
             out["rights"] = ""
             progress_cb(f"  1-6 직원인권 보호지침 수집 실패: {e}")
 
     return out
+
+
+def scrape_rights(page, g_pammgno: str) -> str:
+    """1-6 이동 → 직원인권 탭 클릭 → 내용 로딩 폴링 (탭 로딩이 간헐적으로 느려 재시도)."""
+    GET_TAB_JS = ("(() => { const el = document.querySelector('#tab_div_guide_offer_when_join');"
+                  " return el ? el.innerText : ''; })()")
+    _goto(page, "guide", g_pammgno)
+    for attempt in range(3):
+        page.evaluate(CLOSE_MODAL_JS)
+        page.wait_for_timeout(700)
+        try:
+            page.click(".tabmenu2 li:has-text('직원인권')", timeout=8000)
+        except Exception:
+            pass
+        for _ in range(12):
+            page.wait_for_timeout(1000)
+            txt = page.evaluate(GET_TAB_JS)
+            if txt and len(txt) > 100:
+                return txt
+    return ""
 
 
 # ---------------- 파싱 ----------------
@@ -293,6 +313,35 @@ def parse_rights(text: str) -> dict:
                     continue
         i += 1
     return {"done": done, "total": total, "rows": rows}
+
+
+def parse_health(text: str) -> dict:
+    """8-10 건강검진: 직원별 [현황, 이름, 직종, 검진상태] + 상단 작성/항목누락/대상 카운트."""
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    counts = None
+    for ln in lines[:80]:
+        m = re.match(r"^(\d+)\s*/\s*(\d+)\s*/\s*(\d+)$", ln)
+        if m:
+            counts = (int(m.group(1)), int(m.group(2)), int(m.group(3)))  # 작성/항목누락/대상
+            break
+    rows = []
+    i = 0
+    while i < len(lines):
+        if lines[i].isdigit() and i + 2 < len(lines) and lines[i + 1] in ("재직", "퇴사", "휴직"):
+            status, name = lines[i + 1], lines[i + 2]
+            # 이후 7줄 내 검진상태 토큰
+            hstat = ""
+            for j in range(i + 3, min(i + 11, len(lines))):
+                if lines[j] in ("작성", "미작성", "퇴사", "항목누락", "연중 퇴사"):
+                    hstat = lines[j]
+                    break
+                if lines[j].isdigit() and j > i + 5:
+                    break
+            rows.append({"status": status, "name": name, "health": hstat})
+            i += 3
+            continue
+        i += 1
+    return {"counts": counts, "rows": rows}
 
 
 PROG_TYPES = ("신체기능", "인지기능", "사회적응")
@@ -512,10 +561,34 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             # 2026년 급여개시 수급자: 개시일까지 안내돼 있어야 (미리 안내는 정상)
             r7_late.append(f"{r['name']} 개시{r['start']}→제공{r['provided']}")
 
+    # ---- 항목 15①: 건강검진 연 1회 (완결 연도는 미작성=미흡, 당해 연도는 진행중 표기) ----
+    health_parsed = {int(y): parse_health(t) for y, t in (data.get("health") or {}).items()}
+    health_miss, health_note = [], []
+    for y in sorted(health_parsed):
+        if date(y, 12, 31) < cut:
+            continue
+        rows = health_parsed[y]["rows"]
+        miss_names = [r["name"] for r in rows if r["health"] == "미작성" and r["status"] != "퇴사"]
+        if not rows:
+            continue
+        if y < today.year:
+            if miss_names:
+                health_miss.append(f"{y}년 미작성 {len(miss_names)}명({', '.join(miss_names[:8])}{'…' if len(miss_names) > 8 else ''})")
+        else:
+            if miss_names:
+                health_note.append(f"{y}년 미작성 {len(miss_names)}명(연내 진행중)")
+
     def st(miss):
         return "양호" if not miss else "미흡"
 
     item_results = {}
+    if health_parsed:
+        item_results["15"] = {
+            "status": st(health_miss),
+            "detail": "[부분판정: ①연1회 검진] "
+                      + ("; ".join(health_miss + health_note) or "완결 연도 전 직원 검진 작성 확인")
+                      + " (②입사전 검진 제출 탭은 추후 구현)",
+        }
     if data.get("rights"):
         parts = []
         if rights["done"] is not None:
@@ -599,5 +672,6 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "rights": rights,
             "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},
             "programs": {"plan": plan_parsed, "opinion": op_parsed},
+            "health": health_parsed,
         },
     }
