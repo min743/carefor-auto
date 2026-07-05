@@ -1,14 +1,17 @@
-name: 신규상담 상담시트 입력현황 슬랙공지
+name: 상담 공지 (신규상담 미입력 + 대기명단)
 
+# 발송 주기 미정 — 수동 실행만. 주기 확정 시 schedule(cron) 추가 예정.
 on:
   workflow_dispatch:
     inputs:
-      channel:
-        description: "슬랙 채널 ID"
+      report:
+        description: "보낼 공지"
         required: false
-        default: "C0BC37EB38C"
+        default: "both"
+        type: choice
+        options: [both, consult, waitlist]
       dry_run:
-        description: "true면 전송 없이 미리보기만"
+        description: "true면 전송 없이 생성만"
         required: false
         default: "false"
 
@@ -26,10 +29,15 @@ jobs:
       - name: 공지 실행
         env:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          FLAG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            python consult_report.py --channel "${{ github.event.inputs.channel }}" --dry-run
-          else
-            python consult_report.py --channel "${{ github.event.inputs.channel }}"
+            FLAG="--dry-run"
+          fi
+          if [ "${{ github.event.inputs.report }}" != "waitlist" ]; then
+            python consult_report.py $FLAG
+          fi
+          if [ "${{ github.event.inputs.report }}" != "consult" ]; then
+            python waitlist_report.py $FLAG
           fi

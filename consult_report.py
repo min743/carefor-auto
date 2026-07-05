@@ -131,44 +131,48 @@ def build_message(rows: list[dict], today: date) -> str:
 
     msg = f"{title}\n\n```\n{table}\n```"
 
-    # 입소 완료인데 상담시트 미입력 — 우선 조치 대상
-    urgent = [r for r in rows if r["admitted"] == "Y" and r["sheet_entered"] == "N"]
-    if urgent:
-        msg += f"\n\n⚠️ *입소 완료인데 상담시트 미입력: {len(urgent)}건*"
-        for r in sorted(urgent, key=lambda x: (x["center"], x["consult_date"])):
-            msg += f"\n· {r['center']} | 상담일 {r['consult_date']} | {r['phone']}"
-
-    # 최근 주차 미입력 (이번 달 기준)
     ym = f"{today.year}년 {today.month:02d}월"
-    recent = [r for r in rows if r["sheet_entered"] == "N" and r["yearmonth"] == ym]
-    if recent:
-        msg += f"\n\n📝 *{today.month}월 신규상담 중 미입력: {len(recent)}건*"
-        for r in sorted(recent, key=lambda x: (x["center"], x["consult_date"])):
-            msg += f"\n· {r['center']} | 상담일 {r['consult_date']} | {r['phone']}"
+    urgent_total = sum(1 for r in rows if r["admitted"] == "Y" and r["sheet_entered"] == "N")
+    recent_total = sum(1 for r in rows if r["sheet_entered"] == "N" and r["yearmonth"] == ym)
+    if urgent_total or recent_total:
+        msg += (f"\n\n⚠️ 입소 완료인데 미입력 {urgent_total}건 · "
+                f"📝 {today.month}월 신규상담 미입력 {recent_total}건")
+
+    # 지점별 섹션: 입소완료 미입력 + 이번 달 미입력
+    for short, full in CENTER_ORDER:
+        grp = by_center.get(full, [])
+        urgent = sorted((r for r in grp if r["admitted"] == "Y" and r["sheet_entered"] == "N"),
+                        key=lambda x: x["consult_date"])
+        recent = sorted((r for r in grp if r["sheet_entered"] == "N" and r["yearmonth"] == ym),
+                        key=lambda x: x["consult_date"])
+        if not urgent and not recent:
+            continue
+        msg += f"\n\n*{full}*"
+        for r in urgent:
+            msg += f"\n· ⚠️ 입소완료 미입력 | 상담일 {r['consult_date']} | {r['phone']}"
+        for r in recent:
+            msg += f"\n· {today.month}월 미입력 | 상담일 {r['consult_date']} | {r['phone']}"
 
     msg += "\n\n상담시트 입력 부탁드립니다. (데이터: 주보_충청본부_센터 현황 > 신규상담 세부사항, 전일자 기준)"
     return msg
 
 
-# ---------- 슬랙 전송 ----------
-def send_to_slack(token: str, channel: str, text: str) -> None:
-    body = json.dumps({"channel": channel, "text": text}).encode("utf-8")
+# ---------- 슬랙 전송 (Incoming Webhook — 봇 토큰/유료 불필요) ----------
+def send_via_webhook(webhook_url: str, text: str) -> None:
+    body = json.dumps({"text": text}).encode("utf-8")
     req = urllib.request.Request(
-        "https://slack.com/api/chat.postMessage",
-        data=body,
-        headers={"Authorization": f"Bearer {token}",
-                 "Content-Type": "application/json; charset=utf-8"},
+        webhook_url, data=body,
+        headers={"Content-Type": "application/json; charset=utf-8"},
     )
     with urllib.request.urlopen(req, timeout=30) as res:
-        out = json.loads(res.read().decode("utf-8"))
-    if not out.get("ok"):
-        raise SystemExit(f"슬랙 전송 실패: {out.get('error')}")
+        out = res.read().decode("utf-8")
+    if out.strip() != "ok":
+        raise SystemExit(f"슬랙 전송 실패: {out}")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tsv", help="TSV 파일 경로 (지정 시 webhook 대신 사용)")
-    ap.add_argument("--channel", default=TEST_CHANNEL)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -188,11 +192,11 @@ def main():
         print("(dry-run: 전송 안 함)")
         return
 
-    token = _secret("SLACK_BOT_TOKEN", KEY_BOT_TOKEN)
-    if not token:
-        raise SystemExit("slack_bot_token 자격증명이 없습니다.")
-    send_to_slack(token, args.channel, msg)
-    print(f"전송 완료 → {args.channel}")
+    hook = _secret("SLACK_WEBHOOK_URL", "slack_webhook_url")
+    if not hook:
+        raise SystemExit("slack_webhook_url 자격증명이 없습니다.")
+    send_via_webhook(hook, msg)
+    print("전송 완료 → #차량관리 (webhook)")
 
 
 if __name__ == "__main__":
