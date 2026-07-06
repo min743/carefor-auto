@@ -203,7 +203,7 @@ def main():
             {"type": "header", "text": {"type": "plain_text",
                 "text": "☎️ 신규상담 시트 입력 현황(아롱이)", "emoji": True}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 3월~ 누적"}]},
+                "text": f"{today.strftime('%Y.%m.%d')}({weekday}) · 전일자 기준 · 2026년 5월~ 누적"}]},
             {"type": "section", "text": {"type": "mrkdwn",
                 "text": "💛 상담 한 분 한 분이 소중한 인연입니다 — 오늘의 상담 한 통이 어르신과의 첫 만남이 됩니다."}},
             {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
