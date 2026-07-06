@@ -126,7 +126,37 @@ def fetch_birthdays(progress_cb=print) -> dict | None:
     try:
         import requests
         headers = _headers(token)
-        files = _walk_blocks(PAGE_ID, headers)
+
+        # 1) 검색 API로 '생일쿠폰' 관련 페이지/DB를 찾아 우선 수색, 실패 시 대시보드 전체
+        roots = []
+        try:
+            resp = requests.post("https://api.notion.com/v1/search",
+                                 headers={**headers, "Content-Type": "application/json"},
+                                 json={"query": "생일쿠폰", "page_size": 20}, timeout=30)
+            hits = resp.json().get("results", [])
+            titles = []
+            for h in hits:
+                t = ""
+                if h["object"] == "page":
+                    for prop in (h.get("properties") or {}).values():
+                        if prop.get("type") == "title":
+                            t = "".join(x.get("plain_text", "") for x in prop["title"])
+                elif h["object"] == "database":
+                    t = "".join(x.get("plain_text", "") for x in h.get("title", []))
+                titles.append(t)
+                roots.append((h["object"], h["id"], t))
+            progress_cb(f"  노션 검색 '생일쿠폰' → {len(roots)}건: {titles[:5]}")
+        except Exception:
+            pass
+
+        files = []
+        for obj, rid, _t in roots:
+            if obj == "database":
+                _walk_database(rid, headers, files)
+            else:
+                _walk_blocks(rid, headers, 0, files)
+        if not files:
+            files = _walk_blocks(PAGE_ID, headers)
         monthly: dict[str, dict] = {}
         n_parsed = 0
         for f in files:
