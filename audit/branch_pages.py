@@ -709,9 +709,13 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         rows = health_parsed[y]["rows"]
         if not rows:
             continue
-        # ① 연간: 미작성 + 항목누락(작성했지만 세부자료 미입력) — 재직·휴직 대상
+        # ① 연간: 미작성 + 항목누락(작성했지만 세부자료 미입력 — "눌렀을 때 자료가 있어야") — 재직·휴직 대상
         miss_names = [r["name"] for r in rows if r["health"] == "미작성" and r["status"] != "퇴사"]
         incomplete = [r["name"] for r in rows if r["health"] == "항목누락" and r["status"] != "퇴사"]
+        # 교차검증: 페이지 상단 '작성/항목누락/대상' 집계와 행 파싱 결과 대조
+        counts = health_parsed[y].get("counts")
+        if counts and counts[1] != len([r for r in rows if r["health"] == "항목누락"]):
+            health_note.append(f"{y}년 항목누락 집계 불일치(페이지 {counts[1]} vs 파싱 {len(incomplete)}) — 확인 필요")
         if y < today.year:
             if miss_names:
                 health_miss.append(f"{y}년 미작성 {len(miss_names)}명({', '.join(miss_names[:8])}{'…' if len(miss_names) > 8 else ''})")
