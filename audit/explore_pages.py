@@ -91,6 +91,7 @@ PAGES = {
     "2-4":   ("left_sub2", "/transport/view.transport_car_manage", "2-4.차량관리"),
     "9-1":   ("left_sub9", "/basic/view.center_master", "9-1.시설정보설정"),
     "8-1-1": ("left_sub8", "/share/staff/view.welfare_reward_manage", "8-1-1.복지(포상) 제공대장 관리"),
+    "8-5":   ("left_sub8", "/share/patient/view.patient_case_meeting_tab", "8-5.사례관리 회의록"),
 }
 
 

@@ -34,6 +34,7 @@ PAGES = {
     "welfare":   ("left_sub8", "/share/staff/view.welfare_reward_manage", "8-1-1.복지(포상) 제공대장 관리"),
     "progdaily": ("left_sub5", "/share/program/view.program_service_daily", "5-1.프로그램 제공기록"),
     "consult":   ("left_sub1", "/share/patient/view.patient_consult", "1-4.상담일지"),
+    "case":      ("left_sub8", "/share/patient/view.patient_case_meeting_tab", "8-5.사례관리 회의록"),
 }
 
 # 1-4 상담일지: 수급자별 분기 셀 complete/none + 행 data-info(연간 상담수·급여반영수)
@@ -267,6 +268,25 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
     except Exception as e:
         progress_cb(f"  1-4 상담일지 수집 실패(건너뜀): {e}")
 
+    # 8-5 사례관리 회의록 (항목 29 — 반기별 회의·반영·평가, 2024~)
+    out["case"] = {}
+    try:
+        _goto(page, "case", g_pammgno)
+        page.evaluate(CLOSE_MODAL_JS)
+        for y in [yy for yy in years if yy >= 2024]:
+            page.evaluate(f"reloadPage({{'yy':'{y}'}})")
+            txt = ""
+            for _ in range(8):
+                page.wait_for_timeout(800)
+                page.evaluate(CLOSE_MODAL_JS)
+                txt = page.evaluate(GET_TEXT_JS)
+                if "실시 주기" in txt:
+                    break
+            out["case"][str(y)] = txt
+        progress_cb(f"  8-5 사례관리 회의록 {len(out['case'])}개년 수집")
+    except Exception as e:
+        progress_cb(f"  8-5 사례관리 수집 실패(건너뜀): {e}")
+
     # 1-6 수급자 안전관리 설명 탭 (항목 19④ — 연 1회, 2024~. 기본 탭이라 연도만 전환)
     out["safe"] = {}
     try:
@@ -490,6 +510,86 @@ def parse_safe(text: str) -> dict:
                 continue
         i += 1
     return {"total": total, "done": done, "undone": undone, "rows": rows}
+
+
+def parse_case(text: str) -> dict:
+    """8-5 사례관리 회의록. 2026 신형: 실시주기 요약(회의/반영/평가 × 상·하반기) + 반기 열 목록.
+    2024~25 구형: 분기 보드(1~4분기 작성/미작성) + 목록(연번·일시·수급자·참가자수·작성자·반영 n/m)
+    → 반기로 환산. 반환 키는 동일: meeting/reflect/evaluate([상,하]) + rows."""
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    # 선택 행의 상세 패널(내용보기)은 파싱 제외
+    for stop in ("사례관리 회의록 내용보기", "알림사항"):
+        if stop in lines:
+            lines = lines[:lines.index(stop)]
+    out = {"meeting": [None, None], "reflect": [None, None], "evaluate": [None, None], "rows": []}
+    ratio_re = re.compile(r"^(\d+)\s*/\s*(\d+)$")
+    date_re = re.compile(r"^\d{4}\.\d{2}\.\d{2}$")
+
+    if "실시 주기" in lines:  # ---- 2026 신형 ----
+        KEYS = {"사례관리 회의": "meeting", "급여제공 반영": "reflect", "사례관리 회의 평가": "evaluate"}
+        for i, ln in enumerate(lines):
+            k = KEYS.get(ln)
+            if k and out[k] == [None, None] and i + 2 < len(lines):
+                out[k] = [lines[i + 1], lines[i + 2]]
+        i = 0
+        while i < len(lines):
+            if lines[i] in ("상반기", "하반기") and i + 1 < len(lines) and date_re.match(lines[i + 1]):
+                row = {"half": lines[i], "date": lines[i + 1], "names": "", "sign": "", "reflect": ""}
+                for s in lines[i + 2:i + 7]:
+                    m = ratio_re.match(s)
+                    if m and not row["sign"]:
+                        row["sign"] = s.replace(" ", "")
+                    elif not row["names"] and not m:
+                        row["names"] = s
+                out["rows"].append(row)
+                i += 2
+                continue
+            i += 1
+        return out
+
+    if "1분기" in lines:  # ---- 2024~25 구형: 분기 보드 → 반기 환산 ----
+        try:
+            base = lines.index("4분기") + 1
+            qs = lines[base:base + 4]
+        except ValueError:
+            qs = []
+        def _half(a, b):
+            vals = qs[a:b + 1]
+            if len(vals) < 2:
+                return None
+            n = sum(1 for s in vals if s.startswith("작성"))
+            return f"작성({n}건)" if n else "미작성"
+        out["meeting"] = [_half(0, 1), _half(2, 3)]
+        i = 0
+        while i < len(lines):
+            if lines[i].isdigit() and i + 1 < len(lines) and date_re.match(lines[i + 1]):
+                d = lines[i + 1]
+                row = {"half": "상반기" if int(d[5:7]) <= 6 else "하반기",
+                       "date": d, "names": "", "sign": "", "reflect": ""}
+                for s in lines[i + 2:i + 8]:
+                    if date_re.match(s):
+                        break
+                    m = ratio_re.match(s)
+                    if m:
+                        row["reflect"] = s.replace(" ", "")
+                        break
+                    if not row["names"] and not s.isdigit() and ":" not in s and "~" not in s:
+                        row["names"] = s
+                out["rows"].append(row)
+                i += 2
+                continue
+            i += 1
+        # 반영 요약: 행 단위 집계 (반영수>=대상자수 = 완료)
+        for hi, half in enumerate(("상반기", "하반기")):
+            hr = [r for r in out["rows"] if r["half"] == half]
+            if hr:
+                ok = 0
+                for r in hr:
+                    m = ratio_re.match(r["reflect"])
+                    if m and int(m.group(1)) >= int(m.group(2)) and int(m.group(2)) > 0:
+                        ok += 1
+                out["reflect"][hi] = f"{ok} / {len(hr)}"
+    return out
 
 
 def parse_health(text: str) -> dict:
@@ -974,6 +1074,41 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     if len(consult_miss) > 8:
         consult_miss = consult_miss[:8] + [f"외 {len(consult_miss) - 8}건"]
 
+    # ---- 항목 29: 사례관리 회의 반기별 + 급여반영·평가 (8-5, 2024~) ----
+    case_parsed = {int(y): parse_case(t) for y, t in (data.get("case") or {}).items() if t}
+    case_miss, case_note = [], []
+    for y in sorted(case_parsed):
+        cp = case_parsed[y]
+        for hi, (half, h_start, h_end) in enumerate((("상반기", date(y, 1, 1), date(y, 6, 30)),
+                                                     ("하반기", date(y, 7, 1), date(y, 12, 31)))):
+            if not _period_ok(h_start, h_end):
+                continue
+            meet = cp["meeting"][hi] or ""
+            done = meet.startswith("작성")
+            if h_end >= today:
+                if not done and today > h_start + timedelta(days=60):
+                    case_note.append(f"{y} {half} 회의 미작성(진행중)")
+                continue
+            if not done:
+                case_miss.append(f"{y} {half} 회의 미작성")
+                continue
+            in_grace = (today - h_end).days <= 30  # 반기말 회의의 반영·평가 30일 기한 미도래 가능
+            m = re.match(r"(\d+)\s*/\s*(\d+)", cp["reflect"][hi] or "")
+            if m and int(m.group(1)) < int(m.group(2)):
+                (case_note if in_grace else case_miss).append(
+                    f"{y} {half} 급여반영 {m.group(1)}/{m.group(2)}" + ("(기한 진행중)" if in_grace else ""))
+            if y >= 2026:
+                ev = cp["evaluate"][hi] or ""
+                m2 = re.match(r"(\d+)\s*/\s*(\d+)", ev)
+                if ev == "미작성" or (m2 and int(m2.group(1)) < int(m2.group(2))):
+                    (case_note if in_grace else case_miss).append(
+                        f"{y} {half} 회의평가 미완({ev})" + ("(기한 진행중)" if in_grace else ""))
+        for r in cp["rows"]:
+            ms = re.match(r"(\d+)/(\d+)", r.get("sign") or "")
+            if ms and int(ms.group(1)) < int(ms.group(2)):
+                case_note.append(f"{r['date']} 회의 서명 {r['sign']}")
+    case_note = case_note[:8]
+
     # ---- 항목 15: 건강검진 ①연간(연1회, 항목누락 포함) + ②입사전 제출 ----
     health_parsed = {int(y): parse_health(t) for y, t in (data.get("health") or {}).items()}
     prejoin_parsed = {int(y): parse_prejoin(t) for y, t in (data.get("health_pre") or {}).items()}
@@ -1077,6 +1212,16 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "sub_status": {"②": st(r7_missing + r7_late)},
             "detail": "2026년 기준 — " + " · ".join(parts),
         }
+    if case_parsed:
+        item_results["29"] = {
+            "status": st(case_miss),
+            "sub_status": {"①": st([m for m in case_miss if "회의 미작성" in m]),
+                           "②": st([m for m in case_miss if "급여반영" in m or "회의평가" in m])},
+            "detail": "[①반기 회의·②급여반영/평가] "
+                      + ("; ".join(case_miss) or "반기별 회의·급여반영·평가 충족")
+                      + (" / " + "; ".join(case_note) if case_note else "")
+                      + " (3인 참여·직원별 의견·30일 기한 준수는 회의록 팝업 수기 확인)",
+        }
     if consult_detail:
         item_results["17"] = {
             "status": st(consult_miss + consult2_miss),
@@ -1162,6 +1307,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "rights": rights,
             "safe": safe_parsed,
             "consult": consult_detail,
+            "case": case_parsed,
             "welfare": welfare_parsed,
             "birthday_log": birthday_log,
             "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},
