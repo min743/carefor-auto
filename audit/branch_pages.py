@@ -154,8 +154,27 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
     out["welfare"] = {}
     _yearly("plan", "5-6 프로그램 계획")
     _yearly("opinion", "5-5 의견수렴")
-    _yearly("health", "8-10 건강검진")
     _yearly("welfare", "8-1-1 복지대장")
+
+    # 8-10 건강검진: 연도별 × 탭 2개(연간관리현황 + 입사전 제출)
+    out["health_pre"] = {}
+    try:
+        _goto(page, "health", g_pammgno)
+        page.evaluate(CLOSE_MODAL_JS)
+        for y in years:
+            _set_year(page, y)
+            out["health"][str(y)] = page.evaluate(GET_TEXT_JS)
+            try:
+                page.click("text=입사전 건강검진 제출", timeout=8000)
+                page.wait_for_timeout(2500)
+                out["health_pre"][str(y)] = page.evaluate(GET_TEXT_JS)
+                page.click("text=연간관리현황", timeout=8000)
+                page.wait_for_timeout(2000)
+            except Exception:
+                pass
+        progress_cb(f"  8-10 건강검진 {len(years)}개년 수집 (2개 탭)")
+    except Exception as e:
+        progress_cb(f"  8-10 건강검진 수집 실패(건너뜀): {e}")
 
     # 6-2 일일점검 (기준일 이후 월별 순회)
     if cutoff:
@@ -394,6 +413,41 @@ def parse_welfare(text: str) -> dict:
             out[cur_q].append({"date": ln, "title": title, "recipients": recipients})
         i += 1
     return out
+
+
+def parse_prejoin(text: str) -> list:
+    """8-10 입사전 건강검진 제출 탭: [{name, join, left, status}]."""
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    date_re = re.compile(r"^\d{4}\.\d{2}\.\d{2}$")
+    rows = []
+    i = 0
+    while i < len(lines):
+        # 행: 연번, 이름, 성별, 생년, 직종, 입사일, (퇴사일), 상태
+        if (lines[i].isdigit() and i + 2 < len(lines)
+                and re.match(r"^[가-힣]{2,4}$", lines[i + 1]) and lines[i + 2] in ("남", "여")):
+            name = lines[i + 1]
+            join = left = ""
+            status = ""
+            dates = []
+            for j in range(i + 3, min(i + 10, len(lines))):
+                s = lines[j]
+                if date_re.match(s):
+                    dates.append(s)
+                elif s in ("작성", "미작성", "항목누락", "퇴사"):
+                    status = s
+                    break
+                elif s.isdigit():
+                    break
+            # dates: [생년, 입사일, (퇴사일)]
+            if len(dates) >= 2:
+                join = dates[1]
+                if len(dates) >= 3:
+                    left = dates[2]
+            rows.append({"name": name, "join": join, "left": left, "status": status})
+            i += 3
+            continue
+        i += 1
+    return rows
 
 
 PROG_TYPES = ("신체기능", "인지기능", "사회적응")
@@ -645,22 +699,35 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             # 2026년 급여개시 수급자: 개시일까지 안내돼 있어야 (미리 안내는 정상)
             r7_late.append(f"{r['name']} 개시{r['start']}→제공{r['provided']}")
 
-    # ---- 항목 15①: 건강검진 연 1회 (완결 연도는 미작성=미흡, 당해 연도는 진행중 표기) ----
+    # ---- 항목 15: 건강검진 ①연간(연1회, 항목누락 포함) + ②입사전 제출 ----
     health_parsed = {int(y): parse_health(t) for y, t in (data.get("health") or {}).items()}
+    prejoin_parsed = {int(y): parse_prejoin(t) for y, t in (data.get("health_pre") or {}).items()}
     health_miss, health_note = [], []
     for y in sorted(health_parsed):
         if not _period_ok(date(y, 1, 1), date(y, 12, 31)):
             continue
         rows = health_parsed[y]["rows"]
-        miss_names = [r["name"] for r in rows if r["health"] == "미작성" and r["status"] != "퇴사"]
         if not rows:
             continue
+        # ① 연간: 미작성 + 항목누락(작성했지만 세부자료 미입력) — 재직·휴직 대상
+        miss_names = [r["name"] for r in rows if r["health"] == "미작성" and r["status"] != "퇴사"]
+        incomplete = [r["name"] for r in rows if r["health"] == "항목누락" and r["status"] != "퇴사"]
         if y < today.year:
             if miss_names:
                 health_miss.append(f"{y}년 미작성 {len(miss_names)}명({', '.join(miss_names[:8])}{'…' if len(miss_names) > 8 else ''})")
+            if incomplete:
+                health_miss.append(f"{y}년 항목누락 {len(incomplete)}명({', '.join(incomplete[:5])})")
         else:
             if miss_names:
                 health_note.append(f"{y}년 미작성 {len(miss_names)}명(연내 진행중)")
+            if incomplete:
+                health_miss.append(f"{y}년 항목누락 {len(incomplete)}명({', '.join(incomplete[:5])})")
+        # ② 입사전 제출: 재직 신규입사자가 입사일 지나도록 미작성 → 미흡
+        for r in prejoin_parsed.get(y, []):
+            if r["left"] or r["status"] == "작성":
+                continue
+            if r["join"] and datetime.strptime(r["join"], "%Y.%m.%d").date() <= today:
+                health_miss.append(f"입사전 미제출: {r['name']}(입사 {r['join']})")
 
     # ---- 항목 8③: 복지(포상) 분기별 1회 이상 (8-1-1 대장) ----
     welfare_parsed = {int(y): parse_welfare(t) for y, t in (data.get("welfare") or {}).items()}
@@ -708,9 +775,9 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         item_results["15"] = {
             "status": st(health_miss),
             "sub_status": {"①": st(health_miss)},
-            "detail": "[부분판정: ①연1회 검진] "
-                      + ("; ".join(health_miss + health_note) or "완결 연도 전 직원 검진 작성 확인")
-                      + " (②입사전 검진 제출 탭은 추후 구현)",
+            "detail": "①연간(항목누락 포함)+②입사전 제출: "
+                      + ("; ".join(health_miss + health_note) or "전 직원 검진 작성·입사전 제출 확인")
+                      + " (75% 이상 부분점수 2.25점은 채점 시 판단)",
         }
     if data.get("rights"):
         parts = []
