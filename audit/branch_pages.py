@@ -33,7 +33,40 @@ PAGES = {
     "master":    ("left_sub9", "/basic/view.center_master", "9-1.시설정보설정"),
     "welfare":   ("left_sub8", "/share/staff/view.welfare_reward_manage", "8-1-1.복지(포상) 제공대장 관리"),
     "progdaily": ("left_sub5", "/share/program/view.program_service_daily", "5-1.프로그램 제공기록"),
+    "consult":   ("left_sub1", "/share/patient/view.patient_consult", "1-4.상담일지"),
 }
+
+# 1-4 상담일지: 수급자별 분기 셀 complete/none + 행 data-info(연간 상담수·급여반영수)
+CONSULT_PARSE_JS = """
+(() => {
+  const t = document.querySelector('#patient_consult_table');
+  if (!t) return null;
+  const out = {header: [], banner: '', rows: []};
+  t.querySelectorAll('g-h span[data-type=searchedStatus]').forEach(s => out.header.push(s.innerText.trim()));
+  const bn = document.querySelector('.m_button.opn .stxt');
+  if (bn) out.banner = bn.innerText.trim();
+  const b = t.querySelector('g-b');
+  if (!b) return out;
+  let cur = null;
+  Array.from(b.children).forEach(el => {
+    const tag = el.tagName;
+    if (tag === 'G-TF') {
+      cur = null;
+      try { cur = JSON.parse(el.getAttribute('data-info')); } catch (e) {}
+      if (cur) out.rows.push({name: cur.pamname || '', pas: cur.year_pas_cnt || 0,
+                              csh: cur.year_csh_cnt || 0, stat: '', q: []});
+    } else if (tag === 'G-TD' && cur && out.rows.length) {
+      const col = el.getAttribute('data-gt-col');
+      const last = out.rows[out.rows.length - 1];
+      if (col === '1') last.stat = el.innerText.trim();
+      if (['5', '6', '7', '8'].includes(col) && last.q.length < 4) {
+        last.q.push(el.className.includes('complete') ? (el.innerText.trim().split('\\n')[0] || '✓') : '');
+      }
+    }
+  });
+  return out;
+})()
+"""
 
 # 6-2 일일점검: 행(일자)×열(위생점검1/주방소독2/간호비품3/급식4) — class complete/none 로 작성 여부
 DAILY_PARSE_JS = """
@@ -214,6 +247,25 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
             progress_cb(f"  6-2 일일점검 {len(months)}개월 수집")
         except Exception as e:
             progress_cb(f"  6-2 일일점검 수집 실패(건너뜀): {e}")
+
+    # 1-4 상담일지 (항목 17①② — 분기별 상담 + 급여반영, 2024~)
+    out["consult"] = {}
+    try:
+        _goto(page, "consult", g_pammgno)
+        page.evaluate(CLOSE_MODAL_JS)
+        for y in [yy for yy in years if yy >= 2024]:
+            page.evaluate(f"reloadPage({{'yy':'{y}','visit_type':'','include_serviceSupply':''}})")
+            data_c = None
+            for _ in range(8):
+                page.wait_for_timeout(800)
+                page.evaluate(CLOSE_MODAL_JS)
+                data_c = page.evaluate(CONSULT_PARSE_JS)
+                if data_c and data_c.get("rows"):
+                    break
+            out["consult"][str(y)] = data_c
+        progress_cb(f"  1-4 상담일지 {len(out['consult'])}개년 수집")
+    except Exception as e:
+        progress_cb(f"  1-4 상담일지 수집 실패(건너뜀): {e}")
 
     # 1-6 수급자 안전관리 설명 탭 (항목 19④ — 연 1회, 2024~. 기본 탭이라 연도만 전환)
     out["safe"] = {}
@@ -886,6 +938,42 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         safe_miss = safe_miss[:8] + [f"외 {len(safe_miss) - 8}건"]
     safe_note = safe_note[:8]
 
+    # ---- 항목 17①②: 분기별 상담 + 급여반영 연1회 (1-4 상담일지, 2024~) ----
+    consult_raw = data.get("consult") or {}
+    consult_miss, consult2_miss, consult_note = [], [], []
+    consult_detail = {}
+    Q_END_DAY = (31, 30, 30, 31)
+    for ys in sorted(consult_raw):
+        c = consult_raw[ys]
+        if not c or not c.get("rows"):
+            continue
+        y = int(ys)
+        consult_detail[y] = {"header": c.get("header", []), "banner": c.get("banner", "")}
+        # ① 분기별 상담: 완료된 분기만, 페이지 자체 집계(상담수급자수/대상자수) 기준
+        for qi in range(4):
+            q_start, q_end = date(y, qi * 3 + 1, 1), date(y, qi * 3 + 3, Q_END_DAY[qi])
+            if q_end >= today or not _period_ok(q_start, q_end):
+                continue
+            hdr = c["header"][qi] if qi < len(c.get("header", [])) else ""
+            m = re.match(r"(\d+)\s*/\s*(\d+)", hdr)
+            if not m:
+                continue
+            done_n, tot_n = int(m.group(1)), int(m.group(2))
+            if done_n < tot_n:
+                names = [r["name"] for r in c["rows"]
+                         if len(r.get("q", [])) > qi and not r["q"][qi]][:5]
+                consult_miss.append(f"{y} {qi + 1}분기 {done_n}/{tot_n}명"
+                                    + (f" (미상담 후보: {', '.join(names)})" if names else ""))
+        # ② 급여반영: 연 1회 기준 (내부 목표는 분기 1건 — 당해연도는 현황 노트)
+        csh_total = sum(r.get("csh") or 0 for r in c["rows"])
+        if y < today.year:
+            if csh_total < 1 and _period_ok(date(y, 1, 1), date(y, 12, 31)):
+                consult2_miss.append(f"{y}년 급여반영 0건")
+        else:
+            consult_note.append(f"{y}년 급여반영 {csh_total}건 (내부 목표: 분기 1건)")
+    if len(consult_miss) > 8:
+        consult_miss = consult_miss[:8] + [f"외 {len(consult_miss) - 8}건"]
+
     # ---- 항목 15: 건강검진 ①연간(연1회, 항목누락 포함) + ②입사전 제출 ----
     health_parsed = {int(y): parse_health(t) for y, t in (data.get("health") or {}).items()}
     prejoin_parsed = {int(y): parse_prejoin(t) for y, t in (data.get("health_pre") or {}).items()}
@@ -989,6 +1077,15 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "sub_status": {"②": st(r7_missing + r7_late)},
             "detail": "2026년 기준 — " + " · ".join(parts),
         }
+    if consult_detail:
+        item_results["17"] = {
+            "status": st(consult_miss + consult2_miss),
+            "sub_status": {"①": st(consult_miss), "②": st(consult2_miss)},
+            "detail": "[①분기별 상담·②급여반영 연1회] "
+                      + ("; ".join(consult_miss + consult2_miss) or "완료 분기 전 수급자 상담·급여반영 충족")
+                      + (" / " + "; ".join(consult_note) if consult_note else "")
+                      + " (③계획표·식단표·소식 월1회 제공은 수기)",
+        }
 
     item_results |= {
         "5": {
@@ -1064,6 +1161,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "checks": {y: chk_parsed[y] for y in years},
             "rights": rights,
             "safe": safe_parsed,
+            "consult": consult_detail,
             "welfare": welfare_parsed,
             "birthday_log": birthday_log,
             "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},
