@@ -28,6 +28,7 @@ PAGES = {
     "opinion":   ("left_sub5", "/share/program/view.program_evaluation", "5-5.프로그램 의견수렴 및 반영"),
     "health":    ("left_sub8", "/share/staff/view.staff_yearly_report", "8-10.건강검진관리"),
     "master":    ("left_sub9", "/basic/view.center_master", "9-1.시설정보설정"),
+    "welfare":   ("left_sub8", "/share/staff/view.welfare_reward_manage", "8-1-1.복지(포상) 제공대장 관리"),
 }
 
 # 6-2 일일점검: 행(일자)×열(위생점검1/주방소독2/간호비품3/급식4) — class complete/none 로 작성 여부
@@ -150,9 +151,11 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
             progress_cb(f"  {label} 수집 실패(건너뜀): {e}")
 
     out["health"] = {}
+    out["welfare"] = {}
     _yearly("plan", "5-6 프로그램 계획")
     _yearly("opinion", "5-5 의견수렴")
     _yearly("health", "8-10 건강검진")
+    _yearly("welfare", "8-1-1 복지대장")
 
     # 6-2 일일점검 (기준일 이후 월별 순회)
     if cutoff:
@@ -361,6 +364,36 @@ def parse_health(text: str) -> dict:
             continue
         i += 1
     return {"counts": counts, "rows": rows}
+
+
+def parse_welfare(text: str) -> dict:
+    """8-1-1 복지(포상) 제공대장: 분기별 제공 기록 [{date, title, recipients}]."""
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    date_re = re.compile(r"^\d{4}\.\d{2}\.\d{2}$")
+    out = {"1분기": [], "2분기": [], "3분기": [], "4분기": []}
+    cur_q = None
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        if "신규작성" in ln or ln == "알림사항":
+            break  # 본문 끝 (하단 버튼·알림 모달)
+        if ln in out:
+            cur_q = ln
+        elif cur_q and date_re.match(ln):
+            title = lines[i + 1] if i + 1 < len(lines) else ""
+            # 수령인: 제목 다음부터 'n / n' 서명 카운트 전까지의 이름들
+            recipients = []
+            j = i + 2
+            while j < len(lines) and not re.match(r"^\d+\s*/\s*\d+$", lines[j]):
+                s = lines[j]
+                if date_re.match(s) or s in out or len(s) > 20:
+                    break
+                if re.match(r"^[가-힣]{2,4}$", s):
+                    recipients.append(s)
+                j += 1
+            out[cur_q].append({"date": ln, "title": title, "recipients": recipients})
+        i += 1
+    return out
 
 
 PROG_TYPES = ("신체기능", "인지기능", "사회적응")
@@ -629,6 +662,29 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             if miss_names:
                 health_note.append(f"{y}년 미작성 {len(miss_names)}명(연내 진행중)")
 
+    # ---- 항목 8③: 복지(포상) 분기별 1회 이상 (8-1-1 대장) ----
+    welfare_parsed = {int(y): parse_welfare(t) for y, t in (data.get("welfare") or {}).items()}
+    welfare_miss, welfare_note = [], []
+    birthday_log = {}  # {"YYYY-MM": [수령인]} — 노션 생일쿠폰 대조용
+    q_defs = {1: ("1분기", 1, (3, 31)), 2: ("2분기", 4, (6, 30)), 3: ("3분기", 7, (9, 30)), 4: ("4분기", 10, (12, 31))}
+    for y in sorted(welfare_parsed):
+        wq = welfare_parsed[y]
+        for q, (qname, sm, (em, ed)) in q_defs.items():
+            q_start, q_end = date(y, sm, 1), date(y, em, ed)
+            if not _period_ok(q_start, q_end):
+                continue
+            recs = wq.get(qname, [])
+            if q_end <= today:
+                if not recs:
+                    welfare_miss.append(f"{y} {qname}")
+            elif q_start <= today and not recs:
+                welfare_note.append(f"{y} {qname} 미제공(진행중)")
+        for qname, recs in wq.items():
+            for r in recs:
+                m = re.search(r"(\d+)월\s*생일쿠폰", r["title"])
+                if m and r["recipients"]:
+                    birthday_log.setdefault(f"{y}-{int(m.group(1)):02d}", []).extend(r["recipients"])
+
     def st(miss):
         return "양호" if not miss else "미흡"
 
@@ -639,6 +695,15 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     e6_guide_cur = [e for e in e6_guide if "진행중" not in e]
 
     item_results = {}
+    if welfare_parsed:
+        item_results["8"] = {
+            "status": st(welfare_miss),
+            "detail": "[부분판정: ③분기별 복지] "
+                      + (("누락: " + ", ".join(welfare_miss)) if welfare_miss else "분기별 복지(포상) 제공 충족")
+                      + (" / " + "; ".join(welfare_note) if welfare_note else "")
+                      + " (①5대보험·②가산금·④고충면담·⑤퇴직금은 수기 · 생일쿠폰 노션 대조는 연동 예정)",
+            "sub_status": {"③": st(welfare_miss)},
+        }
     if health_parsed:
         item_results["15"] = {
             "status": st(health_miss),
@@ -731,6 +796,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "refresher": refresher,
             "checks": {y: chk_parsed[y] for y in years},
             "rights": rights,
+            "welfare": welfare_parsed,
+            "birthday_log": birthday_log,
             "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},
             "programs": {"plan": plan_parsed, "opinion": op_parsed},
             "health": health_parsed,
