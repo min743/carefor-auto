@@ -133,6 +133,7 @@ def run_branch_audit(
         "items": ITEMS,
         "item_results": analysis["item_results"],
         "branch_pages": branch_pages["detail"] if branch_pages else None,
+        "opened": branch_pages.get("opened") if branch_pages else None,
     }
 
     if save:
@@ -152,7 +153,7 @@ def _write_dashboard_data() -> None:
     for f in AUDIT_DIR.glob("*.json"):
         try:
             d = json.loads(f.read_text(encoding="utf-8"))
-            slim = {k: d[k] for k in ("branch", "cutoff", "run_at", "people", "item_results", "rows_match") if k in d}
+            slim = {k: d[k] for k in ("branch", "cutoff", "run_at", "people", "item_results", "rows_match", "opened") if k in d}
             slim["analysis"] = d.get("analysis", {})
             slim["analysis"].pop("rows_match", None)
             data[d["branch"]] = slim

@@ -123,7 +123,9 @@ function render(){
 
   html += `<div class="meta">`;
   if(d){
-    html += `<span>🕐 자동수집: <b>${d.run_at}</b></span><span>기준일: <b>${d.cutoff}</b></span><span>수급자: <b>${d.people}명</b> (퇴소자 포함)</span>`;
+    html += `<span>🕐 자동수집: <b>${d.run_at}</b></span><span>기준일: <b>${d.cutoff}</b></span>`
+      + (d.opened ? `<span>기관 지정일: <b>${d.opened}</b> (이전 기간 자동 제외)</span>` : '')
+      + `<span>수급자: <b>${d.people}명</b> (퇴소자 포함)</span>`;
     const st = (d.analysis||{}).stats;
     if(st) html += `<span>낙상↔욕구 대조: <b>${st.total_rounds}</b>회차 / 불일치 <b class="t-bad">${st.disc}</b>건</span>`;
   } else {
