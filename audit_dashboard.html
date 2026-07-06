@@ -161,8 +161,8 @@ function render(){
 
   html += `<div class="btnrow">
     <button onclick="uploadScores()">📤 본부 공유 (점수 업로드)</button>
-    <button class="gray" onclick="exportAll()">📥 점검표 내보내기(JSON)</button>
     <button class="gray" onclick="location.reload()">🔄 새로고침</button>
+    <span style="align-self:center;font-size:12px;color:#888">엑셀·PDF 점검표: 📤 공유 후 "점검표_내보내기.bat" 더블클릭</span>
     <span id="upmsg" style="align-self:center;font-size:12px;color:#2c8a41"></span>
   </div>`;
 
@@ -294,8 +294,20 @@ function buildScoreData(branch){
   });
   const memos = {};
   Object.keys(manual).forEach(no=>{ if(manual[no] && manual[no].memo) memos[no] = manual[no].memo; });
+  // 기준별 선택값 (자동 부여 포함) — 점검표 엑셀/PDF 내보내기용
+  const sub_values = {};
+  ITEMS.forEach(it=>{
+    if(!it.subs) return;
+    it.subs.forEach(s=>{
+      const e = effVal(it, s, manual, d);
+      if(e.v !== undefined){
+        sub_values[it.no] = sub_values[it.no] || {};
+        sub_values[it.no][s.label] = {v: e.v, auto: e.auto};
+      }
+    });
+  });
   return {total_earned: Math.round(earned*100)/100, filled, total_subs: total,
-          na_points: Math.round(naPts*100)/100, per_item, memos};
+          na_points: Math.round(naPts*100)/100, per_item, memos, sub_values};
 }
 async function postScores(branch, data){
   const body = JSON.stringify({token: SCORES_TOKEN, branch, data});
@@ -325,18 +337,6 @@ async function uploadScores(){
   }
   msg.textContent = (done.length ? '✅ 공유 완료: ' + done.join(' · ') : '입력된 점수가 없습니다')
     + (skipped.length && done.length ? ` (미입력 제외: ${skipped.join(', ')})` : '');
-}
-function exportAll(){
-  const out = {};
-  BRANCHES.forEach(b=>{
-    out[b] = { auto: DATA[b] ? DATA[b].item_results : null, manual: loadManual(b),
-               run_at: DATA[b] ? DATA[b].run_at : null };
-  });
-  const blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '지점점검표_' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
 }
 
 if(!ITEMS.length){
