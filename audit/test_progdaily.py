@@ -27,7 +27,7 @@ def main():
         page.evaluate("change_view('monthly')")
         page.wait_for_timeout(2500)
         for m in range(1, date.today().month + 1):
-            page.evaluate(f"reloadPage({{'yy':'2026','mm':'{m:02d}','dd':'01'}})")
+            page.evaluate(f"reloadPage({{'yy':'2026','mm':'{m:02d}','dd':'01','view_flag':'monthly'}})")
             page.wait_for_timeout(2500)
             txt = page.evaluate(GET_TEXT_JS)
             recs = parse_progdaily(txt)
@@ -43,6 +43,8 @@ def main():
         recs = [r for r in records if r["type"].startswith(tk) and r["journal"]]
         misses = []
         wk = date(2026, 1, 1) - timedelta(days=date(2026, 1, 1).weekday())
+        if wk < date(2026, 1, 1):
+            wk += timedelta(days=7)  # 부분 주 제외 (판정 로직과 동일)
         while wk + timedelta(days=6) <= date.today():
             cnt = sum(1 for r in recs if wk <= r["date"] <= wk + timedelta(days=6))
             if cnt < 3:

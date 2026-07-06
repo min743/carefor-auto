@@ -191,7 +191,8 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         y, m = pm_start.year, pm_start.month
         n_m = 0
         while (y, m) <= (_date.today().year, _date.today().month):
-            page.evaluate(f"reloadPage({{'yy':'{y}','mm':'{m:02d}','dd':'01'}})")
+            # view_flag 없이 reloadPage하면 일간 뷰로 리셋됨 (매월 1일 하루치만 수집되는 버그)
+            page.evaluate(f"reloadPage({{'yy':'{y}','mm':'{m:02d}','dd':'01','view_flag':'monthly'}})")
             page.wait_for_timeout(2500)
             out["progdaily"][f"{y}-{m:02d}"] = page.evaluate(GET_TEXT_JS)
             n_m += 1
@@ -753,6 +754,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             recs = [r for r in prog_records if r["type"].startswith(tk) and r["journal"]]
             if t in ("신체기능", "인지기능"):
                 wk = exec_start - timedelta(days=exec_start.weekday())  # 시작 주 월요일
+                if wk < exec_start:
+                    wk += timedelta(days=7)  # 부분 주 제외 — 전년 12월 미수집이라 12/29주 등 허위 미달 방지
                 while wk + timedelta(days=6) <= today:
                     cnt = sum(1 for r in recs if wk <= r["date"] <= wk + timedelta(days=6))
                     if cnt < 3:
