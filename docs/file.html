@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>첨부파일 보기</title>
+<style>
+  body { margin:0; padding:16px; background:#1c1c1e; color:#eee; font-family:'Malgun Gothic',sans-serif; text-align:center; }
+  #status { padding:40px 0; font-size:16px; }
+  img { max-width:100%; height:auto; border-radius:8px; }
+  a.dl { display:inline-block; margin-top:16px; padding:12px 24px; background:#3478f6; color:#fff; border-radius:8px; text-decoration:none; font-size:16px; }
+  .name { margin:10px 0; font-size:14px; color:#aaa; word-break:break-all; }
+</style>
+</head>
+<body>
+<div id="status">첨부파일 불러오는 중...</div>
+<div id="view"></div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyy_fjmDN8LiuEu2FzPOxhjbPDL_bEloCmNP0aXnf1w3JS0MPzkieAAsKfT8F7yb4Xh/exec';
+
+(async () => {
+  const status = document.getElementById('status');
+  const view = document.getElementById('view');
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) { status.textContent = '파일 주소가 올바르지 않습니다.'; return; }
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'getFile', data: { id } })
+    });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || '불러오기 실패');
+    const bin = atob(d.data.base64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const mime = d.data.mimeType || 'application/octet-stream';
+    const blob = new Blob([arr], { type: mime });
+    const url = URL.createObjectURL(blob);
+    status.style.display = 'none';
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = d.data.fileName || '';
+    view.appendChild(name);
+    if (mime.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = url;
+      view.appendChild(img);
+    } else if (mime === 'application/pdf') {
+      location.href = url;
+    } else {
+      const a = document.createElement('a');
+      a.className = 'dl';
+      a.href = url;
+      a.download = d.data.fileName || 'file';
+      a.textContent = '📥 파일 다운로드';
+      view.appendChild(a);
+    }
+  } catch(e) {
+    status.textContent = '불러오기 실패: ' + e.message;
+  }
+})();
+</script>
+</body>
+</html>
