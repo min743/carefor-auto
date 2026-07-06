@@ -144,6 +144,10 @@ def fetch_birthdays(progress_cb=print) -> dict | None:
             for br, names in parsed.items():
                 dst.setdefault(br, []).extend(names)
         progress_cb(f"  노션 생일쿠폰: 파일 {len(files)}개 중 명세서 {n_parsed}개 파싱, {len(monthly)}개월")
+        if n_parsed == 0 and files:
+            # 진단: 패턴 미일치 시 엑셀류 파일명 샘플 출력 (업무 문서명만 — 개인정보 제외 위해 xlsx 한정)
+            samples = [f["name"][:60] for f in files if str(f.get("name", "")).lower().endswith(".xlsx")][:10]
+            progress_cb(f"  [진단] xlsx 파일명 샘플: {samples}")
         _cache = monthly
         return monthly
     except Exception as e:
