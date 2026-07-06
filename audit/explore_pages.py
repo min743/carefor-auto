@@ -96,6 +96,8 @@ PAGES = {
     "3-1":   ("left_sub3", "/share/care/view.care_service_weekly", "3-1.요양급여 제공 기록"),
     "3-1-3": ("left_sub3", "/share/care/view.care_service_bigo_all", "3-1-3.요양급여 특이사항 관리"),
     "3-2":   ("left_sub3", "/share/care/view.status_change_report", "3-2.상태변화 기록"),
+    "1-2":   ("left_sub1", "/patient/view.patient_case_total", "1-2.전체 기초평가 현황"),
+    "1-3":   ("left_sub1", "/share/patient/view.patient_case", "1-3.기초평가 관리"),
 }
 
 

@@ -37,7 +37,35 @@ PAGES = {
     "case":      ("left_sub8", "/share/patient/view.patient_case_meeting_tab", "8-5.사례관리 회의록"),
     "connect":   ("left_sub1", "/share/patient/view.patient_connection_send_report", "1-10.연계기록지 발송 리포트"),
     "status":    ("left_sub3", "/share/care/view.status_change_report", "3-2.상태변화 기록"),
+    "casetotal": ("left_sub1", "/patient/view.patient_case_total", "1-2.전체 기초평가 현황"),
+    "bigo":      ("left_sub3", "/share/care/view.care_service_bigo_all", "3-1-3.요양급여 특이사항 관리"),
 }
+
+# 1-2 전체 기초평가 현황: '급여제공 결과평가' 열 집계(작성건수/대상자수) 추출.
+# 2024~25 구버전 = 연 1회 단일 열, 2026~ = 반기 2열 (data-gt-col 기반 매핑)
+EVAL12_JS = """
+(() => {
+  const gt = Array.from(document.querySelectorAll('g-t')).find(t => t.textContent.includes('작성건수'));
+  if (!gt) return null;
+  const gh = gt.querySelector('g-h');
+  if (!gh) return null;
+  const ths = Array.from(gh.querySelectorAll('g-th'));
+  const hdr = ths.find(t => t.textContent.includes('결과평가'));
+  if (!hdr) return null;
+  const col = hdr.getAttribute('data-gt-col');
+  const span = parseInt(hdr.getAttribute('colspan') || '1');
+  const agg = {};
+  ths.forEach(t => {
+    const txt = t.textContent.replace(/\\s+/g, '');
+    if (/^\\d+\\/\\d+$/.test(txt)) agg[t.getAttribute('data-gt-col')] = txt;
+  });
+  if (span === 1) return {kind: 'year', y: agg[col] || ''};
+  const halfCells = ths.filter(t => ['상반기', '하반기'].includes(t.textContent.trim()));
+  const i0 = halfCells.findIndex(t => t.getAttribute('data-gt-col') === col);
+  const col2 = (i0 >= 0 && halfCells[i0 + 1]) ? halfCells[i0 + 1].getAttribute('data-gt-col') : null;
+  return {kind: 'half', h1: agg[col] || '', h2: col2 ? (agg[col2] || '') : ''};
+})()
+"""
 
 # 1-4 상담일지: 수급자별 분기 셀 complete/none + 행 data-info(연간 상담수·급여반영수)
 CONSULT_PARSE_JS = """
@@ -229,8 +257,13 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         while (y, m) <= (_date.today().year, _date.today().month):
             # view_flag 없이 reloadPage하면 일간 뷰로 리셋됨 (매월 1일 하루치만 수집되는 버그)
             page.evaluate(f"reloadPage({{'yy':'{y}','mm':'{m:02d}','dd':'01','view_flag':'monthly'}})")
-            page.wait_for_timeout(2500)
-            out["progdaily"][f"{y}-{m:02d}"] = page.evaluate(GET_TEXT_JS)
+            txt = ""
+            for _ in range(10):  # 월 전환 레이스 방지
+                page.wait_for_timeout(700)
+                txt = page.evaluate(GET_TEXT_JS)
+                if f"{y}년 {m:02d}월" in txt:
+                    break
+            out["progdaily"][f"{y}-{m:02d}"] = txt
             n_m += 1
             m += 1
             if m > 12:
@@ -258,14 +291,7 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         page.evaluate(CLOSE_MODAL_JS)
         for y in [yy for yy in years if yy >= 2024]:
             page.evaluate(f"reloadPage({{'yy':'{y}','visit_type':'','include_serviceSupply':''}})")
-            data_c = None
-            for _ in range(8):
-                page.wait_for_timeout(800)
-                page.evaluate(CLOSE_MODAL_JS)
-                data_c = page.evaluate(CONSULT_PARSE_JS)
-                if data_c and data_c.get("rows"):
-                    break
-            out["consult"][str(y)] = data_c
+            out["consult"][str(y)] = page.evaluate(CONSULT_PARSE_JS) if _wait_year(page, y) else None
         progress_cb(f"  1-4 상담일지 {len(out['consult'])}개년 수집")
     except Exception as e:
         progress_cb(f"  1-4 상담일지 수집 실패(건너뜀): {e}")
@@ -277,17 +303,40 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         page.evaluate(CLOSE_MODAL_JS)
         for y in [yy for yy in years if yy >= 2024]:
             page.evaluate(f"reloadPage({{'yy':'{y}'}})")
-            txt = ""
-            for _ in range(8):
-                page.wait_for_timeout(800)
-                page.evaluate(CLOSE_MODAL_JS)
-                txt = page.evaluate(GET_TEXT_JS)
-                if "실시 주기" in txt:
-                    break
-            out["case"][str(y)] = txt
+            out["case"][str(y)] = page.evaluate(GET_TEXT_JS) if _wait_year(page, y) else ""
         progress_cb(f"  8-5 사례관리 회의록 {len(out['case'])}개년 수집")
     except Exception as e:
         progress_cb(f"  8-5 사례관리 수집 실패(건너뜀): {e}")
+
+    # 1-2 전체 기초평가 현황 — 급여제공 결과평가 집계 (항목 34①, 2024~)
+    out["result_eval"] = {}
+    try:
+        _goto(page, "casetotal", g_pammgno)
+        page.evaluate(CLOSE_MODAL_JS)
+        for y in [yy for yy in years if yy >= 2024]:
+            d = f"{y}1231" if y < _date.today().year else _date.today().strftime("%Y%m%d")
+            page.evaluate(f"reloadPage({{'date':'{d}'}})")
+            out["result_eval"][str(y)] = page.evaluate(EVAL12_JS) if _wait_year(page, y) else None
+        progress_cb(f"  1-2 결과평가 집계 {len(out['result_eval'])}개년 수집")
+    except Exception as e:
+        progress_cb(f"  1-2 결과평가 수집 실패(건너뜀): {e}")
+
+    # 3-1-3 특이사항 '안전관리' 검색 (항목 19③ 부분 — 2026~. 2024~25는 전 지점 입력 관행 없어 제외)
+    out["bigo_safety"] = {}
+    try:
+        _goto(page, "bigo", g_pammgno)
+        page.evaluate(CLOSE_MODAL_JS)
+        for y in [yy for yy in years if yy >= 2026]:
+            e_d = f"{y}1231" if y < _date.today().year else _date.today().strftime("%Y%m%d")
+            page.evaluate(f"document.querySelector('#id_sdate').value='{y}0101';"
+                          f"document.querySelector('#id_edate').value='{e_d}';"
+                          "document.querySelector('input[name=cdssnch]').value='안전관리';"
+                          "load_contents_form('carebigoInquiry')")
+            page.wait_for_timeout(3000)
+            out["bigo_safety"][str(y)] = page.evaluate(GET_TEXT_JS)
+        progress_cb(f"  3-1-3 안전관리 특이사항 {len(out['bigo_safety'])}개년 수집")
+    except Exception as e:
+        progress_cb(f"  3-1-3 수집 실패(건너뜀): {e}")
 
     # 3-2 상태변화 기록 (항목 34④ — 주 1회 작성, 월별 순회 2024~)
     out["status"] = {}
@@ -299,8 +348,13 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         n_m = 0
         while (y, m) <= (_date.today().year, _date.today().month):
             page.evaluate(f"reloadPage({{'yyyymm':'{y}{m:02d}'}})")
-            page.wait_for_timeout(2000)
-            out["status"][f"{y}-{m:02d}"] = page.evaluate(GET_TEXT_JS)
+            txt = ""
+            for _ in range(10):  # 월 전환 레이스 방지 — 화면의 'YYYY년 MM월' 확인
+                page.wait_for_timeout(700)
+                txt = page.evaluate(GET_TEXT_JS)
+                if f"{y}년 {m:02d}월" in txt:
+                    break
+            out["status"][f"{y}-{m:02d}"] = txt
             n_m += 1
             m += 1
             if m > 12:
@@ -333,12 +387,12 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         for y in [yy for yy in years if yy >= 2024]:
             page.evaluate(f"reloadPage({{'yy':'{y}'}})")
             txt = ""
-            for _ in range(8):
-                page.wait_for_timeout(800)
-                page.evaluate(CLOSE_MODAL_JS)
-                txt = page.evaluate(SAFE_TAB_JS)
-                if "총인원" in txt:
-                    break
+            if _wait_year(page, y):
+                for _ in range(4):
+                    txt = page.evaluate(SAFE_TAB_JS)
+                    if "총인원" in txt:
+                        break
+                    page.wait_for_timeout(800)
             out["safe"][str(y)] = txt
         progress_cb(f"  1-6 수급자 안전관리 {len(out['safe'])}개년 수집")
     except Exception as e:
@@ -359,6 +413,21 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
 
 SAFE_TAB_JS = ("(() => { const el = document.querySelector('#div_safe');"
                " return el ? el.innerText : ''; })()")
+
+# 연도 전환(reloadPage) 후 이전 연도 테이블이 남은 채 조기 수집되는 레이스 방지용 — 화면 표시 연도
+YEAR_JS = ("(() => { const el = document.querySelector('.datepicker .datearea');"
+           " return el ? el.innerText : ''; })()")
+
+
+def _wait_year(page, y, tries: int = 10) -> bool:
+    """datepicker 표시 연도가 y가 될 때까지 폴링. 성공 시 True."""
+    for _ in range(tries):
+        page.wait_for_timeout(800)
+        page.evaluate(CLOSE_MODAL_JS)
+        if str(y) in (page.evaluate(YEAR_JS) or ""):
+            page.wait_for_timeout(500)
+            return True
+    return False
 
 
 def scrape_rights(page, g_pammgno: str) -> str:
@@ -665,6 +734,22 @@ def parse_status(text: str, view_ym: str) -> list:
                     pass
             return out
     return []
+
+
+def parse_bigo(text: str) -> list:
+    """3-1-3 특이사항 검색 결과: [{name, date}] (검색어 포함 기록만 서버가 반환)."""
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    date_re = re.compile(r"^\d{4}\.\d{2}\.\d{2}$")
+    rows = []
+    i = 0
+    while i < len(lines):
+        if (lines[i].isdigit() and i + 3 < len(lines)
+                and not date_re.match(lines[i + 1]) and date_re.match(lines[i + 3])):
+            rows.append({"name": lines[i + 1], "date": lines[i + 3]})
+            i += 4
+            continue
+        i += 1
+    return rows
 
 
 def parse_connect(text: str) -> dict:
@@ -1243,6 +1328,56 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     if n_status_miss > 10:
         status_miss = status_miss[:10] + [f"외 {n_status_miss - 10}주"]
 
+    # ---- 항목 34①: 급여제공 결과평가 (1-2 집계 — 2024~25 연1회, 2026~ 반기 1회) ----
+    def _ratio12(s):
+        m = re.match(r"(\d+)\s*/\s*(\d+)", s or "")
+        return (int(m.group(1)), int(m.group(2))) if m else None
+
+    eval_miss, eval_note = [], []
+    for ys in sorted(data.get("result_eval") or {}):
+        ev = (data["result_eval"] or {}).get(ys)
+        if not ev:
+            continue
+        y = int(ys)
+        if ev.get("kind") == "year":
+            r = _ratio12(ev.get("y"))
+            if r and _period_ok(date(y, 1, 1), date(y, 12, 31)) and r[0] < r[1]:
+                if y < today.year:
+                    eval_miss.append(f"{y}년 결과평가 {r[0]}/{r[1]}")
+                else:
+                    eval_note.append(f"{y}년 결과평가 {r[0]}/{r[1]}(진행중)")
+        else:
+            for hi, (half, hs, he) in enumerate((("상반기", date(y, 1, 1), date(y, 6, 30)),
+                                                 ("하반기", date(y, 7, 1), date(y, 12, 31)))):
+                r = _ratio12(ev.get("h1") if hi == 0 else ev.get("h2"))
+                if not r or not _period_ok(hs, he):
+                    continue
+                if he < today:
+                    if r[0] < r[1]:
+                        eval_miss.append(f"{y} {half} 결과평가 {r[0]}/{r[1]}")
+                else:
+                    eval_note.append(f"{y} {half} 결과평가 {r[0]}/{r[1]}(진행중)")
+
+    # ---- 항목 19③(부분): 신체활동 특이사항 '안전관리' 교육 입력 (3-1-3, 연 1회 가정) ----
+    safety_edu_miss, safety_edu_note = [], []
+    for ys in sorted(data.get("bigo_safety") or {}):
+        y = int(ys)
+        if y < 2026 or not _period_ok(date(y, 1, 1), date(y, 12, 31)):
+            continue  # 안전관리 문구 입력은 2026년 시작 관행 — 이전 연도 판정 시 허위 미흡
+        have = {r["name"] for r in parse_bigo((data["bigo_safety"] or {}).get(ys) or "")}
+        c = (data.get("consult") or {}).get(ys) or {}
+        roster = {r["name"] for r in (c.get("rows") or []) if r.get("stat") in ("수급중", "보류")}
+        if not roster:
+            safety_edu_note.append(f"{y}년 안전관리 입력 {len(have)}명(명단 대조 불가)")
+            continue
+        missing = sorted(roster - have)
+        if missing:
+            msg = f"{y}년 안전관리 미입력 {len(missing)}명({', '.join(missing[:5])}{'…' if len(missing) > 5 else ''})"
+            if y < today.year:
+                safety_edu_miss.append(msg)
+            else:
+                safety_edu_note.append(msg + "(진행중)")
+
     # ---- 항목 30②: 퇴소자 연계기록지 작성·제공 (1-10, 2024~) ----
     connect = parse_connect(data.get("connect") or "")
     conn_miss = []
@@ -1363,13 +1498,19 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "sub_status": {"②": st(r7_missing + r7_late)},
             "detail": "2026년 기준 — " + " · ".join(parts),
         }
-    if data.get("status"):
+    if data.get("status") or data.get("result_eval"):
+        sub34 = {}
+        if data.get("result_eval"):
+            sub34["①"] = st(eval_miss)
+        if data.get("status"):
+            sub34["④"] = st(status_miss)
         item_results["34"] = {
-            "status": st(status_miss),
-            "sub_status": {"④": st(status_miss)},
-            "detail": f"[부분판정: ④주1회 상태변화 기록, {len(status_weeks)}주 검사] "
-                      + (("미달 주: " + ", ".join(status_miss)) if status_miss else "전 주 작성 충족")
-                      + " (기록 충실성·①반기 결과평가·②30일 재작성·③기록지 제공은 추후/수기)",
+            "status": st(eval_miss + status_miss),
+            "sub_status": sub34,
+            "detail": f"[①결과평가·④주1회 상태변화({len(status_weeks)}주 검사)] "
+                      + ("; ".join(eval_miss + status_miss) or "결과평가·주간 기록 충족")
+                      + (" / " + "; ".join(eval_note) if eval_note else "")
+                      + " (기록 충실성·②30일 재작성·③기록지 제공은 수기)",
         }
     if data.get("connect"):
         item_results["30"] = {
@@ -1441,13 +1582,18 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
                       + " (①보관함 잠금·③적정투약은 현장/수기 확인)",
         },
         "19": {
-            "status": st(rights_miss + safe_miss),
-            "sub_status": {"①": st(rights_miss)} | ({"④": st(safe_miss)} if safe_parsed else {}),
-            "detail": "[부분판정: ①교육일지" + ("·④안전관리 설명" if safe_parsed else "") + "] "
-                      + (("누락: " + ", ".join(rights_miss + safe_miss)) if (rights_miss or safe_miss)
+            "status": st(rights_miss + safe_miss + safety_edu_miss),
+            "sub_status": {"①": st(rights_miss)}
+                          | ({"④": st(safe_miss)} if safe_parsed else {})
+                          | ({"③": st(safety_edu_miss)} if data.get("bigo_safety") else {}),
+            "detail": "[부분판정: ①교육일지" + ("·④안전관리 설명" if safe_parsed else "")
+                      + ("·③기록지 안전관리 문구" if data.get("bigo_safety") else "") + "] "
+                      + (("누락: " + ", ".join(rights_miss + safe_miss + safety_edu_miss))
+                         if (rights_miss or safe_miss or safety_edu_miss)
                          else "반기별 노인인권 교육" + ("·수급자 안전관리 설명(연1회)" if safe_parsed else "") + " 확인")
-                      + (" / " + "; ".join(rights_note + safe_note) if (rights_note or safe_note) else "")
-                      + " (②숙지·⑤존중은 면담, ③예방활동은 수기/3-1 기록지 연동 예정)",
+                      + (" / " + "; ".join(rights_note + safe_note + safety_edu_note)
+                         if (rights_note or safe_note or safety_edu_note) else "")
+                      + " (②숙지·⑤존중은 면담 · ③은 연1회 입력 가정 — 자동점수 제외, 확인용)",
         },
     }
     has_exec = bool(data.get("progdaily"))
@@ -1477,6 +1623,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             "case": case_parsed,
             "connect": connect,
             "status": {"weeks": len(status_weeks), "miss_weeks": n_status_miss},
+            "result_eval": data.get("result_eval"),
             "welfare": welfare_parsed,
             "birthday_log": birthday_log,
             "daily_miss": {"supply": supply_miss_m, "hygiene": hygiene_miss_m},

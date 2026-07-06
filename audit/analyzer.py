@@ -56,6 +56,8 @@ def analyze(results: list[dict], cutoff: str) -> dict:
     plan_issues = []
     halfyear_miss = []   # 항목 21: 반기별 누락
     order_issues = []    # 항목 20: 계획일 < 기초평가일 순서 위반
+    rehab_miss = []      # 항목 27①: 2026~ 계획서 기능회복훈련 미기재
+    rehab_checked = 0    # rehabTxt 캡처된 계획 수 (구버전 raw는 0 → 27 미판정)
 
     cut_d = _d(cutoff)
     cur_year = date.today().year
@@ -191,6 +193,19 @@ def analyze(results: list[dict], cutoff: str) -> dict:
                 plan_prob.append(f"{pl.get('wd') or '?'} {issue}")
                 plan_issues.append([p["name"], pl.get("wd", ""), pl.get("ap", ""), st, pl.get("agreeDate", ""), issue])
 
+        # ---- 항목 27①: 2026~ 계획서 기능회복훈련 세부내용 (rehabTxt 캡처분만) ----
+        for pl in p.get("plans", []):
+            if "rehabTxt" not in pl:
+                continue
+            wd = pl.get("wd") or ""
+            if not wd.startswith(("2026", "2025.12")):  # 적용 2026.1~ (전년 12월 작성 예외 인정)
+                continue
+            rehab_checked += 1
+            rt = (pl.get("rehabTxt") or "").strip()
+            has_kind = any(k in rt for k in ("신체기능", "기본동작", "일상생활동작"))
+            if not rt or not has_kind:
+                rehab_miss.append([p["name"], wd, "기능회복훈련 세부내용 없음/미기재"])
+
         rows_check.append([
             p["name"], p.get("status", ""), period_txt,
             miss_cols[0], miss_cols[1], miss_cols[2],
@@ -235,11 +250,20 @@ def analyze(results: list[dict], cutoff: str) -> dict:
             "detail": f"급여제공계획 발송·서명 문제 {n_plan}건",
         },
     }
+    if rehab_checked:
+        item_results["27"] = {
+            "status": st(len(rehab_miss)),
+            "sub_status": {"①": st(len(rehab_miss))},
+            "detail": f"[부분판정: ①계획서 기능회복훈련] 2026~ 계획 {rehab_checked}건 중 미기재 {len(rehab_miss)}건"
+                      + ((" — " + "; ".join(f"{r[0]}({r[1]})" for r in rehab_miss[:5])) if rehab_miss else "")
+                      + " (기본동작훈련 필수 기재 여부·②숙지 면담은 수기 확인)",
+        }
 
     return {
         "rows_match": rows_match,
         "rows_check": rows_check,
         "plan_issues": plan_issues,
+        "rehab_miss": rehab_miss,
         "halfyear_miss": halfyear_miss,
         "order_issues": order_issues,
         "item_results": item_results,

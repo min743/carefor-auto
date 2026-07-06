@@ -292,8 +292,11 @@
                   const ap = (pt.match(/적용기간\s*(\d{4}\.\d{2}\.\d{2}\s*~\s*\d{4}\.\d{2}\.\d{2})/) || [])[1] || '';
                   const st = (pt.match(/발송 및 전자서명\s*\(([^)]*)\)/) || [])[1] || '상태없음';
                   const ag = (pt.match(/동의일\s*(\d{4}\.\d{2}\.\d{2})\s*(\(서명완료\))?/) || []);
-                  plans.push({ key: rd.plan, wd, ap, st, agreeDate: ag[1] || '', agreeSigned: !!ag[2] });
-                } else plans.push({ key: rd.plan, wd: '', ap: '', st: '팝업실패', agreeDate: '', agreeSigned: false });
+                  // 27① 기능회복훈련: 계획서 내 기능회복 구간 텍스트 캡처 (신체기능·기본동작·일상생활동작)
+                  const ri = pt.indexOf('기능회복');
+                  const rehabTxt = ri >= 0 ? pt.substring(ri, ri + 300) : '';
+                  plans.push({ key: rd.plan, wd, ap, st, agreeDate: ag[1] || '', agreeSigned: !!ag[2], rehabTxt });
+                } else plans.push({ key: rd.plan, wd: '', ap: '', st: '팝업실패', agreeDate: '', agreeSigned: false, rehabTxt: '' });
                 closeModalSync();
               }
             }
