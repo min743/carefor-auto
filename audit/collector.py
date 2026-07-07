@@ -152,6 +152,14 @@ def run_branch_audit(
     if item33:
         analysis["item_results"]["33"] = item33
 
+    # 항목 32 백신접종률: 주간보호=재가급여, 2026·2027 정기평가는 특례로 충족(Y) 자동 처리 (기준 명시)
+    _yr = datetime.now().year
+    if _yr in (2026, 2027):
+        analysis["item_results"]["32"] = {
+            "status": "양호", "sub_status": {"①": "양호"},
+            "detail": f"[자동] {_yr} 재가급여(주간보호) 정기평가 특례 — 독감접종률 충족(Y) 자동 처리. 2028~는 실제 접종률 수기 확인",
+        }
+
     out = {
         "branch": branch_name,
         "ctmnumb": ctmnumb,
