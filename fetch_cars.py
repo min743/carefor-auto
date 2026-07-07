@@ -71,12 +71,24 @@ def apply_notion_inspect_dates(branches_data: dict, inspect_dates: dict[str, dic
 
 
 def fetch_vehicle_data():
-    res = requests.post(API_URL,
-        headers={'Content-Type': 'text/plain;charset=utf-8'},
-        data=json.dumps({'action': 'getAll'}),
-        timeout=20)
-    res.encoding = 'utf-8'
-    raw = res.json()
+    import time
+    # Apps Script 콜드스타트로 20초를 넘길 때가 있어 타임아웃 상향 + 재시도
+    raw = None
+    for attempt in range(3):
+        try:
+            res = requests.post(API_URL,
+                headers={'Content-Type': 'text/plain;charset=utf-8'},
+                data=json.dumps({'action': 'getAll'}),
+                timeout=60)
+            res.encoding = 'utf-8'
+            raw = res.json()
+            break
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            if attempt < 2:
+                print(f"  차량 기초데이터 로드 실패({type(e).__name__}), 재시도... ({attempt + 1}/3)")
+                time.sleep(5)
+            else:
+                raise
     branches = raw['data']['branches']
     data = raw['data']['data']
     result = {}
