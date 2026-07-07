@@ -66,7 +66,8 @@ jobs:
         run: python run_audit_headless.py
 
       - name: 요약페이지 커밋 (개인정보 없음)
-        if: ${{ github.event.inputs.test_mode != 'true' }}
+        # 시트 업로드가 실패(예: webhook 403)해도 스캔 중 생성된 요약페이지는 갱신·게시 (결과는 공개 요약페이지로 확인)
+        if: ${{ !cancelled() && github.event.inputs.test_mode != 'true' }}
         run: |
           git config user.name "audit-bot"
           git config user.email "actions@github.com"
