@@ -4,8 +4,6 @@ on:
   schedule:
     # 매일(월~금) 07:00 KST = 일~목 22:00 UTC (KST=UTC+9)
     - cron: '0 22 * * 0-4'
-    # [임시] 2026-07-08(수) 08:00 KST 일회성 실행 = 07-07 23:00 UTC. 오늘 실행 후 이 줄 제거 권장.
-    - cron: '0 23 7 7 *'
   workflow_dispatch:
     inputs:
       test_mode:
