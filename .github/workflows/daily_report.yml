@@ -119,10 +119,10 @@ jobs:
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python run_headless.py
 
-      - name: 실패 알림 (슬랙)
+      - name: 실패 알림 (슬랙, 통합 알림 채널)
         if: failure()
-        env:
-          HOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          curl -s -X POST -H 'Content-Type: application/json' \
-            -d '{"text":"⚠️ 출석관리 자동 발송 실패 — GitHub Actions 로그 확인 필요 (daily_report)"}' "$HOOK"
+          curl -s -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+            -H 'Content-type: application/json; charset=utf-8' \
+            -d '{"channel":"C0BC37EB38C","text":"⚠️ 출석관리 자동 발송 실패 — GitHub Actions 로그 확인 필요 (daily_report)"}'

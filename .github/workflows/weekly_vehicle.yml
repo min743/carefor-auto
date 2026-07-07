@@ -67,10 +67,10 @@ jobs:
           NOTION_TOKEN:    ${{ secrets.NOTION_TOKEN }}
         run: python run_vehicle_headless.py
 
-      - name: 실패 알림 (슬랙, 차량 보고 채널)
+      - name: 실패 알림 (슬랙, 통합 알림 채널)
         if: failure()
         run: |
           curl -s -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
             -H 'Content-type: application/json; charset=utf-8' \
-            -d '{"channel":"C0870HLTG9Z","text":"⚠️ 차량관리 주간 보고 실패 — GitHub Actions 로그 확인 필요 (weekly_vehicle)"}'
+            -d '{"channel":"C0BC37EB38C","text":"⚠️ 차량관리 주간 보고 실패 — GitHub Actions 로그 확인 필요 (weekly_vehicle)"}'
