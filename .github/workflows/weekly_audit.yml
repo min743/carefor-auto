@@ -1,9 +1,9 @@
-name: 지점점검 (매주 월 아침)
+name: 지점점검 (평일 매일 아침)
 
 on:
   schedule:
-    # 매주 일요일 22:00 UTC = 월요일 07:00 KST
-    - cron: '0 22 * * 0'
+    # 매일(월~금) 07:00 KST = 일~목 22:00 UTC (KST=UTC+9)
+    - cron: '0 22 * * 0-4'
   workflow_dispatch:
     inputs:
       test_mode:
