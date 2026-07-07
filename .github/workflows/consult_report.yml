@@ -1,12 +1,14 @@
 name: 상담 공지 (신규상담 미입력 + 대기명단)
 
-# 발송 주기 미정 — 수동 실행만. 주기 확정 시 schedule(cron) 추가 예정.
-# 동시 실행 방지: 수동/외부 dispatch가 겹쳐도 순차 실행
+# 매일 아침 7시(KST) 자동 발송 + 수동 실행.
+# 동시 실행 방지: 예약/수동 dispatch가 겹쳐도 순차 실행
 concurrency:
   group: consult-report
   cancel-in-progress: false
 
 on:
+  schedule:
+    - cron: '2 22 * * *'   # 매일 KST 07:02 (UTC 22:02) — 정각은 지연 커서 2분 늦춤
   workflow_dispatch:
     inputs:
       report:
@@ -36,14 +38,16 @@ jobs:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          # 예약(schedule) 자동 실행은 상담 미입력만. 수동 실행은 입력값(기본 both) 따름.
+          REPORT="${{ github.event.inputs.report || 'consult' }}"
           FLAG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             FLAG="--dry-run"
           fi
-          if [ "${{ github.event.inputs.report }}" != "waitlist" ]; then
+          if [ "$REPORT" != "waitlist" ]; then
             python consult_report.py $FLAG
           fi
-          if [ "${{ github.event.inputs.report }}" != "consult" ]; then
+          if [ "$REPORT" != "consult" ]; then
             python waitlist_report.py $FLAG
           fi
 
