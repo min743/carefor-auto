@@ -85,11 +85,15 @@ def judge_item33(data, today):
     subs["③"] = "주의" if p3 else "양호"
     if p3: notes.append("결과반영 3-1-4 미기재 " + "·".join(p3) + " → 상담일지+요양기록지 확인요망")
 
-    # ⑤ 1식4찬 식단표 게시 (점심 밥+국+4찬 = 5개 이상) — 케어포 6-1에서 확실히 확인되므로 하드 판정
+    # ⑤ 1식4찬 식단표 게시 (점심 밥+국+4찬 = 5개 이상), 6-1에서 확인.
+    #    점심 0찬 = 이번주 미입력 표본일 가능성 → 미흡 아니라 '주의'(확인요망). 입력됐는데 4찬 미만만 미흡.
     lunch = menu.get("lunchDishes", 0)
-    ok5 = bool(menu.get("hasMenu")) and lunch >= 5
-    subs["⑤"] = "양호" if ok5 else "미흡"
-    notes.append(f"식단표 게시 {'O' if menu.get('hasMenu') else 'X'}(점심 {lunch}찬)")
+    if lunch >= 5:
+        subs["⑤"] = "양호"; notes.append(f"식단표 게시 O(점심 {lunch}찬)")
+    elif lunch == 0:
+        subs["⑤"] = "주의"; notes.append("식단표 이번주 미입력(표본) — 게시 확인요망")
+    else:
+        subs["⑤"] = "미흡"; notes.append(f"식단표 점심 {lunch}찬(1식4찬 미달)")
 
     bad = [k for k, v in subs.items() if v == "미흡"]
     warn = [k for k, v in subs.items() if v == "주의"]
@@ -98,18 +102,26 @@ def judge_item33(data, today):
               + " · ".join(notes))
     return {"status": status, "sub_status": subs, "detail": detail}
 
-def go(page, typ, view, title, g):
+def go(page, typ, view, title, g, marker=None):
+    """페이지 이동 후 마커 텍스트가 실제로 뜰 때까지 폴링 — 고정대기보다 조기수집에 안전(클라우드 대비)."""
     h = build_spa_hash(typ, view, title, g)
     _navigate_spa(page, f"https://dn.carefor.co.kr/#{h}")
-    page.wait_for_timeout(4500)
+    page.wait_for_timeout(1500)
     try: page.evaluate(CLOSE_MODAL_JS)
     except Exception: pass
-    page.wait_for_timeout(1000)
+    if marker:
+        try:
+            page.wait_for_function(
+                "m => ((document.querySelector('#r_padding')||document.body).innerText||'').includes(m)",
+                arg=marker, timeout=9000)
+        except Exception:
+            page.wait_for_timeout(3000)  # 마커 안 뜨면 여유 대기 후 진행
+    page.wait_for_timeout(1200)
 
 def collect_branch(page, g):
-    go(page, "left_sub3", "/share/care/view.meal_satisfaction_daynurse", "3-1-4.식사(간식) 만족도 조사 및 반영", g)
+    go(page, "left_sub3", "/share/care/view.meal_satisfaction_daynurse", "3-1-4.식사(간식) 만족도 조사 및 반영", g, marker="만족도")
     sat = page.evaluate(SAT_JS)
-    go(page, "left_sub6", "/share/safe/view.weekly_menu", "6-1.주간식단표", g)
+    go(page, "left_sub6", "/share/safe/view.weekly_menu", "6-1.주간식단표", g, marker="식단")
     menu = page.evaluate(MENU_JS)
     return {"satisfaction": sat, "menu": menu}
 
