@@ -111,11 +111,14 @@ def _norm_phone(s: str) -> str:
     return re.sub(r"\D", "", str(s or ""))
 
 
-def _webapp_values(ss: str, sheet: str) -> list:
+def _webapp_values(ss: str = None, sheet: str = None, ssid: str = None) -> list:
     url = _secret("CONSULT_WEBHOOK_URL", KEY_CONSULT_WEBHOOK)
     if not url:
         raise SystemExit("consult_webhook_url 자격증명이 없습니다.")
-    u = f"{url}{'&' if '?' in url else '?'}ss={ss}&sheet={urllib.parse.quote(sheet)}"
+    key = f"ssid={urllib.parse.quote(ssid)}" if ssid else f"ss={ss}"
+    if sheet:
+        key += f"&sheet={urllib.parse.quote(sheet)}"
+    u = f"{url}{'&' if '?' in url else '?'}{key}"
     last = None
     for attempt in range(4):  # Apps Script 간헐적 5xx 대비 재시도
         try:
@@ -127,7 +130,7 @@ def _webapp_values(ss: str, sheet: str) -> list:
         except Exception as e:
             last = e
             time.sleep(1.5 * (attempt + 1))
-    raise RuntimeError(f"webhook 실패({ss}/{sheet}) 4회: {last}")
+    raise RuntimeError(f"webhook 실패({ssid or ss}/{sheet}) 4회: {last}")
 
 
 def load_entered_phones() -> set:
@@ -145,16 +148,24 @@ def load_entered_phones() -> set:
     return s
 
 
+# 충청본부 전용 제외번호 시트 (본사 데이터 아님 — 우리가 관리). 본사 주보/상담시트는 수정 금지.
+EXCL_SSID = "1dTotP2Q6dKdWkEaNmAnguWs_ll95lOUNG4nSomhM6bA"  # '충청본부 제외번호' (시트1)
+
+
 def load_excluded_phones() -> set:
-    """제외번호(Lost Lead 등) — 미입력에서 제외."""
+    """제외번호(Lost Lead·오분류 등) — '충청본부 제외번호' 시트에서 읽음.
+    실패해도 빈 set 반환(제외 없이 진행). 열 위치 무관하게 전화번호 형태만 수집."""
     if "excl" in _PHONE_CACHE:
         return _PHONE_CACHE["excl"]
     s = set()
-    for row in _webapp_values("main", "제외번호"):  # 헤더 없음
-        if row:
-            p = _norm_phone(row[0])
-            if len(p) >= 10:
-                s.add(p)
+    try:
+        for row in _webapp_values(ssid=EXCL_SSID, sheet="시트1"):
+            for cell in row:
+                p = _norm_phone(cell)
+                if len(p) in (10, 11) and p.startswith("0"):
+                    s.add(p)
+    except Exception as e:
+        print(f"[경고] 제외번호 시트 로드 실패(제외 없이 진행): {e}")
     _PHONE_CACHE["excl"] = s
     return s
 
