@@ -140,7 +140,7 @@ def _make_carefor_lookup():
 
 
 def _summary_row(name: str, grp: list[dict], wait: list[dict], ym: str) -> dict:
-    miss = [r for r in grp if r["sheet_entered"] == "N"]
+    miss = [r for r in grp if r.get("missing")]
     total = len(grp)
     return {
         "center": name,
@@ -159,8 +159,8 @@ def generate(today: date | None = None) -> tuple[Path, list[Path], list[dict]]:
     today = today or date.today()
 
     # 데이터 로드 (공지 스크립트와 동일 소스)
-    a_rows = cr.load_rows_from_webhook()
-    miss_all = sorted((r for r in a_rows if r["sheet_entered"] == "N"),
+    a_rows = cr.load_rows_from_webhook()  # r['missing'] 자동 주석(번호대조)
+    miss_all = sorted((r for r in a_rows if r.get("missing")),
                       key=lambda r: (r["center"], r["consult_date"]))
 
     w_raw = wr.load_rows()

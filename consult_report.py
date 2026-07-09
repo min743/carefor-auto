@@ -15,7 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 from datetime import date
@@ -70,25 +72,19 @@ def load_rows_from_tsv(path: str) -> list[dict]:
             c = line.rstrip("\n").split("\t")
             if len(c) >= 14 and c[0][:4].isdigit() and "년" in c[0]:
                 rows.append(_row(c))
-    return [r for r in rows if r["yearmonth"] >= CUTOFF_YM]
+    result = [r for r in rows if r["yearmonth"] >= CUTOFF_YM]
+    for r in result:  # TSV(테스트)는 네트워크 없이 기존 방식
+        r["missing"] = (r["sheet_entered"] == "N")
+    return result
 
 
 def load_rows_from_webhook() -> list[dict]:
-    url = _secret("CONSULT_WEBHOOK_URL", KEY_CONSULT_WEBHOOK)
-    if not url:
-        raise SystemExit("consult_webhook_url 자격증명이 없습니다. Apps Script 배포 후 등록하세요.")
-    # ss=main: 웹앱이 대상 스프레드시트를 고르는 필수 파라미터 (없으면 404)
-    req = urllib.request.Request(f"{url}{'&' if '?' in url else '?'}ss=main&sheet={urllib.parse.quote(SHEET_NAME)}")
-    with urllib.request.urlopen(req, timeout=60) as res:
-        data = json.loads(res.read().decode("utf-8"))
-    if not data.get("ok"):
-        raise SystemExit(f"webhook 오류: {data.get('error')}")
     rows = []
-    for c in data["values"]:
+    for c in _webapp_values("main", SHEET_NAME):
         c = [str(x) if x is not None else "" for x in c]
         if len(c) >= 14 and c[0][:4].isdigit() and "년" in c[0]:
             rows.append(_row(c))
-    return [r for r in rows if r["yearmonth"] >= CUTOFF_YM]
+    return annotate_missing([r for r in rows if r["yearmonth"] >= CUTOFF_YM])
 
 
 def _row(c: list[str]) -> dict:
@@ -103,6 +99,81 @@ def _row(c: list[str]) -> dict:
         "admitted": c[11].strip(),      # 수급자 입소 여부 Y/N
         "summary": c[13].strip() if len(c) > 13 else "",  # AI 요약
     }
+
+
+# ---------- 상담시트 번호 대조 (미입력 판정) ----------
+# 실제 입력 시트 = 충청본부_상담시트(ss=phone). 탭별 '연락처' 열 위치.
+ENTRY_TABS = [("유선상담", 4), ("대면상담", 5), ("계약상담", 6), ("상담요청", 4), ("등급신청", 5)]
+_PHONE_CACHE: dict = {}
+
+
+def _norm_phone(s: str) -> str:
+    return re.sub(r"\D", "", str(s or ""))
+
+
+def _webapp_values(ss: str, sheet: str) -> list:
+    url = _secret("CONSULT_WEBHOOK_URL", KEY_CONSULT_WEBHOOK)
+    if not url:
+        raise SystemExit("consult_webhook_url 자격증명이 없습니다.")
+    u = f"{url}{'&' if '?' in url else '?'}ss={ss}&sheet={urllib.parse.quote(sheet)}"
+    last = None
+    for attempt in range(4):  # Apps Script 간헐적 5xx 대비 재시도
+        try:
+            with urllib.request.urlopen(urllib.request.Request(u), timeout=60) as res:
+                data = json.loads(res.read().decode("utf-8"))
+            if not data.get("ok"):
+                raise RuntimeError(f"ok=false: {data.get('error')}")
+            return data.get("values", [])
+        except Exception as e:
+            last = e
+            time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"webhook 실패({ss}/{sheet}) 4회: {last}")
+
+
+def load_entered_phones() -> set:
+    """실제 상담시트(충청본부_상담시트)에 입력된 연락처 전체."""
+    if "entered" in _PHONE_CACHE:
+        return _PHONE_CACHE["entered"]
+    s = set()
+    for sheet, col in ENTRY_TABS:
+        for row in _webapp_values("phone", sheet)[1:]:  # 0행=헤더
+            if len(row) > col:
+                p = _norm_phone(row[col])
+                if len(p) >= 10:
+                    s.add(p)
+    _PHONE_CACHE["entered"] = s
+    return s
+
+
+def load_excluded_phones() -> set:
+    """제외번호(Lost Lead 등) — 미입력에서 제외."""
+    if "excl" in _PHONE_CACHE:
+        return _PHONE_CACHE["excl"]
+    s = set()
+    for row in _webapp_values("main", "제외번호"):  # 헤더 없음
+        if row:
+            p = _norm_phone(row[0])
+            if len(p) >= 10:
+                s.add(p)
+    _PHONE_CACHE["excl"] = s
+    return s
+
+
+def annotate_missing(rows: list) -> list:
+    """각 행에 r['missing'] 설정 = 번호가 상담시트에 없고 제외번호도 아님.
+    상담시트/제외번호 로드 실패 시 기존 본사 Y/N(sheet_entered)로 안전 대체(공지 끊김 방지)."""
+    try:
+        entered = load_entered_phones()
+        excl = load_excluded_phones()
+    except Exception as e:
+        print(f"[경고] 상담시트/제외번호 로드 실패 → 본사 Y/N로 대체: {e}")
+        for r in rows:
+            r["missing"] = (r["sheet_entered"] == "N")
+        return rows
+    for r in rows:
+        p = _norm_phone(r["phone"])
+        r["missing"] = (p not in entered and p not in excl) if p else (r["sheet_entered"] == "N")
+    return rows
 
 
 # ---------- 메시지 생성 ----------
@@ -120,7 +191,7 @@ def build_message(rows: list[dict], today: date) -> dict:
     for short, full in CENTER_ORDER:
         grp = by_center.get(full, [])
         n_total = len(grp)
-        n_miss = sum(1 for r in grp if r["sheet_entered"] == "N")
+        n_miss = sum(1 for r in grp if r.get("missing"))
         names.append(short)
         totals.append(str(n_total))
         misses.append(str(n_miss))

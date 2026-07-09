@@ -36,7 +36,7 @@ def consult_rows() -> list[dict]:
     for short, full in cr.CENTER_ORDER:
         grp = by_center.get(full, [])
         n_total = len(grp)
-        n_miss = sum(1 for r in grp if r["sheet_entered"] == "N")
+        n_miss = sum(1 for r in grp if r.get("missing"))
         out.append({
             "center": short,
             "total": n_total,
