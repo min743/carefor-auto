@@ -39,6 +39,7 @@ button[onclick^="uploadScores"]{display:none!important}
 _GATE_BODY = """<div id="hqgate"><h2 style="color:#fff">🔒 지점 점검 대시보드 (본부 공유)</h2>
 <div>접속 번호를 입력하세요</div>
 <input id="hqpin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
+<a href="hq.html" title="본부 공유 허브로" style="position:fixed;left:12px;bottom:12px;z-index:500;background:#2f5496;color:#fff;padding:9px 15px;border-radius:22px;text-decoration:none;font-size:13px;font-weight:bold;box-shadow:0 2px 10px rgba(0,0,0,.25)">← 허브</a>
 """
 # 본부 공유 모드 스크립트: 게이트 + 업로드 비활성화 + 업로드된 점수 자동 로드(읽기 전용)
 _HQ_SCRIPT = """<script>

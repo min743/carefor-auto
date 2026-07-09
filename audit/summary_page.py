@@ -122,11 +122,13 @@ td.name{text-align:left;white-space:nowrap}
 #gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
 #gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
 .note{font-size:11px;color:#777;margin-top:10px;line-height:1.6}
+.back{display:inline-block;margin-bottom:12px;color:#2f5496;text-decoration:none;font-size:13px;font-weight:bold}
 </style></head><body>
 <div id="gate"><h2>🔒 지점 점검 요약</h2><div>접속 번호를 입력하세요</div>
 <input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
 <header><h1>📋 지점 점검 요약 (본부 공유용)</h1><div class="sub" id="gen"></div></header>
 <div class="wrap">
+<a class="back" href="hq.html">← 본부 공유 허브로</a>
 <div class="cards" id="cards"></div>
 <table id="tbl"></table>
 <div class="note">· 이 페이지에는 수급자 개인정보가 포함되어 있지 않습니다 (지점 단위 집계만).<br>
