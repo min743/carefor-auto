@@ -192,8 +192,18 @@ def analyze(results: list[dict], cutoff: str) -> dict:
                 issue = "공단연동·발송기록없음" if is_gongdan else "미발송·미서명"
             elif not signed:
                 issue = "서명없음"
-            elif not same_day:
-                issue = "작성일-동의일 불일치"
+            else:
+                # 발송·서명 완료: 매뉴얼 22② '급여제공 시작일까지 설명·서명·통보'
+                # → 동의일이 적용기간 개시일 이전(이하)이면 정상. (작성일과 다른 날이어도 무방)
+                ap_start = (pl.get("ap") or "").split("~")[0].strip()
+                agree = (pl.get("agreeDate") or "").strip()
+                if ap_start and agree:
+                    if agree > ap_start:
+                        issue = f"동의일 적용개시 이후({agree}>{ap_start})"
+                elif not agree:
+                    issue = "동의일 없음"
+                elif not same_day:  # 적용기간 파싱 불가 시 기존 기준으로 폴백
+                    issue = "작성일-동의일 불일치"
             if issue:
                 plan_prob.append(f"{pl.get('wd') or '?'} {issue}")
                 plan_issues.append([p["name"], pl.get("wd", ""), pl.get("ap", ""), st, pl.get("agreeDate", ""), issue])
