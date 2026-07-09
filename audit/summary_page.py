@@ -6,6 +6,7 @@ audit_results/*.json → docs/audit_summary.html (지점별 36항목 신호등 +
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -19,16 +20,53 @@ PIN = "15771389"  # 본부 공유용 간단 잠금 (변경 가능)
 
 BRANCH_ORDER = ["둔산점", "서구점", "천안점", "청주 오창점"]
 
+# ---- 개인정보(수급자·직원 이름) 제거 ----
+# 자동판정 detail 자유텍스트에는 이름이 여러 형태로 섞임 → 알려진 패턴 제거 후,
+# 그래도 이름 흔적(날짜·괄호한글·쉼표나열)이 남으면 detail 전체를 안전 문구로 대체(방어적).
+_NAME_GATE = [
+    re.compile(r"\d{4}\s*[.\-]\s*\d{1,2}"),        # 구체적 날짜(YYYY.MM) — 이름과 동반
+    re.compile(r"[가-힣]{2,4}\s*\(\s*[가-힣]"),      # 한글(한글  = 이름(각)/이름(여) 등
+    re.compile(r"[가-힣]{2,4}\s*,\s*[가-힣]{2,4}"),  # 쉼표로 이어진 한글 2개 = 이름목록
+    re.compile(r":\s*[가-힣]{2,4}\s*[,)]"),          # 마커: 이름) / 이름,
+    re.compile(r"\d{4}[-.]\d{1,2}\s+[가-힣]"),       # YYYY-MM 이름
+]
+
+
+def clean_detail(text: str) -> str:
+    """자동판정 상세에서 개인정보(이름) 제거. 건수·사유 요약은 최대한 보존."""
+    if not text:
+        return text
+    s = text
+    s = re.sub(r"[가-힣]{2,4}(?:\([가-힣]\))?\s*\((?:입사\s*)?\d{4}[.\-\s0-9]*\)", "", s)  # 이름[(각)](날짜)
+    s = re.sub(r"(\d{4}[-.]\d{1,2})\s+[가-힣]{2,4}", r"\1", s)                              # 날짜 이름
+    s = re.sub(r"(\d+\s*명)\s*\([가-힣\s,]+\)", r"\1", s)                                   # N명(이름들)
+    s = re.sub(r"(입사전 미제출:\s*)(?:;\s*입사전 미제출:\s*)+", "입사전 미제출 명단 생략; ", s)
+    s = re.sub(r"[;,]\s*(?=[;,)])", "", s)
+    s = re.sub(r"(?:;\s*)+", "; ", s)
+    s = re.sub(r"—\s*;", "—", s)
+    s = re.sub(r"\s{2,}", " ", s).strip(" ;,")
+    for rx in _NAME_GATE:  # 방어 게이트: 흔적 남으면 통째 대체
+        if rx.search(s):
+            return "[상세 명단은 지점 대시보드에서 확인]"
+    return s
+
 
 def _branch_summary(d: dict) -> dict:
     """개인정보 없는 요약만 추출."""
     an = d.get("analysis", {})
     stats = an.get("stats", {}) or {}
+    # item_results 의 detail 자유텍스트에서 이름 제거 (원본 훼손 없이 사본)
+    safe_items = {}
+    for no, r in (d.get("item_results") or {}).items():
+        rr = dict(r) if isinstance(r, dict) else r
+        if isinstance(rr, dict) and rr.get("detail"):
+            rr["detail"] = clean_detail(rr["detail"])
+        safe_items[no] = rr
     return {
         "run_at": d.get("run_at", ""),
         "cutoff": d.get("cutoff", ""),
         "people": d.get("people", 0),
-        "item_results": d.get("item_results", {}),
+        "item_results": safe_items,
         "counts": {
             "대조회차": stats.get("total_rounds", 0),
             "불일치": stats.get("disc", 0),
@@ -74,6 +112,7 @@ table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;box-sha
 th,td{border:1px solid #dde3ee;padding:6px 8px;text-align:center}
 th{background:#eef2f9}
 td.name{text-align:left;white-space:nowrap}
+.det{font-size:10.5px;color:#555;margin-top:3px;text-align:left;white-space:normal;line-height:1.4}
 .ok{color:#2c8a41;font-weight:bold}.bad{color:#c02020;font-weight:bold}
 .na{color:#999}.man{color:#4a69b0}
 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
@@ -137,8 +176,9 @@ function cell(b, it){
   if(!d) return '<span class="dot d-na"></span><span class="na">-</span>';
   const r = d.item_results[String(it.no)];
   if(!r) return '<span class="dot d-na"></span><span class="na">수집전</span>';
-  if(r.status==='양호') return '<span class="dot d-ok"></span><span class="ok">양호</span>';
-  return `<span class="dot d-bad"></span><span class="bad" title="${r.detail}">미흡</span>`;
+  const det = r.detail ? `<div class="det">${r.detail}</div>` : '';
+  if(r.status==='양호') return '<span class="dot d-ok"></span><span class="ok">양호</span>'+det;
+  return '<span class="dot d-bad"></span><span class="bad">미흡</span>'+det;
 }
 function scoreCell(b, it){
   const s = SCORES[b];
