@@ -1,12 +1,14 @@
 name: 상담 공지 (신규상담 미입력 + 대기명단)
 
+# run-name 에 '무엇을 보냈는지'를 기록 → gate가 제목을 보고 실제 consult 발송만 중복 판정.
+# (dry-run·waitlist-only 런은 consult 발송으로 치지 않아 오스킵 방지)
+run-name: "상담공지 [${{ github.event.inputs.report || 'consult' }}]${{ github.event.inputs.dry_run == 'true' && ' DRYRUN' || '' }}"
+
 # 발송 보장 구조 (2026-07-08):
 #   1차(정시): cron-job.org 외부 workflow_dispatch — 매일 07:00 KST 호출 (GitHub cron 지연 우회)
 #   2차(백업): schedule cron — 아침 예약분. GitHub 스케줄러가 수 시간 지연될 수 있어 백업 용도.
-#   gate: 오늘(KST) 이미 성공 발송이 있으면 스킵 → 외부/예약/수동이 겹쳐도 중복 발송 없음.
+#   gate: 오늘(KST) consult를 실제 발송한 성공 런이 있으면 스킵 (report-type·dry-run 구분).
 # 수동 실행: dry_run=true(미리보기) / force=true(무조건 발송) / report(both|consult|waitlist)
-# 주의: 발송 전 시간대에 dry_run 성공 이력이 있으면 gate가 발송된 것으로 오인할 수 있으니
-#       오전에는 dry_run을 돌리지 말 것.
 
 # 동시 실행 방지: 외부 dispatch·예약·수동이 겹쳐도 순차 실행 → 뒤쪽은 gate에서 스킵
 concurrency:
@@ -78,13 +80,20 @@ jobs:
               "Authorization": "Bearer " + os.environ["GH_TOKEN"],
               "Accept": "application/vnd.github+json"})
           runs = json.loads(urllib.request.urlopen(req, timeout=30).read())["workflow_runs"]
-          prior = [r for r in runs if str(r["id"]) != os.environ["RUN_ID"]]
+
+          def sent_consult(r):
+              # run-name 제목으로 '실제 consult 발송' 여부 판정 (dry-run·waitlist-only 제외)
+              t = r.get("display_title", "") or ""
+              return ("[consult]" in t or "[both]" in t) and "DRYRUN" not in t
+
+          prior = [r for r in runs
+                   if str(r["id"]) != os.environ["RUN_ID"] and sent_consult(r)]
           if prior:
               out.write("send=no\n")
-              print(f"오늘 이미 발송됨 ({prior[0]['run_started_at']}) — 스킵")
+              print(f"오늘 consult 이미 발송됨 ({prior[0]['run_started_at']}, {prior[0].get('display_title')}) — 스킵")
           else:
               out.write("send=yes\n")
-              print("오늘 발송 이력 없음 — 발송 진행")
+              print("오늘 consult 발송 이력 없음 — 발송 진행")
           EOF
 
       - name: 게이트 실패 알림 (조용한 미발송 방지)
