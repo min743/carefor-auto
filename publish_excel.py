@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import mimetypes
 import os
@@ -35,6 +36,7 @@ except ImportError:
     keyring = None
 
 import consult_excel
+import consult_report as cr
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 FOLDER_MIME = "application/vnd.google-apps.folder"
@@ -108,7 +110,9 @@ def upload_file(token: str, path: Path, folder_id: str, drive_name: str) -> dict
             headers={"Authorization": f"Bearer {token}", "Content-Type": XLSX_MIME},
         )
         with urllib.request.urlopen(req, timeout=120) as res:
-            return json.loads(res.read().decode())
+            info = json.loads(res.read().decode())
+        _ensure_anyone_writer(token, fid)  # 지점이 '제외(O)' 체크하도록 편집권한
+        return info
 
     boundary = uuid.uuid4().hex
     meta = json.dumps({"name": drive_name, "parents": [folder_id]}).encode()
@@ -127,9 +131,7 @@ def upload_file(token: str, path: Path, folder_id: str, drive_name: str) -> dict
     )
     with urllib.request.urlopen(req, timeout=120) as res:
         info = json.loads(res.read().decode())
-    # 링크가 있는 모든 사용자: 뷰어(보기 전용)
-    drive(token, "POST", f"/files/{info['id']}/permissions",
-          body={"type": "anyone", "role": "reader"})
+    _ensure_anyone_writer(token, info["id"])  # 링크 있는 사용자 편집 가능(지점 '제외(O)' 표시용)
     return info
 
 
@@ -152,16 +154,85 @@ def send_slack(payload: dict | str) -> None:
         raise SystemExit(f"슬랙 전송 실패: {out}")
 
 
+def _download(token: str, file_id: str) -> bytes:
+    req = urllib.request.Request(
+        f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media",
+        headers={"Authorization": f"Bearer {token}"})
+    with urllib.request.urlopen(req, timeout=120) as res:
+        return res.read()
+
+
+def _ensure_anyone_writer(token: str, fid: str) -> None:
+    """지점이 '제외(O)' 체크할 수 있게 링크 편집권한(anyone writer) 보장."""
+    perms = drive(token, "GET", f"/files/{fid}/permissions", query={"fields": "permissions(id,type,role)"})
+    anyone = next((p for p in perms.get("permissions", []) if p.get("type") == "anyone"), None)
+    if anyone and anyone.get("role") != "writer":
+        drive(token, "PATCH", f"/files/{fid}/permissions/{anyone['id']}", body={"role": "writer"})
+    elif not anyone:
+        drive(token, "POST", f"/files/{fid}/permissions", body={"type": "anyone", "role": "writer"})
+
+
+def harvest_exclude_marks(token: str, folder_id: str) -> list:
+    """지점 상담공지 엑셀 '신규상담 미입력' 시트의 '제외(O)' 표시된 행 번호 수집 → [(번호,사유)]."""
+    from openpyxl import load_workbook
+    names = [f"{full}_상담공지.xlsx" for _, full in cr.CENTER_ORDER] + ["전체_상담공지.xlsx"]
+    seen, pairs = set(), []
+    for name in names:
+        found = drive(token, "GET", "/files",
+                      query={"q": f"name = '{name}' and '{folder_id}' in parents and trashed = false",
+                             "fields": "files(id)"})
+        if not found.get("files"):
+            continue
+        try:
+            wb = load_workbook(io.BytesIO(_download(token, found["files"][0]["id"])),
+                               read_only=True, data_only=True)
+        except Exception as e:
+            print(f"[제외수집] {name} 열기 실패: {e}")
+            continue
+        try:
+            if "신규상담 미입력" not in wb.sheetnames:
+                continue
+            rows = list(wb["신규상담 미입력"].iter_rows(values_only=True))
+        finally:
+            wb.close()
+        if not rows:
+            continue
+        header = [str(h or "") for h in rows[0]]
+        ci_ex = next((i for i, h in enumerate(header) if h.startswith("제외")), None)
+        ci_ph = next((i for i, h in enumerate(header) if "번호" in h), None)
+        if ci_ex is None or ci_ph is None:
+            continue
+        for row in rows[1:]:
+            if len(row) <= max(ci_ex, ci_ph):
+                continue
+            if str(row[ci_ex] or "").strip() and str(row[ci_ph] or "").strip():
+                d = cr._norm_phone(row[ci_ph])
+                if len(d) >= 10 and d not in seen:
+                    seen.add(d)
+                    pairs.append((str(row[ci_ph]).strip(), f"지점 제외표시({name.split('_')[0]})"))
+    return pairs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     today = date.today()
-    out_dir, paths, summaries = consult_excel.generate(today)
-
     token = google_token()
     root_id = find_or_create_folder(token, ROOT_FOLDER)
+
+    # 지점 엑셀의 '제외(O)' 표시 수집 → 제외번호 자동 등록 (재생성 전에!)
+    try:
+        marks = harvest_exclude_marks(token, root_id)
+        if marks:
+            import excl_store
+            n = excl_store.add_phones(marks)
+            print(f"지점 '제외(O)' 표시 {len(marks)}건 확인 → 제외번호 {n}건 신규 추가")
+    except Exception as e:
+        print(f"[경고] 지점 제외표시 수집 실패(무시하고 진행): {e}")
+
+    out_dir, paths, summaries = consult_excel.generate(today)
 
     links = []
     for p in paths:

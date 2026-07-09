@@ -32,7 +32,8 @@ HEADER_FONT = Font(bold=True, color="FFFFFF")
 URGENT_FILL = PatternFill("solid", fgColor="FFC7CE")   # 입소완료 미입력 / 기한 지남
 TODAY_FILL = PatternFill("solid", fgColor="FFEB9C")    # 오늘 예정
 
-MISS_COLS = ["센터명", "구분", "연월", "해당 주차", "상담일자", "급여개시일자", "고객 번호", "입소 여부",
+# 맨 앞 '제외(O)' 열: 지점이 주간보호 아닌 건에 O(또는 아무 표시) → 다음 발송 때 제외번호 자동 등록.
+MISS_COLS = ["제외(O)", "센터명", "구분", "연월", "해당 주차", "상담일자", "급여개시일자", "고객 번호", "입소 여부",
              "케어포 등록", "케어포 지점", "수급자명", "수급현황", "케어포 개시일", "AI 요약"]
 WAIT_COLS = ["센터명", "아웃콜 차수", "예정일자", "기한 경과(일)", "연락처", "첫 상담일"]
 SUMMARY_COLS = ["센터", "신규상담(누적)", "시트 미입력", "미입력률", "⚠️ 입소완료 미입력", "당월 미입력",
@@ -84,12 +85,15 @@ def add_miss_sheet(wb: Workbook, rows: list[dict], ym: str, carefor_lookup=None)
             cf_cols = ["Y", pt["branch"], pt["name"], pt["status"], pt["start"]]
         else:
             cf_cols = ["N" if carefor_lookup else "", "", "", "", ""]
-        ws.append([r["center"], kind, r["yearmonth"], r["week"], r["consult_date"],
+        ws.append(["", r["center"], kind, r["yearmonth"], r["week"], r["consult_date"],
                    r["start_date"], r["phone"], r["admitted"], *cf_cols, r["summary"]])
         if r["admitted"] == "Y":
             for cell in ws[ws.max_row]:
                 cell.fill = URGENT_FILL
-    _style_sheet(ws, [12, 17, 12, 16, 12, 13, 14, 9, 10, 11, 11, 10, 12, 60])
+    _style_sheet(ws, [9, 12, 17, 12, 16, 12, 13, 14, 9, 10, 11, 11, 10, 12, 60])
+    # '제외(O)' 열 안내색 (연노랑) — 지점이 여기에 O 표시
+    for cell in ws["A"][1:]:
+        cell.fill = TODAY_FILL
 
 
 def add_wait_sheet(wb: Workbook, items: list[dict]) -> None:
