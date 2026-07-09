@@ -1214,10 +1214,12 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
             safe_note.append(f"{y}년 안전관리 요약 파싱 실패")
             continue
         if s["undone"]:
+            # 1-6 '안전관리 설명' 탭 기준 — 3-1-3 기록지 문구(③)와 혼동 방지 위해 출처 명시
+            msg = f"{y}년 [1-6 설명탭] 미설명 {s['undone']}명(설명 {s['done']}/총 {s['total']})"
             if y < today.year:
-                safe_miss.append(f"{y}년 미설명 {s['undone']}명")
+                safe_miss.append(msg)
             else:
-                safe_note.append(f"{y}년 미설명 {s['undone']}명(진행중)")
+                safe_note.append(msg + "(진행중)")
     # 신규수급자(2026~) 급여개시 14일 이내 설명 대조 — 개시일은 직원인권 탭 rows 재사용
     if safe_parsed and rights["rows"]:
         expl = {}
@@ -1368,11 +1370,14 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         c = (data.get("consult") or {}).get(ys) or {}
         roster = {r["name"] for r in (c.get("rows") or []) if r.get("stat") in ("수급중", "보류")}
         if not roster:
-            safety_edu_note.append(f"{y}년 안전관리 입력 {len(have)}명(명단 대조 불가)")
+            safety_edu_note.append(f"{y}년 [3-1-3 기록지] '안전관리' 문구 기재 {len(have)}명(명단 대조 불가)")
             continue
         missing = sorted(roster - have)
         if missing:
-            msg = f"{y}년 안전관리 미입력 {len(missing)}명({', '.join(missing[:5])}{'…' if len(missing) > 5 else ''})"
+            # 1-6 '설명탭'(④)과 다른 지표임을 문구로 분리 — 기재/대상 인원도 함께 표기
+            msg = (f"{y}년 [3-1-3 기록지] 특이사항 '안전관리' 문구 미기재 {len(missing)}명"
+                   f"(기재 {len(roster & have)}/대상 {len(roster)}명)"
+                   f"({', '.join(missing[:5])}{'…' if len(missing) > 5 else ''})")
             if y < today.year:
                 safety_edu_miss.append(msg)
             else:
