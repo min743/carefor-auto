@@ -148,18 +148,19 @@ def load_entered_phones() -> set:
     return s
 
 
-# 충청본부 전용 제외번호 시트 (본사 데이터 아님 — 우리가 관리). 본사 주보/상담시트는 수정 금지.
-EXCL_SSID = "1dTotP2Q6dKdWkEaNmAnguWs_ll95lOUNG4nSomhM6bA"  # '충청본부 제외번호' (시트1)
+# 제외번호 시트 (앱이 만들고 관리 — 본사 데이터 아님). exclude_tool.py로 추가.
+EXCL_SSID = "1vlQwkUdYOgPgqFKHwAa4UTKiDyFuIKhofAhWbVdcVeM"  # '충청본부_상담제외번호(자동관리)'
+EXCL_SHEET = "제외번호"
 
 
 def load_excluded_phones() -> set:
-    """제외번호(Lost Lead·오분류 등) — '충청본부 제외번호' 시트에서 읽음.
+    """제외번호(Lost Lead·오분류 등) — 앱 관리 제외번호 시트에서 읽음.
     실패해도 빈 set 반환(제외 없이 진행). 열 위치 무관하게 전화번호 형태만 수집."""
     if "excl" in _PHONE_CACHE:
         return _PHONE_CACHE["excl"]
     s = set()
     try:
-        for row in _webapp_values(ssid=EXCL_SSID, sheet="시트1"):
+        for row in _webapp_values(ssid=EXCL_SSID, sheet=EXCL_SHEET):
             for cell in row:
                 p = _norm_phone(cell)
                 if len(p) in (10, 11) and p.startswith("0"):
