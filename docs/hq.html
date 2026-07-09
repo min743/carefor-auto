@@ -9,12 +9,13 @@ header{background:#2f5496;color:#fff;padding:18px 20px;text-align:center}
 header h1{font-size:20px;margin:0}
 .sub{font-size:12px;opacity:.85;margin-top:4px}
 .wrap{padding:20px 16px;max-width:640px;margin:0 auto}
-.card{display:block;background:#fff;border-radius:12px;padding:20px;margin-bottom:14px;
+.card{display:flex;align-items:flex-start;gap:16px;background:#fff;border-radius:12px;padding:18px 20px;margin-bottom:14px;
   box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none;color:#222;
   border-left:5px solid #2f5496;transition:transform .1s}
 .card:hover{transform:translateY(-2px)}
-.card .ico{font-size:26px}
-.card .ttl{font-size:17px;font-weight:bold;color:#2f5496;margin:6px 0 3px}
+.card .ico{font-size:30px;line-height:1;flex-shrink:0}
+.card .txt{flex:1;min-width:0}
+.card .ttl{font-size:17px;font-weight:bold;color:#2f5496;margin:2px 0 3px}
 .card .desc{font-size:12.5px;color:#666;line-height:1.5}
 .note{font-size:11px;color:#888;margin-top:18px;line-height:1.7;text-align:center}
 #gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
@@ -26,23 +27,32 @@ header h1{font-size:20px;margin:0}
 <div class="wrap">
   <a class="card" href="bongmyeong.html">
     <div class="ico">🗺️</div>
-    <div class="ttl">봉명동 주간보호 개소 리포트</div>
-    <div class="desc">청주 봉명점(2026.10 개소) 입지·송영 30분권 실시간 지도 · 인근 센터 정원/현원/등급/개소일(공단 조회) · 홍보 대상·전략</div>
+    <div class="txt">
+      <div class="ttl">봉명동 주간보호 개소 리포트</div>
+      <div class="desc">청주 봉명점(2026.10 개소) 입지·송영 30분권 실시간 지도 · 인근 센터 정원/현원/등급/개소일(공단 조회) · 홍보 대상·전략</div>
+    </div>
   </a>
   <a class="card" href="consult_summary.html">
     <div class="ico">☎️</div>
-    <div class="ttl">상담 현황 요약</div>
-    <div class="desc">신규상담 상담시트 입력 현황 · 센터별 상담 대기 명단 (센터 단위 집계, 매일 갱신)</div>
+    <div class="txt">
+      <div class="ttl">상담 현황 요약</div>
+      <div class="desc">신규상담 상담시트 입력 현황 · 센터별 상담 대기 명단 (센터 단위 집계, 매일 갱신)</div>
+    </div>
   </a>
   <a class="card" href="branch_dashboard.html">
     <div class="ico">📋</div>
-    <div class="ttl">지점 점검 대시보드</div>
-    <div class="desc">평가 매뉴얼 36개 항목 지점별 신호등·점수·판정내용 + 상세 명단(수급자 이름 ○○○ 마스킹) — 지점 대시보드 그대로, 이름만 제거 · <a href="audit_summary.html" style="color:#2f5496">한눈 요약본 →</a></div>
+    <div class="txt">
+      <div class="ttl">지점 점검 대시보드</div>
+      <div class="desc">평가 매뉴얼 36개 항목 지점별 신호등·점수·판정내용 + 상세 명단(수급자 이름 ○○○ 마스킹) — 지점 대시보드 그대로, 이름만 제거</div>
+    </div>
   </a>
+  <a href="audit_summary.html" style="display:block;margin:-8px 0 14px;padding-left:24px;color:#2f5496;text-decoration:none;font-size:12.5px">↳ 지점 점검 한눈 요약본 →</a>
   <a class="card" href="index.html">
     <div class="ico">🚗</div>
-    <div class="ttl">차량 관리</div>
-    <div class="desc">지점별 차량 주행거리·엔진오일·정기검사 현황</div>
+    <div class="txt">
+      <div class="ttl">차량 관리</div>
+      <div class="desc">지점별 차량 주행거리·엔진오일·정기검사 현황</div>
+    </div>
   </a>
   <div class="note">· 상세(수급자별) 내역은 각 지점 PC 대시보드 / 슬랙 엑셀 링크에서만 확인됩니다.<br>
   · 이 허브 링크만 본부에 공유하면 됩니다.</div>
