@@ -65,18 +65,23 @@ jobs:
           CI: "true"
         run: python run_audit_headless.py
 
-      - name: 요약페이지 커밋 (개인정보 없음)
+      - name: 본부 대시보드 발행 (이름 제거)
+        # 로컬 audit_results/dashboard_data.js(실명 포함) → docs/ 이름 제거본 생성
+        if: ${{ !cancelled() && github.event.inputs.test_mode != 'true' }}
+        run: python -m audit.publish_hq_dashboard
+
+      - name: 요약페이지·대시보드 커밋 (개인정보 없음)
         # 시트 업로드가 실패(예: webhook 403)해도 스캔 중 생성된 요약페이지는 갱신·게시 (결과는 공개 요약페이지로 확인)
         if: ${{ !cancelled() && github.event.inputs.test_mode != 'true' }}
         run: |
           git config user.name "audit-bot"
           git config user.email "actions@github.com"
-          git add docs/audit_summary.html
+          git add docs/audit_summary.html docs/dashboard_data.js docs/branch_dashboard.html
           if git diff --cached --quiet; then
             echo "요약페이지 변경 없음"
           else
-            git commit -m "chore: 지점점검 요약페이지 자동 갱신 [skip ci]"
-            git push
+            git commit -m "chore: 지점점검 요약·본부대시보드 자동 갱신 [skip ci]"
+            git pull --rebase origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }}
           fi
 
       - name: 실패 알림 (슬랙, 통합 알림 채널)

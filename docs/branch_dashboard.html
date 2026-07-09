@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>지점관리 점검 대시보드</title>
+<script src="dashboard_data.js" onerror="window.AUDIT_DATA={};window.AUDIT_ITEMS=null;"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: '맑은 고딕', 'Malgun Gothic', sans-serif; margin: 0; background: #f4f6fa; color: #222; }
+  header { background: #2f5496; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 19px; margin: 0; }
+  header .sub { font-size: 12px; opacity: .85; }
+  .tabs { display: flex; gap: 6px; padding: 12px 24px 0; }
+  .tab { padding: 9px 22px; border-radius: 8px 8px 0 0; background: #d7dfee; cursor: pointer; font-weight: bold; font-size: 14px; }
+  .tab.on { background: #fff; color: #2f5496; box-shadow: 0 -2px 6px rgba(0,0,0,.06); }
+  .wrap { background: #fff; margin: 0 24px 24px; padding: 18px; border-radius: 0 8px 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+  .meta { font-size: 13px; color: #666; margin-bottom: 12px; display:flex; gap:18px; flex-wrap:wrap; }
+  .summary { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .card { background: #f6f8fc; border: 1px solid #e0e6f0; border-radius: 8px; padding: 10px 18px; text-align: center; min-width: 90px; }
+  .card b { display: block; font-size: 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #dbe2ec; padding: 7px 9px; vertical-align: top; }
+  th { background: #eef2f9; }
+  td.center { text-align: center; white-space: nowrap; }
+  .light { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 5px; }
+  .g-ok   { background: #35a94e; } .t-ok   { color: #2c8a41; font-weight: bold; }
+  .g-bad  { background: #d93a3a; } .t-bad  { color: #c02020; font-weight: bold; }
+  .g-na   { background: #b9b9b9; } .t-na   { color: #888; }
+  .g-warn { background: #e8a01f; } .t-warn { color: #b57a00; font-weight: bold; }
+  .g-man  { background: #6f8fd6; } .t-man  { color: #4a69b0; font-weight: bold; }
+  select.mstat { padding: 3px 6px; border: 1px solid #ccc; border-radius: 4px; }
+  input.memo { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 4px 6px; font-size: 12px; }
+  .criteria { color: #555; font-size: 12px; line-height: 1.45; }
+  .subrow { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-top: 1px dashed #e4e9f2; }
+  .subrow:first-child { border-top: 0; }
+  .sublabel { font-weight: bold; color: #2f5496; min-width: 28px; }
+  .subtext { flex: 1; color: #555; font-size: 12px; line-height: 1.4; }
+  .subscore { min-width: 108px; }
+  select.sc { padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+  select.sc.filled { background: #eaf6ec; border-color: #8fc79a; }
+  select.sc.zero { background: #fdecec; border-color: #e5a0a0; }
+  .itemscore { font-weight: bold; font-size: 13px; white-space: nowrap; }
+  .scorecard b { font-size: 26px !important; }
+  .loc { color: #888; font-size: 11px; }
+  .btnrow { margin: 12px 0; display: flex; gap: 8px; }
+  button { background: #2f5496; color: #fff; border: 0; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: bold; }
+  button.gray { background: #7a869a; }
+  .detail-detail { font-size: 12px; color:#444; }
+  .nodata { padding: 40px; text-align: center; color: #999; }
+  details { margin-top: 16px; }
+  details summary { cursor: pointer; font-weight: bold; color: #2f5496; padding: 6px 0; }
+  .small-table th, .small-table td { font-size: 12px; padding: 4px 7px; }
+  .checks { margin-top: 8px; background: #fff8e6; border: 1px solid #f0d98c; border-radius: 6px; padding: 8px 10px; }
+  .checks-h { font-weight: bold; color: #b57a00; font-size: 12px; margin-bottom: 5px; }
+  .checkrow { display: flex; gap: 7px; align-items: flex-start; font-size: 12px; color: #5a4a1a; padding: 3px 0; cursor: pointer; line-height: 1.45; }
+  .checkrow input { margin-top: 2px; flex-shrink: 0; }
+  .checkrow.done span { color: #2c8a41; text-decoration: line-through; }
+</style>
+<meta name="robots" content="noindex, nofollow">
+<style>
+#hqgate{position:fixed;inset:0;background:#2f5496;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
+#hqgate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
+button[onclick^="uploadScores"]{display:none!important}
+</style>
+</head>
+<body><div id="hqgate"><h2 style="color:#fff">🔒 지점 점검 대시보드 (본부 공유)</h2>
+<div>접속 번호를 입력하세요</div>
+<input id="hqpin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
+
+<header>
+  <h1>📋 지점관리 점검 대시보드</h1>
+  <div class="sub">평가 매뉴얼 36개 항목 — 자동수집(run_audit.py) + 수기입력 / 데이터: audit_results/</div>
+  <a href="https://min743.github.io/carefor-auto/audit_summary.html" target="_blank"
+     style="margin-left:auto;background:#fff;color:#2f5496;font-weight:bold;font-size:13px;
+            padding:8px 14px;border-radius:8px;text-decoration:none;white-space:nowrap">🌐 본부 공유 페이지</a>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="content"></div>
+
+<script>
+const BRANCHES = ['둔산점','서구점','천안점','청주 오창점'];
+const DATA = window.AUDIT_DATA || {};
+const ITEMS = window.AUDIT_ITEMS || [];
+let cur = localStorage.getItem('audit_tab') || BRANCHES[0];
+
+function manualKey(branch){ return 'audit_manual_' + branch; }
+function loadManual(branch){ try { return JSON.parse(localStorage.getItem(manualKey(branch))||'{}'); } catch(e){ return {}; } }
+function saveManual(branch, obj){ localStorage.setItem(manualKey(branch), JSON.stringify(obj)); }
+
+function light(status){
+  if(status==='양호') return '<span class="light g-ok"></span><span class="t-ok">양호</span>';
+  if(status==='미흡') return '<span class="light g-bad"></span><span class="t-bad">미흡</span>';
+  if(status==='주의') return '<span class="light g-warn"></span><span class="t-warn">주의</span>';
+  if(status==='해당없음') return '<span class="light g-na"></span><span class="t-na">해당없음</span>';
+  return '<span class="light g-na"></span><span class="t-na">수집전</span>';
+}
+
+// ---- 점수 계산 (기준별 배점, 자동판정 양호 시 자동 만점) ----
+function subVal(manual, no, label){
+  const m = manual[no];
+  return m && m.subs ? m.subs[label] : undefined;
+}
+function autoVal(it, s, d){
+  // 자동판정 결과로 자동 만점 부여 — 기준(sub) 단위 판정(sub_status) 우선, 없으면 항목 status
+  if(!d || !it.auto_subs || !it.auto_subs.includes(s.label)) return undefined;
+  const r = d.item_results && d.item_results[String(it.no)];
+  if(!r) return undefined;
+  if(r.sub_status && r.sub_status[s.label] !== undefined){
+    return r.sub_status[s.label] === '양호' ? s.score : undefined;
+  }
+  return r.status === '양호' ? s.score : undefined;
+}
+function effVal(it, s, manual, d){
+  const v = subVal(manual, it.no, s.label);
+  if(v !== undefined && v !== '') return {v: String(v), auto: false};
+  const a = autoVal(it, s, d);
+  if(a !== undefined) return {v: String(a), auto: true};
+  return {v: undefined, auto: false};
+}
+function itemScore(it, manual, d){
+  if(!it.subs || !it.subs.length) return null;
+  let earned=0, denom=0, filled=0, total=it.subs.length;
+  it.subs.forEach(s=>{
+    const e = effVal(it, s, manual, d);
+    if(e.v === undefined) return;
+    filled++;
+    if(e.v === 'NA') return;         // 해당없음: 분모 제외
+    earned += parseFloat(e.v); denom += s.score;
+  });
+  return {earned, denom, filled, total};
+}
+function fmt(n){ return (Math.round(n*100)/100).toString(); }
+
+function render(){
+  document.getElementById('tabs').innerHTML = BRANCHES.map(b=>
+    `<div class="tab ${b===cur?'on':''}" onclick="switchTab('${b}')">${b}</div>`).join('');
+  const d = DATA[cur];
+  const manual = loadManual(cur);
+  let html = '';
+
+  html += `<div class="meta">`;
+  if(d){
+    html += `<span>🕐 자동수집: <b>${d.run_at}</b></span><span>기준일: <b>${d.cutoff}</b></span>`
+      + (d.opened ? `<span>기관 지정일: <b>${d.opened}</b> (이전 기간 자동 제외)</span>` : '')
+      + `<span>수급자: <b>${d.people}명</b> (퇴소자 포함)</span>`;
+    const st = (d.analysis||{}).stats;
+    if(st) html += `<span>낙상↔욕구 대조: <b>${st.total_rounds}</b>회차 / 불일치 <b class="t-bad">${st.disc}</b>건</span>`;
+  } else {
+    html += `<span class="t-na">아직 자동수집 데이터가 없습니다 — <b>py run_audit.py --branch ${cur}</b> 실행 후 새로고침</span>`;
+  }
+  html += `</div>`;
+
+  // 요약 카드 (자동판정 신호등 + 점수)
+  let nOk=0, nBad=0, nWait=0;
+  let sumEarned=0, sumDenom=0, sumFilled=0, sumSubs=0;
+  const hasScoring = ITEMS.some(it=>it.subs && it.subs.length);
+  ITEMS.forEach(it=>{
+    if(it.method!=='manual'){
+      const r = d && d.item_results && d.item_results[String(it.no)];
+      if(r){ if(r.status==='양호') nOk++; else nBad++; }
+      else nWait++;
+    }
+    const sc = itemScore(it, manual, d);
+    if(sc){ sumEarned+=sc.earned; sumDenom+=sc.denom; sumFilled+=sc.filled; sumSubs+=sc.total; }
+  });
+  html += `<div class="summary">`;
+  if(hasScoring){
+    // 총점 = 득점 누적 합계 (만점 100, 해당없음 배점은 만점에서 차감)
+    const possible = sumDenom;  // 입력된 기준 중 해당없음 제외 배점 합
+    const pct = possible>0 ? sumEarned/possible*100 : null;
+    html += `<div class="card scorecard"><b class="${sumFilled===0?'t-na':(pct>=90?'t-ok':(pct>=70?'t-warn':'t-bad'))}">${sumFilled===0?'-':fmt(sumEarned)}</b>총점 (100점 만점)</div>
+      <div class="card"><b class="${sumFilled===sumSubs?'t-ok':'t-man'}">${sumFilled} / ${sumSubs}</b>기준 입력</div>`;
+  }
+  html += `<div class="card"><b class="t-ok">${nOk}</b>자동 양호</div>
+    <div class="card"><b class="t-bad">${nBad}</b>자동 미흡</div>
+    <div class="card"><b class="t-na">${nWait}</b>수집전</div>
+  </div>`;
+
+  html += `<div class="btnrow">
+    <button onclick="uploadScores()">📤 본부 공유 (점수 업로드)</button>
+    <select id="expScope" class="mstat" style="align-self:center">
+      <option value="cur">현재 지점 (${cur})</option>
+      <option value="all">전체 지점</option>
+    </select>
+    <button onclick="exportExcel()">📗 엑셀 내보내기</button>
+    <button onclick="exportPDF()">📕 PDF 내보내기</button>
+    <button class="gray" onclick="location.reload()">🔄 새로고침</button>
+    <span id="upmsg" style="align-self:center;font-size:12px;color:#2c8a41"></span>
+  </div>`;
+
+  // 36개 항목 테이블 (기준별 점수 입력)
+  html += `<table><tr><th style="width:36px">#</th><th style="width:150px">항목</th><th style="width:64px">방식</th><th style="width:96px">자동판정</th><th>평가기준 (기준별 점수 선택)</th><th style="width:92px">점수</th><th style="width:180px">메모</th></tr>`;
+  ITEMS.forEach(it=>{
+    const m = manual[it.no] || {};
+    const r = d && d.item_results && d.item_results[String(it.no)];
+    const autoHtml = it.method==='manual'
+      ? '<span class="t-man">수기</span>'
+      : (r ? light(r.status) : light(null));
+
+    let bodyHtml = '';
+    if(r) bodyHtml += `<div class="detail-detail">▶ ${r.detail}</div>`;
+    if(it.subs && it.subs.length){
+      bodyHtml += it.subs.map(s=>{
+        const e = effVal(it, s, manual, d);
+        const v = e.v;
+        const opts = ['<option value="">미입력</option>']
+          .concat(s.steps.map(st=>`<option value="${st}" ${String(v)===String(st)?'selected':''}>${fmt(st)}점${st===s.score?' (충족)':(st===0?' (미충족)':'')}</option>`))
+          .concat([`<option value="NA" ${v==='NA'?'selected':''}>해당없음</option>`]);
+        const cls = v===undefined||v==='' ? '' : (v==='NA' ? '' : (parseFloat(v)===s.score ? 'filled' : 'zero'));
+        const badge = e.auto ? ' <span style="font-size:10px;color:#2c8a41;font-weight:bold">🤖자동</span>' : '';
+        return `<div class="subrow">
+          <span class="sublabel">${s.label}</span>
+          <span class="subtext">${s.text} <span class="loc">(배점 ${fmt(s.score)})</span></span>
+          <span class="subscore"><select class="sc ${cls}" onchange="setSub(${it.no},'${s.label}',this.value)">${opts.join('')}</select>${badge}</span>
+        </div>`;
+      }).join('');
+      bodyHtml += `<details style="margin-top:4px"><summary style="font-size:11px;color:#888">기준 전문 보기</summary><div class="criteria">${it.criteria}</div></details>`;
+    } else {
+      bodyHtml += `<div class="criteria">${it.criteria}</div>`;
+    }
+    if(it.checks && it.checks.length){
+      bodyHtml += `<div class="checks"><div class="checks-h">✅ 현장 확인 포인트 (2026 보완)</div>`
+        + it.checks.map((c,i)=>{
+            const on = m.checks && m.checks[i];
+            return `<label class="checkrow ${on?'done':''}">
+              <input type="checkbox" ${on?'checked':''} onchange="setCheck(${it.no},${i},this.checked)">
+              <span>${c}</span></label>`;
+          }).join('')
+        + `</div>`;
+    }
+    bodyHtml += `<div class="loc">${it.method==='manual'?'수기 확인 항목':'케어포 '+it.loc}</div>`;
+
+    const sc = itemScore(it, manual, d);
+    let scoreHtml = '-';
+    if(sc){
+      if(sc.filled===0) scoreHtml = `<span class="t-na">미입력</span>`;
+      else if(sc.denom===0) scoreHtml = `<span class="t-na">해당없음</span>`;
+      else scoreHtml = `<span class="itemscore ${sc.earned>=sc.denom?'t-ok':'t-bad'}">${fmt(sc.earned)} / ${fmt(sc.denom)}</span>`
+        + (sc.filled<sc.total?`<div class="loc">${sc.filled}/${sc.total} 입력</div>`:'');
+    }
+
+    const memoHtml = `<input class="memo" value="${(m.memo||'').replace(/"/g,'&quot;')}" placeholder="메모"
+      onchange="setManual(${it.no},'memo',this.value)">`;
+
+    html += `<tr>
+      <td class="center">${it.no}</td>
+      <td><b>${it.name}</b></td>
+      <td class="center">${it.method==='manual'?'<span class="t-man">수기</span>':'자동'}</td>
+      <td class="center">${it.method==='manual'?'-':(r?light(r.status):light(null))}</td>
+      <td>${bodyHtml}</td>
+      <td class="center">${scoreHtml}</td>
+      <td>${memoHtml}</td>
+    </tr>`;
+  });
+  html += `</table>`;
+
+  // 상세 리스트 (자동수집 있을 때)
+  if(d){
+    const an = d.analysis || {};
+    if(d.rows_match && d.rows_match.length){
+      const disc = d.rows_match.filter(r=>r[8]==='불일치'||String(r[8]).startsWith('확인'));
+      html += `<details><summary>🔎 낙상↔욕구사정 불일치·확인필요 (${disc.length}건)</summary>
+        <table class="small-table"><tr><th>수급자</th><th>현황</th><th>낙상평가일</th><th>활동</th><th>걸음걸이</th><th>욕구사정일</th><th>일어나앉기</th><th>옮겨앉기</th><th>판정</th></tr>
+        ${disc.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+    if(an.halfyear_miss && an.halfyear_miss.length){
+      html += `<details><summary>🔎 반기별 평가 누락 (${an.halfyear_miss.length}건)</summary>
+        <table class="small-table"><tr><th>수급자</th><th>현황</th><th>반기</th><th>평가</th><th>재적기간</th></tr>
+        ${an.halfyear_miss.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+    if(an.order_issues && an.order_issues.length){
+      html += `<details><summary>🔎 계획-기초평가 순서 확인 (${an.order_issues.length}건)</summary>
+        <table class="small-table"><tr><th>수급자</th><th>계획 작성일</th><th>내용</th></tr>
+        ${an.order_issues.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+    if(an.plan_issues && an.plan_issues.length){
+      html += `<details><summary>🔎 급여제공계획 발송·서명 문제 (${an.plan_issues.length}건)</summary>
+        <table class="small-table"><tr><th>수급자</th><th>작성일</th><th>적용기간</th><th>발송상태</th><th>동의일</th><th>문제</th></tr>
+        ${an.plan_issues.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+    if(an.rows_check && an.rows_check.length){
+      html += `<details><summary>🔎 수급자별 연간작성·계약 점검 (${an.rows_check.length}명)</summary>
+        <table class="small-table"><tr><th>수급자</th><th>현황</th><th>수급기간</th><th>누락①</th><th>누락②</th><th>누락③</th><th>표준약관</th><th>계약연속</th><th>계획점검</th></tr>
+        ${an.rows_check.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
+    }
+  }
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function switchTab(b){ cur=b; localStorage.setItem('audit_tab', b); render(); }
+function setManual(no, key, val){
+  const m = loadManual(cur);
+  m[no] = m[no] || {};
+  m[no][key] = val;
+  saveManual(cur, m);
+  render();
+}
+// ---- 사이트 내 점검표 내보내기 (엑셀/PDF) ----
+function expBranches(){
+  const sc = document.getElementById('expScope');
+  return (sc && sc.value === 'all') ? BRANCHES.slice() : [cur];
+}
+function subStatusOf(v, sub){
+  if(v === undefined || v === '') return '미입력';
+  if(v === 'NA') return '해당없음';
+  const x = parseFloat(v);
+  if(x >= sub.score) return '충족';
+  return x === 0 ? '미충족' : '부분충족';
+}
+function branchRows(b){
+  const manual = loadManual(b);
+  const d = DATA[b];
+  const rows = [];
+  let earned = 0, filled = 0, total = 0, naPts = 0;
+  ITEMS.forEach(it=>{
+    (it.subs||[]).forEach((s, si)=>{
+      const e = effVal(it, s, manual, d);
+      total++;
+      let scoreCell = '';
+      if(e.v !== undefined){
+        filled++;
+        if(e.v === 'NA'){ naPts += s.score; scoreCell = '해당없음'; }
+        else { earned += parseFloat(e.v); scoreCell = parseFloat(e.v); }
+      }
+      const r = d && d.item_results && d.item_results[String(it.no)];
+      const m = manual[it.no] || {};
+      rows.push([si===0 ? it.no : '', si===0 ? it.name : '', s.label, s.text, s.score,
+                 scoreCell, subStatusOf(e.v, s), e.v===undefined?'':(e.auto?'자동':'수기'),
+                 r ? r.status : '', si===0 ? (m.memo||'') : '']);
+    });
+  });
+  return {rows, earned: Math.round(earned*100)/100, filled, total, naPts: Math.round(naPts*100)/100};
+}
+// 현장 확인 포인트 (2026 보완) — 지점별 체크상태 포함
+function branchChecks(b){
+  const manual = loadManual(b);
+  const rows = [];
+  ITEMS.forEach(it=>{
+    if(!it.checks || !it.checks.length) return;
+    const m = manual[it.no] || {};
+    it.checks.forEach((c,i)=>{
+      const on = !!(m.checks && m.checks[i]);
+      rows.push([it.no, it.name, c, on]);
+    });
+  });
+  return rows;
+}
+function exportExcel(){
+  if(typeof XLSX === 'undefined'){ alert('엑셀 라이브러리(vendor/xlsx.full.min.js)를 찾을 수 없습니다.'); return; }
+  const brs = expBranches();
+  const wb = XLSX.utils.book_new();
+  const sum = [["지점","총점(100점)","기준 입력","해당없음 배점","자동수집 시각","기관 지정일"]];
+  const packs = {};
+  brs.forEach(b=>{
+    const p = branchRows(b);
+    packs[b] = p;
+    const d = DATA[b] || {};
+    sum.push([b, p.earned, `${p.filled}/${p.total}`, p.naPts, d.run_at||'-', d.opened||'-']);
+  });
+  const wsSum = XLSX.utils.aoa_to_sheet(sum);
+  wsSum['!cols'] = [{wch:14},{wch:12},{wch:10},{wch:12},{wch:17},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, wsSum, '요약');
+  brs.forEach(b=>{
+    const aoa = [["번호","항목","기준","기준 내용","배점","점수","판정","채점","자동판정","메모"], ...packs[b].rows];
+    const chk = branchChecks(b);
+    if(chk.length){
+      aoa.push([], ["── 현장 확인 포인트 (2026 보완) — 배점 무관 ──"],
+               ["번호","항목","확인 포인트","확인"]);
+      chk.forEach(r=>aoa.push([r[0], r[1], r[2], r[3] ? 'O' : '']));
+    }
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:6},{wch:16},{wch:5},{wch:55},{wch:6},{wch:8},{wch:9},{wch:6},{wch:9},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, ws, b);
+  });
+  const tag = brs.length===1 ? brs[0]+'_' : '';
+  const dt = new Date();
+  const ymd = dt.getFullYear() + String(dt.getMonth()+1).padStart(2,'0') + String(dt.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, `지점점검표_${tag}${ymd}.xlsx`);
+}
+function exportPDF(){
+  const brs = expBranches();
+  let body = '';
+  brs.forEach((b, bi)=>{
+    const manual = loadManual(b);
+    const d = DATA[b];
+    let earned=0, naPts=0, filled=0, total=0;
+    let rows = '';
+    ITEMS.forEach(it=>{
+      let itE=0, itNa=0, itF=0;
+      (it.subs||[]).forEach(s=>{
+        const e = effVal(it, s, manual, d);
+        total++;
+        if(e.v !== undefined){
+          filled++; itF++;
+          if(e.v==='NA'){ itNa+=s.score; naPts+=s.score; }
+          else { itE+=parseFloat(e.v); earned+=parseFloat(e.v); }
+        }
+      });
+      const possible = (it.total||0) - itNa;
+      const verdict = itF===0 ? '미입력' : (possible<=0 ? '해당없음' : (itE>=possible ? '충족' : '미달'));
+      const cls = verdict==='충족' ? 'ok' : (verdict==='미달' ? 'bad' : 'na');
+      const r = d && d.item_results && d.item_results[String(it.no)];
+      rows += `<tr><td>${it.no}</td><td class="l">${it.name}</td><td>${it.total||'-'}</td>
+        <td>${itF===0?'-':fmt(itE)}</td><td class="${cls}">${verdict}</td><td>${r?r.status:''}</td></tr>`;
+    });
+    const chk = branchChecks(b);
+    let checksHtml = '';
+    if(chk.length){
+      checksHtml = `<h2 class="chkh">✅ 현장 확인 포인트 (2026 보완) — 배점 무관, 현장 점검용</h2>
+        <table><tr><th style="width:36px">#</th><th>항목</th><th style="text-align:left">확인 포인트</th><th style="width:40px">확인</th></tr>
+        ${chk.map(r=>`<tr><td>${r[0]}</td><td class="l">${r[1]}</td><td class="l">${r[2]}</td><td>${r[3]?'☑':'☐'}</td></tr>`).join('')}</table>`;
+    }
+    body += `<div class="page${bi<brs.length-1?' brk':''}">
+      <h1>지점 점검표 — ${b}</h1>
+      <div class="meta">생성 ${new Date().toLocaleDateString('ko-KR')} · 총점 <b>${fmt(earned)}점</b> / 만점 ${fmt(100-naPts)}점(해당없음 ${fmt(naPts)}점 제외)
+        · 기준 입력 ${filled}/${total} · 자동수집 ${(d||{}).run_at||'-'} · 기관 지정일 ${(d||{}).opened||'-'}</div>
+      <table><tr><th style="width:36px">번호</th><th>항목</th><th style="width:50px">배점</th><th style="width:50px">득점</th><th style="width:60px">판정</th><th style="width:66px">자동판정</th></tr>${rows}</table>
+      ${checksHtml}
+    </div>`;
+  });
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>지점점검표</title><style>
+    body{font-family:'맑은 고딕',sans-serif;margin:14px;color:#222}
+    h1{font-size:17px;margin:0 0 4px}
+    h2.chkh{font-size:13px;margin:12px 0 4px;color:#b57a00}
+    .meta{font-size:11px;color:#666;margin-bottom:8px}
+    table{border-collapse:collapse;width:100%;font-size:10.5px}
+    th,td{border:1px solid #b9c4d8;padding:3px 6px;text-align:center}
+    th{background:#2f5496;color:#fff}
+    td.l{text-align:left}
+    .ok{color:#2c8a41;font-weight:bold}.bad{color:#c02020;font-weight:bold}.na{color:#888}
+    .brk{page-break-after:always}
+    @media print { body{margin:6mm} }
+  </style></head><body>${body}
+  <script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
+  w.document.close();
+}
+function setSub(no, label, val){
+  const m = loadManual(cur);
+  m[no] = m[no] || {};
+  m[no].subs = m[no].subs || {};
+  if(val === '') delete m[no].subs[label];
+  else m[no].subs[label] = val;
+  saveManual(cur, m);
+  render();
+}
+// ---- 현장 확인 포인트 체크 (배점과 무관, 체크상태만 저장) ----
+function setCheck(no, idx, on){
+  const m = loadManual(cur);
+  m[no] = m[no] || {};
+  m[no].checks = m[no].checks || {};
+  if(on) m[no].checks[idx] = true;
+  else delete m[no].checks[idx];
+  saveManual(cur, m);
+  render();
+}
+// ---- 점수 본부 공유 (Apps Script 웹훅) ----
+const SCORES_HOOK = 'https://script.google.com/macros/s/AKfycbxCaMyM26xaLNlYUof-Jxac88jfWggzphLDvBEIRlDY-2Bn8S9wF5HWt52QupXWkxlO/exec';
+const SCORES_TOKEN = 'audit-scores-2026-cheongju';
+function buildScoreData(branch){
+  const manual = loadManual(branch);
+  const d = DATA[branch];
+  let earned=0, denom=0, filled=0, total=0, naPts=0;
+  const per_item = {};
+  ITEMS.forEach(it=>{
+    const sc = itemScore(it, manual, d);
+    if(!sc) return;
+    total += it.subs.length; filled += sc.filled;
+    earned += sc.earned; denom += sc.denom;
+    it.subs.forEach(s=>{
+      const e = effVal(it, s, manual, d);
+      if(e.v==='NA') naPts += s.score;
+    });
+    per_item[it.no] = {earned: sc.earned, denom: sc.denom, filled: sc.filled, subs: it.subs.length};
+  });
+  const memos = {};
+  Object.keys(manual).forEach(no=>{ if(manual[no] && manual[no].memo) memos[no] = manual[no].memo; });
+  // 기준별 선택값 (자동 부여 포함) — 점검표 엑셀/PDF 내보내기용
+  const sub_values = {};
+  ITEMS.forEach(it=>{
+    if(!it.subs) return;
+    it.subs.forEach(s=>{
+      const e = effVal(it, s, manual, d);
+      if(e.v !== undefined){
+        sub_values[it.no] = sub_values[it.no] || {};
+        sub_values[it.no][s.label] = {v: e.v, auto: e.auto};
+      }
+    });
+  });
+  return {total_earned: Math.round(earned*100)/100, filled, total_subs: total,
+          na_points: Math.round(naPts*100)/100, per_item, memos, sub_values};
+}
+async function postScores(branch, data){
+  const body = JSON.stringify({token: SCORES_TOKEN, branch, data});
+  try{
+    const res = await fetch(SCORES_HOOK, {method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+    const out = await res.json();
+    return out.ok;
+  }catch(e){
+    await fetch(SCORES_HOOK, {method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+    return true;  // no-cors: 응답 확인 불가하지만 전송됨
+  }
+}
+async function uploadScores(){
+  const msg = document.getElementById('upmsg');
+  msg.textContent = '전체 지점 업로드 중...';
+  const done = [], skipped = [];
+  for(const b of BRANCHES){
+    const data = buildScoreData(b);
+    if(data.filled === 0){ skipped.push(b); continue; }
+    try{
+      const ok = await postScores(b, data);
+      done.push(`${b} ${data.total_earned}점(${data.filled}/${data.total_subs})`);
+      if(!ok) done[done.length-1] += '⚠️';
+    }catch(e){ done.push(`${b} ❌`); }
+  }
+  msg.textContent = (done.length ? '✅ 공유 완료: ' + done.join(' · ') : '입력된 점수가 없습니다')
+    + (skipped.length && done.length ? ` (미입력 제외: ${skipped.join(', ')})` : '');
+}
+
+if(!ITEMS.length){
+  document.getElementById('content').innerHTML =
+    '<div class="nodata">audit_results/dashboard_data.js 가 없습니다.<br>먼저 <b>py run_audit.py</b> 를 한 번 실행하세요 (항목 정의가 함께 생성됩니다).</div>';
+  document.getElementById('tabs').innerHTML = '';
+} else {
+  render();
+}
+</script>
+<script>
+(function(){
+  var PIN='15771389';
+  var g=document.getElementById('hqgate');
+  document.getElementById('hqpin').addEventListener('input',function(e){
+    if(e.target.value===PIN){g.style.display='none';sessionStorage.setItem('ap','1');}
+  });
+  if(sessionStorage.getItem('ap')==='1') g.style.display='none';
+  // 업로드 비활성화(본부가 눌러도 공유 점수 훼손 방지)
+  window.uploadScores=function(){alert('본부 공유 페이지에서는 점수 업로드가 비활성화되어 있습니다.');};
+  // 업로드된 점수/메모를 hook에서 불러와 표시(읽기 전용)
+  try{
+    fetch(SCORES_HOOK+(SCORES_HOOK.indexOf('?')>=0?'&':'?')+'token='+encodeURIComponent(SCORES_TOKEN))
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(!j||!j.ok||!j.scores) return;
+        Object.keys(j.scores).forEach(function(branch){
+          var sc=j.scores[branch]; if(!sc) return; var m={};
+          if(sc.sub_values){Object.keys(sc.sub_values).forEach(function(no){
+            m[no]=m[no]||{}; m[no].subs={};
+            Object.keys(sc.sub_values[no]).forEach(function(lab){m[no].subs[lab]=sc.sub_values[no][lab].v;});
+          });}
+          if(sc.memos){Object.keys(sc.memos).forEach(function(no){m[no]=m[no]||{}; m[no].memo=sc.memos[no];});}
+          try{localStorage.setItem(manualKey(branch),JSON.stringify(m));}catch(e){}
+        });
+        render();
+      }).catch(function(e){});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
