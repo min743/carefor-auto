@@ -51,6 +51,11 @@
   details { margin-top: 16px; }
   details summary { cursor: pointer; font-weight: bold; color: #2f5496; padding: 6px 0; }
   .small-table th, .small-table td { font-size: 12px; padding: 4px 7px; }
+  .checks { margin-top: 8px; background: #fff8e6; border: 1px solid #f0d98c; border-radius: 6px; padding: 8px 10px; }
+  .checks-h { font-weight: bold; color: #b57a00; font-size: 12px; margin-bottom: 5px; }
+  .checkrow { display: flex; gap: 7px; align-items: flex-start; font-size: 12px; color: #5a4a1a; padding: 3px 0; cursor: pointer; line-height: 1.45; }
+  .checkrow input { margin-top: 2px; flex-shrink: 0; }
+  .checkrow.done span { color: #2c8a41; text-decoration: line-through; }
 </style>
 </head>
 <body>
@@ -205,6 +210,16 @@ function render(){
     } else {
       bodyHtml += `<div class="criteria">${it.criteria}</div>`;
     }
+    if(it.checks && it.checks.length){
+      bodyHtml += `<div class="checks"><div class="checks-h">✅ 현장 확인 포인트 (2026 보완)</div>`
+        + it.checks.map((c,i)=>{
+            const on = m.checks && m.checks[i];
+            return `<label class="checkrow ${on?'done':''}">
+              <input type="checkbox" ${on?'checked':''} onchange="setCheck(${it.no},${i},this.checked)">
+              <span>${c}</span></label>`;
+          }).join('')
+        + `</div>`;
+    }
     bodyHtml += `<div class="loc">${it.method==='manual'?'수기 확인 항목':'케어포 '+it.loc}</div>`;
 
     const sc = itemScore(it, manual, d);
@@ -309,6 +324,20 @@ function branchRows(b){
   });
   return {rows, earned: Math.round(earned*100)/100, filled, total, naPts: Math.round(naPts*100)/100};
 }
+// 현장 확인 포인트 (2026 보완) — 지점별 체크상태 포함
+function branchChecks(b){
+  const manual = loadManual(b);
+  const rows = [];
+  ITEMS.forEach(it=>{
+    if(!it.checks || !it.checks.length) return;
+    const m = manual[it.no] || {};
+    it.checks.forEach((c,i)=>{
+      const on = !!(m.checks && m.checks[i]);
+      rows.push([it.no, it.name, c, on]);
+    });
+  });
+  return rows;
+}
 function exportExcel(){
   if(typeof XLSX === 'undefined'){ alert('엑셀 라이브러리(vendor/xlsx.full.min.js)를 찾을 수 없습니다.'); return; }
   const brs = expBranches();
@@ -326,6 +355,12 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb, wsSum, '요약');
   brs.forEach(b=>{
     const aoa = [["번호","항목","기준","기준 내용","배점","점수","판정","채점","자동판정","메모"], ...packs[b].rows];
+    const chk = branchChecks(b);
+    if(chk.length){
+      aoa.push([], ["── 현장 확인 포인트 (2026 보완) — 배점 무관 ──"],
+               ["번호","항목","확인 포인트","확인"]);
+      chk.forEach(r=>aoa.push([r[0], r[1], r[2], r[3] ? 'O' : '']));
+    }
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = [{wch:6},{wch:16},{wch:5},{wch:55},{wch:6},{wch:8},{wch:9},{wch:6},{wch:9},{wch:24}];
     XLSX.utils.book_append_sheet(wb, ws, b);
@@ -361,17 +396,26 @@ function exportPDF(){
       rows += `<tr><td>${it.no}</td><td class="l">${it.name}</td><td>${it.total||'-'}</td>
         <td>${itF===0?'-':fmt(itE)}</td><td class="${cls}">${verdict}</td><td>${r?r.status:''}</td></tr>`;
     });
+    const chk = branchChecks(b);
+    let checksHtml = '';
+    if(chk.length){
+      checksHtml = `<h2 class="chkh">✅ 현장 확인 포인트 (2026 보완) — 배점 무관, 현장 점검용</h2>
+        <table><tr><th style="width:36px">#</th><th>항목</th><th style="text-align:left">확인 포인트</th><th style="width:40px">확인</th></tr>
+        ${chk.map(r=>`<tr><td>${r[0]}</td><td class="l">${r[1]}</td><td class="l">${r[2]}</td><td>${r[3]?'☑':'☐'}</td></tr>`).join('')}</table>`;
+    }
     body += `<div class="page${bi<brs.length-1?' brk':''}">
       <h1>지점 점검표 — ${b}</h1>
       <div class="meta">생성 ${new Date().toLocaleDateString('ko-KR')} · 총점 <b>${fmt(earned)}점</b> / 만점 ${fmt(100-naPts)}점(해당없음 ${fmt(naPts)}점 제외)
         · 기준 입력 ${filled}/${total} · 자동수집 ${(d||{}).run_at||'-'} · 기관 지정일 ${(d||{}).opened||'-'}</div>
       <table><tr><th style="width:36px">번호</th><th>항목</th><th style="width:50px">배점</th><th style="width:50px">득점</th><th style="width:60px">판정</th><th style="width:66px">자동판정</th></tr>${rows}</table>
+      ${checksHtml}
     </div>`;
   });
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>지점점검표</title><style>
     body{font-family:'맑은 고딕',sans-serif;margin:14px;color:#222}
     h1{font-size:17px;margin:0 0 4px}
+    h2.chkh{font-size:13px;margin:12px 0 4px;color:#b57a00}
     .meta{font-size:11px;color:#666;margin-bottom:8px}
     table{border-collapse:collapse;width:100%;font-size:10.5px}
     th,td{border:1px solid #b9c4d8;padding:3px 6px;text-align:center}
@@ -390,6 +434,16 @@ function setSub(no, label, val){
   m[no].subs = m[no].subs || {};
   if(val === '') delete m[no].subs[label];
   else m[no].subs[label] = val;
+  saveManual(cur, m);
+  render();
+}
+// ---- 현장 확인 포인트 체크 (배점과 무관, 체크상태만 저장) ----
+function setCheck(no, idx, on){
+  const m = loadManual(cur);
+  m[no] = m[no] || {};
+  m[no].checks = m[no].checks || {};
+  if(on) m[no].checks[idx] = true;
+  else delete m[no].checks[idx];
   saveManual(cur, m);
   render();
 }
