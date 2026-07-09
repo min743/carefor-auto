@@ -104,7 +104,12 @@
   }
   function parseNeeds(html) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const res = { sit: '?', tr: '?', toilet: '?', nutrition: '?' };
+    const res = { sit: '?', tr: '?', toilet: '?', nutrition: '?', avoidFood: false };
+    // 항목 33①: 영양상태 판단근거(cyk07_resn)에 기피식품 기재 여부 ('기피식품 없음'도 기재로 인정)
+    try {
+      const m = html.match(/cyk07_resn(?:&quot;|")\s*:\s*(?:&quot;|")([\s\S]*?)(?:&quot;|")\s*,/);
+      res.avoidFood = /기피\s*식품/.test(m ? m[1] : html);
+    } catch (e) { res.avoidFood = false; }
     Array.from(doc.querySelectorAll('tr')).forEach(r => {
       const t = r.textContent.replace(/\s+/g, ' ').trim();
       const isNut = t.indexOf('영양상태') === 0 || t.indexOf('영양 ') === 0;
@@ -306,7 +311,7 @@
                 const p3 = anyXhrWait('일어나 앉기', 15000);
                 rd.needsCell.click();
                 const html = await p3;
-                if (html) { const pn = parseNeeds(html); needsArr.push({ date: nd, sit: pn.sit, tr: pn.tr, toilet: pn.toilet, nutrition: pn.nutrition }); } else needsArr.push({ date: nd, sit: '실패', tr: '실패', toilet: '실패' });
+                if (html) { const pn = parseNeeds(html); needsArr.push({ date: nd, sit: pn.sit, tr: pn.tr, toilet: pn.toilet, nutrition: pn.nutrition, avoidFood: pn.avoidFood }); } else needsArr.push({ date: nd, sit: '실패', tr: '실패', toilet: '실패' });
                 closeModalSync();
               }
               const pd = dateOf(rd.plan);
@@ -324,7 +329,10 @@
                   // 27① 기능회복훈련: 계획서 내 기능회복 구간 텍스트 캡처 (신체기능·기본동작·일상생활동작)
                   const ri = pt.indexOf('기능회복');
                   const rehabTxt = ri >= 0 ? pt.substring(ri, ri + 300) : '';
-                  plans.push({ key: rd.plan, wd, ap, st, agreeDate: ag[1] || '', agreeSigned: !!ag[2], rehabTxt });
+                  // 종합의견(총평): 계획서 서술형 총평 — 낙상/욕창/인지·배설·식이 상태가 반영됐는지 대조용
+                  const ji = pt.indexOf('종합의견');
+                  const opinion = ji >= 0 ? pt.substring(ji, ji + 800) : '';
+                  plans.push({ key: rd.plan, wd, ap, st, agreeDate: ag[1] || '', agreeSigned: !!ag[2], rehabTxt, opinion });
                 } else plans.push({ key: rd.plan, wd: '', ap: '', st: '팝업실패', agreeDate: '', agreeSigned: false, rehabTxt: '' });
                 closeModalSync();
               }

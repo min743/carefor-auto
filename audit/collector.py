@@ -151,6 +151,17 @@ def run_branch_audit(
 
     if item33:
         analysis["item_results"]["33"] = item33
+        # 항목 33①: 신규 수급자 기피식품 기재(욕구사정 영양 판단근거) 자동판정
+        try:
+            from .collect_item33 import judge_avoid_food
+            st1, note1 = judge_avoid_food(results)
+            if st1:
+                item33["sub_status"]["①"] = st1
+                item33["detail"] += " · " + note1
+                if st1 == "미흡":
+                    item33["status"] = "미흡"
+        except Exception as e:
+            progress_cb(f"[{branch_name}] 33① 기피식품 판정 건너뜀: {e}")
 
     # 항목 32 백신접종률: 주간보호=재가급여, 2026·2027 정기평가는 특례로 충족(Y) 자동 처리 (기준 명시)
     _yr = datetime.now().year

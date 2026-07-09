@@ -174,3 +174,31 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def judge_avoid_food(results, cut: str = "2026.01.01"):
+    """항목 33①: 기간 내 신규 수급자의 욕구사정에 기피식품 기재 여부.
+
+    - 욕구사정 영양상태 판단근거에 '기피식품'이 있으면 기재로 인정('없음' 포함, 매뉴얼 기준)
+    - 기간 내 신규 수급자 없으면 예외(양호)
+    - avoidFood 필드가 아예 없으면(구버전 스캔) 판정 보류 → (None, None)
+    반환: (status, note) 또는 (None, None)
+    """
+    has_field = any("avoidFood" in n for p in results for n in (p.get("needs") or []))
+    if not has_field:
+        return None, None
+
+    new = []
+    for p in results:
+        starts = [e["d"] for e in (p.get("enroll") or [])
+                  if e.get("k") == "급여개시일" and e.get("d")]
+        if starts and min(starts) >= cut:
+            new.append(p)
+    if not new:
+        return "양호", "①기피식품: 기간 내 신규 수급자 없음(예외)"
+
+    miss = [p["name"] for p in new if not any(n.get("avoidFood") for n in (p.get("needs") or []))]
+    if miss:
+        return "미흡", (f"①기피식품 미기재 {len(miss)}명"
+                      f"({', '.join(miss[:5])}{'…' if len(miss) > 5 else ''})")
+    return "양호", f"①기피식품 기재 확인(신규 {len(new)}명 전원)"
