@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .items import ITEMS
+from .names import collect_from_audit_results, detail_for_share, name_rx
 
 ROOT = Path(__file__).resolve().parent.parent
 AUDIT_DIR = ROOT / "audit_results"
@@ -52,17 +53,17 @@ def clean_detail(text: str) -> str:
     return s
 
 
-def _branch_summary(d: dict) -> dict:
-    """개인정보 없는 요약만 추출."""
+def _branch_summary(d: dict, rx) -> dict:
+    """개인정보 없는 요약만 추출 (이름은 '강○희'로 마스킹)."""
     an = d.get("analysis", {})
     stats = an.get("stats", {}) or {}
-    # item_results 의 detail 자유텍스트에서 이름 제거 (원본 훼손 없이 사본)
+    # item_results 의 detail 자유텍스트에서 이름 마스킹 (원본 훼손 없이 사본)
     safe_items = {}
     for no, r in (d.get("item_results") or {}).items():
         rr = dict(r) if isinstance(r, dict) else r
         if isinstance(rr, dict) and rr.get("detail"):
-            # 이름 제거 후 HTML 이스케이프(<, &, > 로 표 렌더 깨짐/주입 방지 — innerHTML 삽입됨)
-            rr["detail"] = html.escape(clean_detail(rr["detail"]))
+            # 마스킹 후 HTML 이스케이프(<, &, > 로 표 렌더 깨짐/주입 방지 — innerHTML 삽입됨)
+            rr["detail"] = html.escape(detail_for_share(rr["detail"], rx))
         safe_items[no] = rr
     return {
         "run_at": d.get("run_at", ""),
@@ -80,11 +81,12 @@ def _branch_summary(d: dict) -> dict:
 
 
 def generate() -> Path:
+    rx = name_rx(collect_from_audit_results(AUDIT_DIR))  # 수급자+직원 이름 집합 (마스킹용)
     data = {}
     for f in AUDIT_DIR.glob("*.json"):
         try:
             d = json.loads(f.read_text(encoding="utf-8"))
-            data[d["branch"]] = _branch_summary(d)
+            data[d["branch"]] = _branch_summary(d, rx)
         except Exception:
             continue
 

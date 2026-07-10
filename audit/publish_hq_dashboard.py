@@ -20,7 +20,8 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-from .summary_page import clean_detail  # 이름 패턴 제거 + 흔적 남으면 통째 대체
+from .names import (base_name, collect_from_audit_results, detail_for_share,
+                    mask_known, mask_name, name_rx)
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "audit_results" / "dashboard_data.js"
@@ -90,16 +91,6 @@ def publish_dashboard_html():
     DASH_OUT.write_text(html, encoding="utf-8")
     return DASH_OUT
 
-def mask_name(n: str) -> str:
-    """공단 게시 관행대로 성과 끝 글자만 남긴다. 강윤희→강○희, 김옥→김○, 남궁민우→남○○우."""
-    n = n.strip()
-    if len(n) < 2:
-        return n
-    if len(n) == 2:
-        return n[0] + "○"
-    return n[0] + "○" * (len(n) - 2) + n[-1]
-
-
 # 명단표: 0번 컬럼이 수급자 이름 (구조 고정)
 NAME_COL_ARRAYS_TOP = ["rows_match"]
 NAME_COL_ARRAYS_AN = ["halfyear_miss", "order_issues", "plan_issues", "rows_check", "rehab_miss"]
@@ -113,95 +104,25 @@ def _load() -> dict:
     return {"data": json.loads(m.group(1)), "items": json.loads(m.group(2))}
 
 
-# 동명이인 표기를 벗겨 기본 이름을 얻는다: 이명옥A / 김영숙(동명이인) / 김경자(각) → 이명옥·김영숙·김경자
-_NAME_TOKEN = re.compile(r"([가-힣]{2,4})(?:\([^)]{1,8}\))?[A-Za-z]?$")
-
-
-def _base_name(s: str) -> str | None:
-    m = _NAME_TOKEN.fullmatch((s or "").strip())
-    return m.group(1) if m else None
-
-
 def _collect_names(data: dict) -> set[str]:
     """명단표 0번 컬럼 = 수급자 이름 집합 (동명이인 접미사 제거 후 기본 이름 채택)."""
     names: set[str] = set()
     for b in data.values():
         for arr in NAME_COL_ARRAYS_TOP:
             for row in b.get(arr, []) or []:
-                if row and isinstance(row[0], str) and (n := _base_name(row[0])):
+                if row and isinstance(row[0], str) and (n := base_name(row[0])):
                     names.add(n)
         an = b.get("analysis", {}) or {}
         for arr in NAME_COL_ARRAYS_AN:
             for row in an.get(arr, []) or []:
-                if row and isinstance(row[0], str) and (n := _base_name(row[0])):
+                if row and isinstance(row[0], str) and (n := base_name(row[0])):
                     names.add(n)
     return names
 
 
-_SKIP_KEYS = {"items", "item_results"}  # 항목 정의/판정 — 항목명(욕구사정 등)은 사람이름 아님
-
-
-def _names_from_json(obj, acc: set[str]) -> None:
-    """audit_results/*.json 을 재귀 순회하며 사람 'name' 필드만 수집(수급자+직원 완전 커버)."""
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            if k in _SKIP_KEYS:
-                continue
-            if k == "name" and isinstance(v, str) and (n := _base_name(v)):
-                acc.add(n)
-            else:
-                _names_from_json(v, acc)
-    elif isinstance(obj, list):
-        for x in obj:
-            _names_from_json(x, acc)
-
-
 def _collect_all_person_names(data: dict) -> set[str]:
     """명단표(수급자) + audit_results/*.json의 모든 name필드(직원 포함) 합집합."""
-    names = _collect_names(data)
-    for f in (ROOT / "audit_results").glob("*.json"):
-        try:
-            _names_from_json(json.loads(f.read_text(encoding="utf-8")), names)
-        except Exception:
-            continue
-    return names
-
-
-def _name_rx(names: set[str]):
-    """알려진 이름들을 하나의 결합 정규식으로 (긴 이름 우선, 한글 경계)."""
-    if not names:
-        return None
-    alt = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
-    return re.compile(rf"(?<![가-힣])(?:{alt})(?![가-힣])")
-
-
-def _mask_known(s: str, rx) -> str:
-    """문자열에 남아있는 알려진 수급자 이름을 마스킹 (이수→이수율 오치환 방지)."""
-    if not s or rx is None:
-        return s
-    return rx.sub(lambda m: mask_name(m.group(0)), s)
-
-
-# 마스킹 뒤에도 남은 '진짜 이름'만 잡는 게이트. '강○희'는 ○가 [가-힣]이 아니라 걸리지 않는다.
-# summary_page._NAME_GATE 와 달리 '날짜만' 게이트는 뺀다 (이름이 이미 마스킹돼 과잉 차단이 됨).
-_HQ_NAME_GATE = [
-    re.compile(r"[가-힣]{2,4}\s*\(\s*[가-힣]"),       # 이름(각) / 이름(여)
-    re.compile(r"[가-힣]{2,4}\s*,\s*[가-힣]{2,4}"),   # 이름, 이름
-    re.compile(r":\s*[가-힣]{2,4}\s*[,)]"),           # 마커: 이름) / 이름,
-    re.compile(r"\d{4}[-.]\d{1,2}\s+[가-힣]{2,4}"),   # YYYY-MM 이름
-]
-
-
-def _detail_for_hq(text: str, rx) -> str:
-    """detail 자유텍스트: 알려진 이름은 마스킹해 살리고, 미등록 이름이 남으면 통째 대체."""
-    if not text:
-        return text
-    s = _mask_known(text, rx)
-    s = re.sub(r"\s{2,}", " ", s).strip(" ;,")
-    for g in _HQ_NAME_GATE:
-        if g.search(s):
-            return "[상세 명단은 지점 대시보드에서 확인]"
-    return s
+    return _collect_names(data) | collect_from_audit_results(ROOT / "audit_results")
 
 
 def _mask_array(rows, rx):
@@ -211,7 +132,7 @@ def _mask_array(rows, rx):
         if r and isinstance(r[0], str) and re.fullmatch(r"[가-힣]{2,4}", r[0].strip()):
             r[0] = mask_name(r[0])
         # 다른 컬럼에 남은 알려진 이름도 마스킹 + HTML 이스케이프(대시보드가 innerHTML로 삽입)
-        r = [html.escape(_mask_known(c, rx)) if isinstance(c, str) else c for c in r]
+        r = [html.escape(mask_known(c, rx)) if isinstance(c, str) else c for c in r]
         out.append(r)
     return out
 
@@ -219,7 +140,7 @@ def _mask_array(rows, rx):
 def sanitize(payload: dict):
     data = payload["data"]
     names = _collect_all_person_names(data)  # 수급자 + 직원 이름 완전 집합
-    rx = _name_rx(names)
+    rx = name_rx(names)
     for b in data.values():
         # 명단표 마스킹
         for arr in NAME_COL_ARRAYS_TOP:
@@ -232,18 +153,18 @@ def sanitize(payload: dict):
         # item_results detail: 알려진 이름은 '강○희'로 마스킹해 살리고, 미등록 이름만 안전 대체
         for r in (b.get("item_results") or {}).values():
             if isinstance(r, dict) and r.get("detail"):
-                r["detail"] = html.escape(_detail_for_hq(r["detail"], rx))
+                r["detail"] = html.escape(detail_for_share(r["detail"], rx))
         # analysis.item_results 도 동일 처리(있으면)
         for r in (an.get("item_results") or {}).values():
             if isinstance(r, dict) and r.get("detail"):
-                r["detail"] = html.escape(_detail_for_hq(r["detail"], rx))
+                r["detail"] = html.escape(detail_for_share(r["detail"], rx))
     return payload, names
 
 
 def verify(payload: dict, names: set[str]) -> list[str]:
     """결과 전체 문자열에서 알려진 수급자 이름이 남아있는지 검사."""
     blob = json.dumps(payload["data"], ensure_ascii=False)
-    rx = _name_rx(names)
+    rx = name_rx(names)
     return sorted(set(rx.findall(blob))) if rx else []
 
 
