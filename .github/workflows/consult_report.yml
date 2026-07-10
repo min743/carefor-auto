@@ -117,10 +117,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 공지 실행
+      # publish_excel/consult_excel이 openpyxl을 쓴다. 이게 없어 2026-07-10까지
+      # '상세 엑셀 재생성' 스텝이 매일 ModuleNotFoundError로 죽고 있었다
+      # (continue-on-error가 conclusion을 success로 보고해 드러나지 않음).
+      - name: 패키지 설치
+        run: pip install openpyxl
+
+      - name: 공지 실행 (지점별 엑셀 재생성 → 드라이브 갱신 → 링크 포함 슬랙 공지)
         env:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GOOGLE_OAUTH_JSON: ${{ secrets.GOOGLE_OAUTH_JSON }}
         run: |
           # 예약/외부 자동 실행은 상담 미입력만. 수동 실행은 입력값(기본 consult) 따름.
           REPORT="${{ github.event.inputs.report || 'consult' }}"
@@ -129,29 +136,31 @@ jobs:
             FLAG="--dry-run"
           fi
           if [ "$REPORT" != "waitlist" ]; then
-            python consult_report.py $FLAG
+            # publish_excel: 지점 '제외 ✔' 수집 → 엑셀 재생성 → 드라이브 덮어쓰기
+            #                → 표 + 지점별 엑셀 링크를 담아 슬랙 발송.
+            # 드라이브/OAuth 장애로 실패하면 링크 없는 기존 경로로 폴백해 공지 자체는 반드시 내보낸다
+            # (2026-07-07 사고: 잘 돌아가는 발송 경로는 검증 전 제거 금지).
+            # 슬랙 발송은 publish_excel의 마지막 동작이라, 실패 시점엔 아직 미발송 → 중복 발송 없음.
+            if ! python publish_excel.py $FLAG; then
+              echo "::warning::publish_excel 실패 → consult_report 폴백 발송(엑셀 링크 없음)"
+              python consult_report.py $FLAG
+            fi
           fi
           if [ "$REPORT" != "consult" ]; then
             python waitlist_report.py $FLAG
           fi
 
-      # 아래 두 스텝은 '발송 이후' 작업 — 실패해도 런을 실패로 만들지 않음(continue-on-error).
+      # 아래 스텝들은 '발송 이후' 작업 — 실패해도 런을 실패로 만들지 않음(continue-on-error).
       # 이유: 발송은 이미 성공했는데 여기서 실패로 런이 죽으면, 백업 런의 gate가
       #       '오늘 성공 없음'으로 보고 공지를 중복 발송함. 발송 무결성 > 요약 최신성.
+      # ⚠️ continue-on-error 스텝은 실패해도 API가 conclusion=success로 보고한다.
+      #    성공 여부는 반드시 로그(outcome)로 확인할 것.
       - name: 본부 공유 요약페이지 생성 (개인정보 없음)
         if: ${{ github.event.inputs.dry_run != 'true' }}
         continue-on-error: true
         env:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
         run: python consult_summary_page.py
-
-      - name: 상세 엑셀 재생성 + 드라이브 갱신 (슬랙 발송 없음, 번호대조 반영)
-        if: ${{ github.event.inputs.dry_run != 'true' }}
-        continue-on-error: true
-        env:
-          CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
-          GOOGLE_OAUTH_JSON: ${{ secrets.GOOGLE_OAUTH_JSON }}
-        run: python publish_excel.py --dry-run
 
       - name: 요약페이지 커밋 (docs/consult_summary.html)
         if: ${{ github.event.inputs.dry_run != 'true' }}
