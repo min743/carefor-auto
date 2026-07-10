@@ -258,7 +258,7 @@ def main():
         "─" * (LABEL_W + sum(col_ws)),
     ]
     for label, key in [("신규상담(누적)", "total"), ("시트 미입력", "miss"),
-                       ("미입력률", "rate"), ("상담 대기", "wait")]:
+                       ("미입력률", "rate"), ("대기(아웃콜)", "wait")]:
         table_lines.append(cr._rpad(label, LABEL_W) + "".join(
             cr._lpad(str(s[key]), w) for s, w in zip(cols, col_ws)))
     table = "\n".join(table_lines)
@@ -280,7 +280,8 @@ def main():
             {"type": "section", "text": {"type": "mrkdwn", "text": f"```\n{table}\n```"}},
             {"type": "section", "text": {"type": "mrkdwn", "text": link_line}},
             {"type": "context", "elements": [{"type": "mrkdwn",
-                "text": "📝 상담시트 입력 부탁드립니다. 연락처·아웃콜 차수 등 상세는 엑셀(보기 전용, 링크 고정) 참조.\n"
+                "text": "📝 상담시트 입력 부탁드립니다. 연락처·아웃콜 차수 등 상세는 엑셀(링크 고정) 참조.\n"
+                        "주간보호가 아닌 건은 엑셀 맨 뒤 '제외 ✔' 칸을 체크하시면 다음날 자동 제외됩니다.\n"
                         "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏"}]},
         ],
     }
