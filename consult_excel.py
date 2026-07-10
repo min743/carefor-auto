@@ -29,8 +29,13 @@ import waitlist_report as wr
 
 OUT_ROOT = Path(__file__).resolve().parent / "상담공지_엑셀"
 
+FONT_NAME = "맑은 고딕"
+BASE_SZ = 11
 HEADER_FILL = PatternFill("solid", fgColor="4472C4")
-HEADER_FONT = Font(bold=True, color="FFFFFF")
+HEADER_FONT = Font(name=FONT_NAME, size=BASE_SZ, bold=True, color="FFFFFF")
+BASE_FONT = Font(name=FONT_NAME, size=BASE_SZ)
+# 좌측정렬로 볼 긴 텍스트 열(제목 기준) — 잘림·가독성 위해 wrap+top+left
+LEFT_COLS = {"AI 요약", "첫 상담일"}
 URGENT_FILL = PatternFill("solid", fgColor="FFC7CE")   # 입소완료 미입력 / 기한 지남
 TODAY_FILL = PatternFill("solid", fgColor="FFEB9C")    # 오늘 예정
 
@@ -45,17 +50,42 @@ SUMMARY_COLS = ["센터", "신규상담(누적)", "시트 미입력", "미입력
 def _style_sheet(ws, widths: list[int]) -> None:
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
+    # 헤더 열 이름 → 좌측정렬 대상 인덱스
+    headers = [c.value for c in ws[1]]
+    left_idx = {i for i, h in enumerate(headers) if h in LEFT_COLS}
     for cell in ws[1]:
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
-        cell.alignment = Alignment(horizontal="center", vertical="center")
-    # 데이터 전체: 가운데 정렬 + 줄바꿈으로 셀 안에 맞춤
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.row_dimensions[1].height = 22
+
     center_wrap = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left_wrap = Alignment(horizontal="left", vertical="center", wrap_text=True)
     for row in ws.iter_rows(min_row=2):
         for cell in row:
-            cell.alignment = center_wrap
+            cell.font = BASE_FONT
+            cell.alignment = left_wrap if (cell.column - 1) in left_idx else center_wrap
+    _autofit_row_heights(ws, widths, headers)
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
+
+
+def _autofit_row_heights(ws, widths: list[int], headers: list) -> None:
+    """wrap_text 셀이 눌려 잘려 보이는 문제 해결 — 각 행에 필요한 줄 수를 계산해 높이를 넉넉히 지정.
+    (엑셀은 wrap+병합/자동높이 조합에서 자동계산을 안 해줘 '정렬' 눌러야 풀리므로 미리 넣어둔다)"""
+    line_px = 16                                  # 11pt 한 줄 대략 높이(px)
+    for row in ws.iter_rows(min_row=2):
+        max_lines = 1
+        for cell in row:
+            v = cell.value
+            if v is None:
+                continue
+            col_w = widths[cell.column - 1] if cell.column - 1 < len(widths) else 12
+            cap = max(1, int(col_w / 1.35))       # 열너비로 대략 담기는 글자 수(한글 기준 보수적)
+            for seg in str(v).split("\n"):
+                seg_len = sum(2 if ord(ch) > 0x2000 else 1 for ch in seg)  # 한글 폭 2 가중
+                max_lines = max(max_lines, -(-seg_len // (cap * 2)) or 1)
+        ws.row_dimensions[row[0].row].height = min(160, max(18, max_lines * line_px + 4))
 
 
 def add_summary_sheet(wb: Workbook, srows: list[dict]) -> None:
