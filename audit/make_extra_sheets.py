@@ -53,10 +53,9 @@ def analyze_branch(branch, src, cutoff):
         name, status = p["name"], p.get("status", "")
         needs = p.get("needs", [])
 
-        # 낙상 기반 규칙 (R1, R4, R5)
-        for f in p.get("falls", []):
-            if toN(f["date"]) < toN(cutoff):
-                continue
+        # 낙상 기반 규칙 (R1, R4, R5) — 최신 회차만 (옛 회차는 이미 고친 값일 수 있어 지시 대상 아님)
+        _falls = [f for f in p.get("falls", []) if toN(f["date"]) >= toN(cutoff)]
+        for f in ([max(_falls, key=lambda x: toN(x["date"]))] if _falls else []):
             eff = pair_needs(needs, f["date"])
             nd = eff["date"] if eff else ""
             toilet = (eff or {}).get("toilet", "?")
@@ -76,10 +75,9 @@ def analyze_branch(branch, src, cutoff):
                 rows.append([name, status, "R5 합계11점↑→옮겨앉기", f["date"], f"합계 {total}점", nd, f"옮겨: {tr}",
                              verdict(True, tr, "완전자립")])
 
-        # 욕창 기반 규칙 (R2, R3, R6)
-        for s in p.get("sores", []):
-            if toN(s["date"]) < toN(cutoff):
-                continue
+        # 욕창 기반 규칙 (R2, R3, R6) — 최신 회차만
+        _sores = [s for s in p.get("sores", []) if toN(s["date"]) >= toN(cutoff)]
+        for s in ([max(_sores, key=lambda x: toN(x["date"]))] if _sores else []):
             sc = s.get("scores") or {}
             def score_of(*labels):
                 for lb in labels:
