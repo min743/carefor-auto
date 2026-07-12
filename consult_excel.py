@@ -53,27 +53,31 @@ def _text_width(text: str) -> float:
     return w + 2.8  # 좌우 여백
 
 
-def _style_sheet(ws, widths: list[int]) -> None:
+def _style_sheet(ws, widths: list[int], compact: bool = False) -> None:
+    """compact=True: 헤더 글씨를 작게(11pt) + 헤더기준 열너비를 좁혀 시트 전체 폭 축소
+    (열 많은 '신규상담 미입력' 시트용)."""
     headers = [c.value for c in ws[1]]
     left_idx = {i for i, h in enumerate(headers) if h in LEFT_COLS}
-    # 열너비 = max(지정, 헤더+필터화살표, 데이터 최댓값) — 긴 텍스트열(LEFT_COLS)만 상한 적용
+    hdr_font = Font(name=FONT_NAME, size=11, bold=True, color="FFFFFF") if compact else HEADER_FONT
+    hdr_scale = 0.80 if compact else 1.0   # 헤더 11pt는 글자가 작아 더 좁게 담김
+    # 열너비 = max(바닥, 헤더+필터화살표, 데이터 최댓값) — 긴 텍스트열(LEFT_COLS)만 상한 적용
     FILTER_PAD = 3.2  # 구글시트/엑셀 헤더의 필터 드롭다운(⇟) 화살표가 먹는 폭
     for i in range(len(headers)):
         col = list(ws.iter_cols(min_col=i + 1, max_col=i + 1))[0]
         data_need = max([_text_width(c.value) for c in col[1:] if c.value is not None] or [0])
-        hdr_need = _text_width(headers[i]) + FILTER_PAD  # 헤더는 필터 화살표만큼 더 넓게
-        base = widths[i] if i < len(widths) else 10
+        hdr_need = _text_width(headers[i]) * hdr_scale + FILTER_PAD
+        base = (5.5 if compact else (widths[i] if i < len(widths) else 10))  # compact은 내용이 폭을 결정
         eff = max(base, data_need, hdr_need)
         if i in left_idx:                 # AI 요약 등 긴 텍스트는 상한 두고 wrap 유지
-            eff = min(eff, max(base, 42))
+            eff = min(eff, 34 if compact else max(base, 42))
         ws.column_dimensions[get_column_letter(i + 1)].width = eff
         if i < len(widths):
             widths[i] = eff
     for cell in ws[1]:
         cell.fill = HEADER_FILL
-        cell.font = HEADER_FONT
+        cell.font = hdr_font
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=False)
-    ws.row_dimensions[1].height = 24
+    ws.row_dimensions[1].height = 22 if compact else 24
 
     center = Alignment(horizontal="center", vertical="center", wrap_text=False)   # 한 줄
     left_wrap = Alignment(horizontal="left", vertical="center", wrap_text=True)   # 긴 텍스트만 줄바꿈
@@ -121,11 +125,11 @@ def add_miss_sheet(wb: Workbook, rows: list[dict], ym: str, carefor_lookup=None)
     ws.append(MISS_COLS)
     for r in rows:
         if r["admitted"] == "Y":
-            kind = "⚠️ 입소완료 미입력"
+            kind = "⚠️입소완료"
         elif r["yearmonth"] == ym:
-            kind = "당월 미입력"
+            kind = "당월"
         else:
-            kind = "이전 미입력"
+            kind = "이전"
         # 케어포 수급자 대조 (마지막 다운로드본 기준)
         cf = carefor_lookup(r["phone"]) if carefor_lookup else None
         if cf:
@@ -138,7 +142,7 @@ def add_miss_sheet(wb: Workbook, rows: list[dict], ym: str, carefor_lookup=None)
         if r["admitted"] == "Y":
             for cell in ws[ws.max_row]:
                 cell.fill = URGENT_FILL
-    _style_sheet(ws, [11, 15, 11, 11, 11, 12, 13, 8, 9, 10, 10, 9, 11, 40, 8])
+    _style_sheet(ws, [11, 15, 11, 11, 11, 12, 13, 8, 9, 10, 10, 9, 11, 40, 8], compact=True)
     # 맨 뒤 '제외 ✔' 열: 클릭→✔ 선택(드롭다운) → 다음 발송 때 자동 제외
     ex_col = get_column_letter(len(MISS_COLS))          # 제외 열
     note_col = get_column_letter(len(MISS_COLS) + 1)    # 옆 안내 열
