@@ -30,7 +30,7 @@ import waitlist_report as wr
 OUT_ROOT = Path(__file__).resolve().parent / "상담공지_엑셀"
 
 FONT_NAME = "맑은 고딕"
-BASE_SZ = 12
+BASE_SZ = 13
 HEADER_FILL = PatternFill("solid", fgColor="4472C4")
 HEADER_FONT = Font(name=FONT_NAME, size=BASE_SZ, bold=True, color="FFFFFF")
 BASE_FONT = Font(name=FONT_NAME, size=BASE_SZ)
@@ -47,34 +47,38 @@ SUMMARY_COLS = ["센터", "신규상담(누적)", "시트 미입력", "미입력
                 "상담 대기", "기한 지남"]
 
 
-def _hdr_width(text: str) -> float:
-    """헤더가 한 줄에 들어오는 최소 열너비(한글=2, 그 외=1.1 폭 + 여유)."""
-    w = sum(2.0 if ord(ch) > 0x2000 else 1.1 for ch in str(text or ""))
-    return w + 2.6  # 좌우 여백
+def _text_width(text: str) -> float:
+    """한 줄에 들어오는 최소 열너비(한글=2.1, 그 외=1.15 폭 + 여백)."""
+    w = sum(2.1 if ord(ch) > 0x2000 else 1.15 for ch in str(text or ""))
+    return w + 2.8  # 좌우 여백
 
 
 def _style_sheet(ws, widths: list[int]) -> None:
     headers = [c.value for c in ws[1]]
-    # 헤더가 한 줄로 다 보이도록, 지정 너비와 헤더 필요너비 중 큰 값 사용
-    for i, w in enumerate(widths, start=1):
-        need = _hdr_width(headers[i - 1]) if i - 1 < len(headers) else 0
-        eff = max(w, need)
-        ws.column_dimensions[get_column_letter(i)].width = eff
-        widths[i - 1] = eff  # 행높이 계산도 보정된 너비 기준
     left_idx = {i for i, h in enumerate(headers) if h in LEFT_COLS}
+    # 열너비 = max(지정, 헤더 한줄, 데이터 최댓값 한줄) — 긴 텍스트열(LEFT_COLS)만 상한 적용
+    for i in range(len(headers)):
+        col_vals = [str(c.value) for c in list(ws.iter_cols(min_col=i + 1, max_col=i + 1))[0] if c.value is not None]
+        need = max([_text_width(v) for v in col_vals] or [0])
+        base = widths[i] if i < len(widths) else 10
+        eff = max(base, need)
+        if i in left_idx:                 # AI 요약 등 긴 텍스트는 상한 두고 wrap 유지
+            eff = min(eff, max(base, 42))
+        ws.column_dimensions[get_column_letter(i + 1)].width = eff
+        if i < len(widths):
+            widths[i] = eff
     for cell in ws[1]:
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
-        # 헤더는 줄바꿈 없이 한 줄 (열너비를 헤더에 맞춰 넓혔으므로 안 잘림)
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=False)
-    ws.row_dimensions[1].height = 22
+    ws.row_dimensions[1].height = 24
 
-    center_wrap = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    left_wrap = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=False)   # 한 줄
+    left_wrap = Alignment(horizontal="left", vertical="center", wrap_text=True)   # 긴 텍스트만 줄바꿈
     for row in ws.iter_rows(min_row=2):
         for cell in row:
             cell.font = BASE_FONT
-            cell.alignment = left_wrap if (cell.column - 1) in left_idx else center_wrap
+            cell.alignment = left_wrap if (cell.column - 1) in left_idx else center
     _autofit_row_heights(ws, widths, headers)
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
