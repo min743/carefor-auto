@@ -1,9 +1,8 @@
 name: 지점점검 (평일 매일 아침)
 
 on:
-  schedule:
-    # 매일(월~금) 07:00 KST = 일~목 22:00 UTC (KST=UTC+9)
-    - cron: '0 22 * * 0-4'
+  # 평일 07:00 정시 실행은 cron-job.org가 담당 — test_mode=false dispatch (2026-07-11).
+  #   GitHub schedule은 9~12h 지연돼 제거(중복 스캔 방지). 수동은 아래 workflow_dispatch.
   workflow_dispatch:
     inputs:
       test_mode:

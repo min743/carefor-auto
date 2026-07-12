@@ -22,7 +22,8 @@ concurrency:
 on:
   schedule:
     - cron: '0 0 * * 1-6'  # 월~토 KST 09:00 (UTC 00:00) — 시트 갱신만 (일요일 제외)
-    - cron: '10 2 * * 1'  # 매주 월 KST 11:10 (UTC 02:10) — 슬랙 보고 발송
+    # 월요일 슬랙 보고(11:10)는 cron-job.org가 정시 발송 — force=true dispatch (2026-07-11 이전).
+    #   GitHub schedule은 9~12h 지연돼 중복/지연 방지 위해 제거.
   workflow_dispatch:
     inputs:
       dry_run:
