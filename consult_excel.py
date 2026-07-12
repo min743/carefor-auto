@@ -56,12 +56,14 @@ def _text_width(text: str) -> float:
 def _style_sheet(ws, widths: list[int]) -> None:
     headers = [c.value for c in ws[1]]
     left_idx = {i for i, h in enumerate(headers) if h in LEFT_COLS}
-    # 열너비 = max(지정, 헤더 한줄, 데이터 최댓값 한줄) — 긴 텍스트열(LEFT_COLS)만 상한 적용
+    # 열너비 = max(지정, 헤더+필터화살표, 데이터 최댓값) — 긴 텍스트열(LEFT_COLS)만 상한 적용
+    FILTER_PAD = 3.2  # 구글시트/엑셀 헤더의 필터 드롭다운(⇟) 화살표가 먹는 폭
     for i in range(len(headers)):
-        col_vals = [str(c.value) for c in list(ws.iter_cols(min_col=i + 1, max_col=i + 1))[0] if c.value is not None]
-        need = max([_text_width(v) for v in col_vals] or [0])
+        col = list(ws.iter_cols(min_col=i + 1, max_col=i + 1))[0]
+        data_need = max([_text_width(c.value) for c in col[1:] if c.value is not None] or [0])
+        hdr_need = _text_width(headers[i]) + FILTER_PAD  # 헤더는 필터 화살표만큼 더 넓게
         base = widths[i] if i < len(widths) else 10
-        eff = max(base, need)
+        eff = max(base, data_need, hdr_need)
         if i in left_idx:                 # AI 요약 등 긴 텍스트는 상한 두고 wrap 유지
             eff = min(eff, max(base, 42))
         ws.column_dimensions[get_column_letter(i + 1)].width = eff
