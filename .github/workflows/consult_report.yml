@@ -21,7 +21,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 23 * * *'   # 매일 KST 08:00 (UTC 전날 23:00)
+    - cron: '0 23 * * 0-5'   # KST 월~토 08:00 (UTC 일~금 23:00) — 일요일 제외(UTC 토 트리거 제거)
   workflow_dispatch:
     inputs:
       report:
