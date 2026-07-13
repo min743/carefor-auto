@@ -802,8 +802,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </div></header>
 
 <nav><div class="wrap">
-  <a href="#summary">요약</a><a href="#site">입지분석</a><a href="#map-sec">지도·송영권역</a>
-  <a href="#comp">인근 센터</a><a href="#promo">홍보 대상</a><a href="#strategy">홍보 전략</a><a href="#src">출처·주의</a>
+  <a href="#summary">요약</a><a href="#site">입지분석</a><a href="#map-sec">지도·송영권역</a><a href="#traffic">교통 여건</a>
+  <a href="#comp">인근 센터</a><a href="#mgmt">지점 관리</a><a href="#promo">홍보 대상</a><a href="#strategy">홍보 전략</a><a href="#src">출처·주의</a>
 </div></nav>
 
 <main class="wrap">
@@ -859,8 +859,44 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="disc" style="margin-top:14px"><b>실측 권장 · 30분권 주의.</b> 원은 직선거리 근사치로 실제 도로시간과 다릅니다. 개소 전 <b>등·하원 시간대 실차 왕복 측정</b>으로 권역을 확정하세요. 특히 <b>편도 30분(4권역)은 고령 이용자의 왕복 1시간+ 탑승 부담·피로가 커</b> 상시 운행보다 등급·동선이 맞는 개별 케이스로 제한하는 것이 현실적입니다. <span class="badge b-op">의견</span></div>
   </section>
 
+  <section id="traffic">
+    <div class="sec-head"><div class="n">04</div><h2>송영 교통 여건 (청주 지리 · 정체)</h2></div>
+    <p class="lead">청주 지리를 모르는 분을 위해, 봉명동이 청주 어디쯤인지와 송영 코스가 지나갈 도로의 평소 정체를 정리했습니다. <b>지금의 편도 30분 반경은 ‘거리’가 아니라 등·하원 피크의 ‘실소요 시간’으로 봐야 합니다.</b> <span class="badge b-src">출처</span> 나무위키·위키백과·뉴시스·굿모닝충청 등(하단 07 출처)</p>
+    <div class="callout"><b>봉명동은 청주 어디?</b> 흥덕구 <b>서부 구도심</b>으로, 청주 최대 상업·인구 밀집축인 <b>사창–복대–가경 벨트 바로 위(북쪽)</b>에 붙어 있습니다. 동 중앙을 <b>제1순환로</b>가 남북으로, 북단을 <b>제2순환로</b>가 지나 간선 접근성은 우수하지만, 그만큼 <b>도심 상습 정체 구간을 끼고</b> 있습니다. <span class="badge b-src">출처</span></div>
+    <div class="grid3" style="margin-top:16px">
+      <div class="card warn"><h3><span class="tag t-opp">1순환로 · 봉명동 관통</span></h3><ul>
+        <li><b>사창사거리</b>(봉명 남쪽 경계 ~200m) 상습 혼잡 — 시가 2023년 좌회전 차로 연장 <span class="badge b-src">출처</span></li>
+        <li>왕복 4~7차로 도심 순환 간선, 사창·터미널 방면 교차로 교통량 많음 <span class="badge b-src">출처</span></li>
+        <li>북동쪽 상리교차로 고가 공사(~2027) — 봉명 반대편이라 직접 영향은 작음 <span class="badge b-src">출처</span></li>
+      </ul></div>
+      <div class="card warn"><h3><span class="tag t-opp">2순환로 · 봉명동 북단</span></h3><ul>
+        <li><b>서청주교~터미널~시외버스터미널사거리</b> = 반경 내 최악 정체(평시도 통과 15분+) <span class="badge b-src">출처</span></li>
+        <li>서청주IC 개통으로 개선됐으나 <b>여전히 청주 손꼽는 정체축</b>(대형·화물차 집중) <span class="badge b-src">출처</span></li>
+        <li>가경터미널·복대 상업지(지웰·현대백화점)와 직결 — 서·남서 코스 부담 <span class="badge b-op">의견</span></li>
+      </ul></div>
+      <div class="card"><h3><span class="tag t-str">직지대로 · 동서축</span></h3><ul>
+        <li>센터 앞을 지나는 <b>동서 대동맥</b> — 시내 서·중부 연결 우수 <span class="badge b-src">출처</span></li>
+        <li>용량 부족으로 서청주IC~청주역 <b>확장 계획(~2030)</b> = 현재 붐비는 축이라는 뜻 <span class="badge b-src">출처</span></li>
+        <li>시 ‘출퇴근 상습정체 교차로 9곳 개선’에 봉명 인근 다수 포함(백운·원봉공원·가경 등) <span class="badge b-src">출처</span></li>
+      </ul></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>등·하원 시간대 혼잡 <span class="badge b-est">추정</span></h3><ul>
+        <li>송영 <b>등원 08~09시 · 하원 16~18시</b>는 청주 출퇴근 피크와 정확히 겹침 <span class="badge b-src">출처</span></li>
+        <li><b>남·서 코스</b>(사창사거리·터미널·서청주교·복대) 경유 시 소요시간 크게 늘 수 있음 <span class="badge b-est">추정</span></li>
+        <li><b>북쪽 코스</b>(송절·송정·화계 등 저밀도)는 상대적으로 영향이 작음 <span class="badge b-est">추정</span></li>
+      </ul></div>
+      <div class="card"><h3>고령 송영 시사점 <span class="badge b-op">의견</span></h3><ul>
+        <li>청주는 <b>지하철이 없어</b> 정체 우회 수단이 없음 — 막히면 송영도 그대로 지연 <span class="badge b-src">출처</span></li>
+        <li><b>정체축 관통 원거리 배차는 보수적으로</b> — 왕복 1시간+ 차내 체류는 멀미·피로·화장실 부담 <span class="badge b-op">의견</span></li>
+        <li>권역을 정체 구간 진입 최소화하도록 설계, 지그재그 관통 지양 <span class="badge b-op">의견</span></li>
+      </ul></div>
+    </div>
+    <div class="disc" style="margin-top:14px"><b>실측 방법.</b> 배차 확정 전 <b>네이버·카카오 길찾기</b>로 주요 목적지를 <b>등원 08~09시 / 하원 16~18시</b> 시간대로 조회해 실소요를 검증하고, <a href="http://www.cjits.go.kr/traffic1.view" target="_blank" rel="noopener">청주통합교통정보센터</a>·<a href="https://tdata.cheongju.go.kr/main" target="_blank" rel="noopener">청주교통데이터</a>로 구간 지체를 확인하세요. 지도상 30분이라도 <b>피크엔 초과할 수 있습니다.</b> <span class="badge b-op">의견</span></div>
+  </section>
+
   <section id="comp">
-    <div class="sec-head"><div class="n">04</div><h2>인근 주간보호센터 (주야간보호)</h2></div>
+    <div class="sec-head"><div class="n">05</div><h2>인근 주간보호센터 (주야간보호)</h2></div>
     <p class="lead">송영 반경 내 확인된 주야간보호 시설입니다. 정원 대비 현원이 꽉 찬 곳은 대기수요가 우리 센터로 넘어올 신호입니다. <b>‘지도’ 버튼을 누르면 위 지도에서 해당 센터로 이동</b>합니다. <span class="badge b-src">출처</span> 국민건강보험공단 장기요양기관 조회 · 2026-07-09 기준(기관별 최종변경일 상이)</p>
     <div class="twrap"><table>
       <thead><tr><th>센터명</th><th>위치</th><th>정원</th><th>현원</th><th>등급</th><th>개소일</th><th>지도</th><th>시사점</th></tr></thead>
@@ -881,9 +917,58 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
   </section>
 
+  <section id="mgmt">
+    <div class="sec-head"><div class="n">06</div><h2>지점 관리 입지 · 연계망 (개소 후 운영)</h2></div>
+    <p class="lead">개소 후 지점 운영에 필요한 <b>송영 차량 관리</b>, 이용 어르신 <b>의료 연계·홍보 대상</b> 병·의원, <b>행정·복지 연계 창구</b>를 봉명동 168-5 기준 근거리 위주로 정리했습니다. 거리·소요는 지도상 대략치이며, 방문 전 대표번호·심평원으로 재확인하세요. <span class="badge b-src">출처</span> 각 기관 공식/지도(2026-07 확인) · <span class="badge b-est">확인필요</span> 지번·영업여부는 방문 전 재확인</p>
+
+    <div class="card" style="margin-top:8px"><h3>🚐 송영 차량 관리 (정비 · 타이어) <span class="badge b-src">출처</span></h3>
+      <div class="twrap"><table>
+        <thead><tr><th>업체</th><th>주소</th><th>연락처</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr><td><span class="name">티스테이션 청주봉명점</span></td><td>1순환로565번길 2 (봉명동)</td><td class="util">043-276-9321</td><td>한국타이어 · 휠얼라이먼트 · 차 5분내</td></tr>
+          <tr><td><span class="name">공임나라 청주봉명점</span></td><td>봉명동 2438</td><td class="util">043-267-5109</td><td>일반정비 · 엔진오일 · 타이어 · 차 5분내</td></tr>
+        </tbody>
+      </table></div>
+      <p class="catdesc" style="margin-top:8px">봉명동 내 카센터·타이어점은 이 외에도 다수(봉명동 754·756-1·763 일대) — 상호 미확인분은 개소 전 실사로 확정. 현대 블루핸즈·기아 오토큐 봉명 지점은 공식 확인 필요. <span class="badge b-est">확인필요</span></p>
+    </div>
+
+    <h3 style="margin:22px 0 8px">🏥 의료 연계 · 홍보 대상 병·의원</h3>
+    <p class="lead" style="margin-bottom:10px">이용 어르신 진료를 의뢰·연계하고, 원무·사회복지(진료협력)팀을 홍보 접촉하는 대상입니다. <b>정형외과·재활·요양병원의 연계 가치가 가장 큽니다.</b></p>
+    <div class="twrap"><table>
+      <thead><tr><th>구분</th><th>기관</th><th>위치 · 센터서 소요</th><th>연락처</th><th>연계 포인트</th></tr></thead>
+      <tbody>
+        <tr><td>정형외과</td><td><span class="name">서울정형외과의원</span></td><td>봉명동 1순환로509 · 차 5분</td><td class="util">043-266-7612</td><td>근골격·퇴행성 통증 1차 연계 · 최근접</td></tr>
+        <tr><td>척추·관절</td><td><span class="name">청주프라임병원</span></td><td>복대동 짐대로72번길37 · 차 5~10분</td><td class="util">043-221-1122</td><td>인공관절·척추수술+재활 → 수술 후 주보 복귀</td></tr>
+        <tr><td>재활</td><td><span class="name">청주삼성재활병원</span></td><td>복대동 162-1 · 차 5~10분</td><td class="util">043-235-5555 <span class="badge b-est">확인필요</span></td><td>뇌졸중·골절 후 전문재활 → 입원↔주보 상호의뢰</td></tr>
+        <tr><td>신경과</td><td><span class="name">브레인신경과의원</span></td><td>복대동 대농로56 · 차 5~10분</td><td class="util">043-238-7588</td><td>치매·어지럼·뇌혈류 진단·관리</td></tr>
+        <tr><td>요양·노인</td><td><span class="name">하나노인전문병원</span></td><td>죽림동 대림로431 · 차 10분</td><td class="util">043-270-8114</td><td>하나병원 계열 · 퇴원 후 주보 복귀 의뢰</td></tr>
+        <tr><td>요양·노인</td><td><span class="name">충북도립노인전문병원</span></td><td>미평동 청남로1910 · 차 15분</td><td class="util">043-287-7715</td><td>공립 · 치매 특화 → 중증 치매 상호의뢰</td></tr>
+        <tr><td>종합병원</td><td><span class="name">하나병원</span></td><td>가경동 2순환로1262 · 차 10분</td><td class="util">043-230-6114</td><td>흥덕구 대표 종합·응급 · <b>진료협력센터 홍보 1순위</b></td></tr>
+        <tr><td>공공병원</td><td><span class="name">충북 청주의료원</span></td><td>사직동 흥덕로48 · 차 10~15분</td><td class="util">043-279-2300</td><td>공공·사회사업 → 의료급여·취약 어르신 연계</td></tr>
+      </tbody>
+    </table></div>
+    <p class="catdesc" style="margin-top:8px">봉명동 관내 <b>내과의원</b>은 이번 조사에서 특정하지 못함(당장은 종합병원 내과로 대체) — 개소 전 지도 검색으로 근거리 내과 확정. <span class="badge b-est">확인필요</span></p>
+
+    <h3 style="margin:22px 0 8px">🏛 행정 · 복지 연계 창구</h3>
+    <div class="grid2">
+      <div class="card"><h3>보건 · 등급 <span class="badge b-src">출처</span></h3><ul>
+        <li><b>흥덕보건소</b> — 복대동 대농로 88 · ☎043-201-3580 (차 10분). 방문건강관리·건강증진</li>
+        <li><b>흥덕구 치매안심센터</b> — 보건소 본관 내 · ☎043-201-4320. 치매 조기검진·쉼터·가족교육 <b>1순위 연계</b></li>
+        <li><b>건보공단 청주서부지사</b>(흥덕·청원 관할 = <b>봉명동 담당</b>) — 직지대로 757(운천동) · ☎1577-1000 (차 5~10분). 등급판정·상담 <span class="badge b-est">‘흥덕지사’ 아님</span></li>
+        <li><b>건보공단 청주동부지사</b>(상당·서원 관할) — 서원구 사직대로 308-12 · ☎1577-1000 <span class="badge b-est">주소 재확인</span></li>
+      </ul></div>
+      <div class="card"><h3>행정복지센터 (돌봄담당) <span class="badge b-src">출처</span></h3><ul>
+        <li><b>봉명1동</b> — 직지대로620번길 70 · ☎043-201-7822 (도보권~차3분)</li>
+        <li><b>봉명2송정동</b> — 주현로41번길 18 · ☎043-201-7852 (차 5분내)</li>
+        <li>맞춤돌봄·사례관리 담당자가 <b>대상자를 직접 연결</b> — 홍보 1순위(로드맵 D-30 연계)</li>
+      </ul></div>
+    </div>
+    <div class="callout" style="margin-top:16px"><b>운영 팁.</b> 등록으로 이어지는 핵심 4곳은 <b>치매안심센터 · 행정복지센터 돌봄담당 · 하나병원 진료협력센터 · 공단 서부지사</b>입니다. 정비는 <b>봉명동 내 2곳</b>과 송영 차량 정기점검을 미리 트고, 의료는 <b>근거리 정형외과·재활·요양병원</b> 순으로 접촉하세요. <span class="badge b-op">의견</span></div>
+  </section>
+
   <section id="promo">
-    <div class="sec-head"><div class="n">05</div><h2>홍보 대상 리스트 (현장 실행용)</h2></div>
-    <p class="lead">"어디로 나갈지"를 카테고리·우선순위로 정리했습니다. 방문하면 체크하세요(이 브라우저에 저장). 개별 지점명은 개소 전 동 행정복지센터로 확정할 항목입니다. <span class="badge b-est">확인필요</span></p>
+    <div class="sec-head"><div class="n">07</div><h2>홍보 대상 리스트 (현장 실행용)</h2></div>
+    <p class="lead">"어디로 나갈지"를 카테고리·우선순위로 정리했습니다. 방문하면 체크하세요(이 브라우저에 저장). 실명 기관은 <b>☎연락처·센터서 소요시간</b>을 붙였습니다(소요는 지도 추정, 통칭 항목은 개소 전 동 행정복지센터로 확정). 병·의원 상세는 <b>06 지점 관리</b> 표 참조. <span class="badge b-est">확인필요</span> 재가센터·삼성재활병원 번호는 발송 전 통화 확인</p>
     <div class="promo-top">
       <div class="prog">진행률 <div class="bar"><i id="progfill"></i></div><span id="progtxt" class="num">0 / 0</span></div>
       <button id="resetbtn" class="tag t-opp" style="border:none;cursor:pointer;padding:6px 12px;font-size:12px">체크 초기화</button>
@@ -893,7 +978,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </section>
 
   <section id="strategy">
-    <div class="sec-head"><div class="n">06</div><h2>홍보 전략 · 개소 90일 로드맵</h2></div>
+    <div class="sec-head"><div class="n">08</div><h2>홍보 전략 · 개소 90일 로드맵</h2></div>
     <p class="lead">본부가 진척을 관리할 수 있도록 개소 전후를 3단계로 나눴습니다. <span class="badge b-op">의견</span></p>
     <div class="road">
       <div class="phase"><div class="ph">D-30 이전</div><h3>기반 · 관계 심기</h3><div class="pt">개소 전, 조용히 네트워크부터</div><ul>
@@ -934,7 +1019,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   </section>
 
   <section id="src">
-    <div class="sec-head"><div class="n">07</div><h2>출처 · 주의사항</h2></div>
+    <div class="sec-head"><div class="n">09</div><h2>출처 · 주의사항</h2></div>
     <div class="grid2">
       <div class="card"><h3>확인된 자료 출처</h3><div class="src">
         <span>· 봉명동 인구/행정동/재건축 — 위키백과 ‘봉명동(청주시)’ (2022.2 기준 인구)</span>
@@ -942,6 +1027,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
         <span>· 흥덕구/청주 고령화율(2024) — 흥덕 13.8%, 청주 17%, 상당 19.2%, 청원 16.6%</span>
         <span>· 청주 경로당 1,087개(2024), 노인복지관(가경·종합·내덕)</span>
         <span>· 개소일 = 공단 지정일자 기준 · 지도/좌표 — OpenStreetMap (도로 단위 근사)</span>
+        <span>· <b>교통(04)</b> — 나무위키·위키백과(봉명동·1·2순환로·청주시외버스터미널), 뉴시스(2023 사창사거리 차로연장), 굿모닝충청·충청도민일보(출퇴근 상습정체 교차로 9곳), 충북일보·충청타임즈(승용차 40만대·직지대로 확장)</span>
+        <span>· <b>정비·행정(06)</b> — 티스테이션 공식·공임나라(당근/순위닷), 청주시 흥덕보건소·봉명1동·봉명2송정동 공식, 중앙치매센터, 건보공단 지사찾기(서부=직지대로757 운천동 / 동부=서원구 사직대로308-12)</span>
+        <span>· <b>의료(06)</b> — 각 병원 공식사이트·네이버/카카오 지도·똑닥·메디어스(정형·재활·신경·요양·종합병원), 하나병원/청주의료원 등</span>
+        <span>· <b>연락처(06·07)</b> — 각 기관 공식/디렉토리 확인(2026-07). 청주삼성재활병원·봉명동 재가센터 3곳은 디렉토리 출처 → <b>발송 전 통화 확인</b> 권장. 소요시간은 지도 추정</span>
       </div></div>
       <div class="card"><h3>정확도 한계 <span class="badge b-est">확인필요</span></h3><ul>
         <li>인구는 <b>2022년 기준</b>이 최신 확인치 — 개소 전 <b>주민등록 인구통계(jumin.mois.go.kr)</b>로 동별 <b>65세+ 최신 수치</b> 재확인</li>
@@ -949,6 +1038,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
         <li>지도 핀은 <b>도로 단위 근사</b> 위치</li>
         <li>송영 반경 원은 <b>직선거리 근사</b> — 실차 측정 필수</li>
         <li>경쟁센터 정원·현원·등급은 <b>공단 2026-07-09 조회 기준</b> — 현원은 매일 변동</li>
+        <li>교통(04)은 <b>정성적 근거·일반 추정</b> — 구간별 통행속도 등 정량치는 청주통합교통정보센터·지도앱 시간대 조회로 실측 필요</li>
+        <li>시설(06) <b>주소·거리·영업여부·지번</b>(서울정형외과, 동부지사 주소 등)은 방문 전 대표번호·심평원·지도로 재확인 · 봉명동 내과·오토큐/블루핸즈는 미확정</li>
       </ul></div>
     </div>
     <div class="disc"><b>다음 단계.</b> ① 최신 65세+ 동별 인구 재확인 → 수치 갱신, ② 실차 송영 측정 → 권역 확정, ③ 홍보 리스트에 <b>실제 기관명·주소·연락처</b> 채우기(동 행정복지센터 협조). 현장 실행은 별도 <b>홍보 방문 관리대장(엑셀/구글시트)</b>로 관리.</div>
@@ -1056,22 +1147,23 @@ svg.leaflet-image-layer.leaflet-interactive path {
   // promo checklist
   var CATS=[
     {t:"재가·요양 연계처",why:"1순위",desc:"이용자를 직접 의뢰하는 최우선 파트너",items:[
-      {n:"성은실버케어센터 (봉명동 백봉로179)",s:"방문요양→주보 의뢰",p:1},
-      {n:"사랑으로노인복지 (봉명동 1순환로616)",s:"방문요양 연계",p:1},
-      {n:"9988방문요양센터 (봉명동 덕암로114번길33)",s:"방문요양 연계",p:1},
+      {n:"성은실버케어센터 (봉명동 백봉로179)",s:"방문요양→주보 의뢰 · ☎043-268-0289 · 차 5분내",p:1},
+      {n:"사랑으로노인복지 (봉명동 1순환로616)",s:"방문요양 연계 · ☎043-275-8575 · 차 5분내",p:1},
+      {n:"9988방문요양센터 (봉명동 덕암로114번길33)",s:"방문요양 연계 · ☎043-277-9988(발송전 통화확인) · 차 5분내",p:1},
       {n:"인근 방문요양·재가센터 추가 발굴",s:"봉명·가경·복대",p:1}]},
     {t:"공공 돌봄 창구",why:"1순위",desc:"대상자 발굴·연결 공식 통로",items:[
-      {n:"봉명1동 행정복지센터(맞춤돌봄·사례관리)",s:"돌봄담당 인사",p:1},
-      {n:"봉명2송정동 행정복지센터",s:"돌봄담당 인사",p:1},
-      {n:"복대1·2동/가경동/운천신봉동 행정복지센터",s:"1권역 전 동",p:1},
-      {n:"국민건강보험공단 청주(흥덕)지사",s:"등급판정·상담",p:1}]},
-    {t:"의료기관",why:"1순위",desc:"등급자·퇴원환자 접점. 원무·사회복지팀",items:[
+      {n:"봉명1동 행정복지센터(맞춤돌봄·사례관리)",s:"돌봄담당 인사 · ☎043-201-7822 · 도보권~차3분",p:1},
+      {n:"봉명2송정동 행정복지센터",s:"돌봄담당 인사 · ☎043-201-7852 · 차 5분내",p:1},
+      {n:"복대1·2동/가경동/운천신봉동 행정복지센터",s:"1권역 전 동(개소 전 확정)",p:1},
+      {n:"건보공단 청주서부지사(흥덕·청원 관할=봉명동 담당)",s:"등급판정·상담 · ☎1577-1000 · 직지대로757(운천동) · 차 5~10분",p:1},
+      {n:"건보공단 청주동부지사(상당·서원 관할)",s:"타 구 거주 대상자 등급·상담 · ☎1577-1000 · 서원구 사직대로308-12 · 차 10~15분",p:1}]},
+    {t:"의료기관",why:"1순위",desc:"등급자·퇴원환자 접점. 원무·사회복지팀 (실명·연락처는 06 지점관리 표 참조)",items:[
       {n:"봉명·가경 정형외과·신경과·재활의학과",s:"고령 환자 다수",p:1},
       {n:"인근 요양병원·재활병원",s:"퇴원 연계",p:1},
       {n:"내과·가정의학과 의원",s:"만성질환 고령",p:2}]},
     {t:"복지관·기관",why:"2순위",desc:"고령층 대량 접점 + 제휴",items:[
-      {n:"청주가경노인복지관",s:"봉명 근거리 대형",p:1},
-      {n:"청주시노인종합복지관",s:"시 대표관",p:2},
+      {n:"청주가경노인복지관 (가경동 서부로1225)",s:"봉명 근거리 대형 · ☎043-236-0111 · 차 10분내",p:1},
+      {n:"청주시노인종합복지관 (상당구 대성로172번길21)",s:"시 대표관 · ☎043-255-2144 · 차 15~20분",p:2},
       {n:"장애인·기타 복지기관",s:"교차 의뢰",p:3}]},
     {t:"경로당·아파트",why:"2순위",desc:"방문 설명회 명분 (청주 경로당 1,087개)",items:[
       {n:"봉명동 경로당(동 명단 확보 후 순회)",s:"1권역 집중",p:2},
