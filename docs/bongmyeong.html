@@ -850,7 +850,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   <section id="map-sec">
     <div class="sec-head"><div class="n">03</div><h2>송영 가능 반경 · 실제 지도 (편도 최대 30분)</h2></div>
-    <p class="lead">페이지 안에서 바로 확대·이동되는 실제 지도입니다. 원은 송영 반경(직선거리 근사), 핀은 경쟁센터·재가센터·복지관, <b>빨간 ⚠ 마커는 상습 정체 지점</b>(클릭 시 우회 안내). <b>아래 지점 이름을 누르면 지도가 그 위치로 이동</b>하고 정보가 뜹니다. 위 ‘⚠ 정체 구간’ 버튼으로 켜고 끌 수 있습니다. 모든 동작은 이 페이지 안에서만 일어납니다(외부 이동 없음).</p>
+    <p class="lead">페이지 안에서 바로 확대·이동되는 실제 지도입니다. 원은 송영 반경(직선거리 근사), 핀은 경쟁센터·재가센터·복지관, <b>빨간 ⚠ 마커는 상습 정체 지점</b>(클릭 시 우회 안내). <b>아래 지점 이름을 누르면 지도가 그 위치로 이동</b>하고 정보가 뜹니다. <b>인근 주간보호센터</b>는 지도의 빨간 핀을 클릭하거나 아래 <b>05 인근 주간보호센터</b> 표에서 확인하세요(편도 30분 이내). 위 ‘⚠ 정체 구간’ 버튼으로 켜고 끌 수 있습니다. 모든 동작은 이 페이지 안에서만 일어납니다(외부 이동 없음).</p>
     <div class="placebar" id="placebar"><span class="plabel">지점 이동 →</span></div>
     <div class="maptools" id="maptools"></div>
     <div id="map"></div>
@@ -1137,7 +1137,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   // place chips
   var pb=document.getElementById('placebar');
-  SITES.forEach(function(s){var c=document.createElement('button');c.className='chip';c.type='button';
+  SITES.forEach(function(s){if(s.type==='comp')return;  // 경쟁 주간보호센터는 칩에서 제외(지도 핀·아래 표로 확인)
+    var c=document.createElement('button');c.className='chip';c.type='button';
     c.innerHTML='<span class="sw" style="background:'+s.c+'"></span>'+s.name;
     c.addEventListener('click',function(){focusSite(s.id);});
     pb.appendChild(c);});
