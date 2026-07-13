@@ -864,6 +864,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="sec-head"><div class="n">04</div><h2>송영 교통 여건 (청주 지리 · 정체)</h2></div>
     <p class="lead">청주 지리를 모르는 분을 위해, 봉명동이 청주 어디쯤인지와 송영 코스가 지나갈 도로의 평소 정체를 정리했습니다. <b>지금의 편도 30분 반경은 ‘거리’가 아니라 등·하원 피크의 ‘실소요 시간’으로 봐야 합니다.</b> <span class="badge b-src">출처</span> 나무위키·위키백과·뉴시스·굿모닝충청 등(하단 07 출처)</p>
     <div class="callout"><b>봉명동은 청주 어디?</b> 흥덕구 <b>서부 구도심</b>으로, 청주 최대 상업·인구 밀집축인 <b>사창–복대–가경 벨트 바로 위(북쪽)</b>에 붙어 있습니다. 동 중앙을 <b>제1순환로</b>가 남북으로, 북단을 <b>제2순환로</b>가 지나 간선 접근성은 우수하지만, 그만큼 <b>도심 상습 정체 구간을 끼고</b> 있습니다. <span class="badge b-src">출처</span></div>
+    <div class="placebar" style="margin:16px 0 2px"><span class="plabel">🗺 정체 지점 — 누르면 위 실시간 지도로 이동 →</span><button class="chip jmap" type="button" data-id="cg_sachang"><span class="sw" style="background:#e07a6b"></span>사창사거리</button><button class="chip jmap" type="button" data-id="cg_bokdae"><span class="sw" style="background:#e07a6b"></span>복대사거리</button><button class="chip jmap" type="button" data-id="cg_terminal"><span class="sw" style="background:#e07a6b"></span>시외버스터미널</button><button class="chip jmap" type="button" data-id="cg_seocj"><span class="sw" style="background:#e07a6b"></span>서청주교</button></div>
     <div class="grid3" style="margin-top:16px">
       <div class="card warn"><h3><span class="tag t-opp">1순환로 · 봉명동 관통</span></h3><ul>
         <li><b>사창사거리</b>(봉명 남쪽 경계 ~200m) 상습 혼잡 — 시가 2023년 좌회전 차로 연장 <span class="badge b-src">출처</span></li>
@@ -1223,6 +1224,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
       grid.querySelectorAll('input[type=checkbox]').forEach(function(x){x.checked=false});
       grid.querySelectorAll('.item').forEach(function(x){x.classList.remove('done')});done=0;refresh();});
   })();
+
+  // 04 교통 섹션의 '정체 지점' 버튼 → 위 지도로 이동 + 해당 마커 팝업
+  document.querySelectorAll('.jmap').forEach(function(btn){
+    btn.addEventListener('click',function(){focusSite(btn.getAttribute('data-id'));});});
 
   document.querySelectorAll('nav a').forEach(function(a){a.addEventListener('click',function(e){
     var id=a.getAttribute('href');if(id.length>1){var t=document.querySelector(id);if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});}}});});
