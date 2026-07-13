@@ -749,7 +749,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   td .name{font-weight:700;color:var(--ink)}
   .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
   .g-a{background:var(--accent-soft);color:var(--accent-ink)} .g-b{background:var(--geo-soft);color:var(--geo)} .g-c{background:var(--warn-soft);color:var(--warn)} .g-d{background:var(--crit-soft);color:var(--crit)} .g-na{background:var(--panel-2);color:var(--ink-3)}
-  .util{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .util{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  #mgmt table td:nth-child(2),#mgmt table td:nth-child(3){white-space:nowrap}
   .mbtn{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:7px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);cursor:pointer;white-space:nowrap;font-family:var(--sans)}
   .mbtn:hover{background:var(--accent);color:#fff}
   .promo-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -764,7 +765,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line-2)}
   .item input{margin-top:3px;width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer}
   .item label{font-size:13.5px;cursor:pointer;flex:1}
-  .item .il{font-weight:600;color:var(--ink)} .item .isub{font-size:12px;color:var(--ink-3);margin-top:1px}
+  .item .il{display:block;font-weight:600;color:var(--ink)} .item .isub{display:block;font-size:12px;color:var(--ink-3);margin-top:2px;line-height:1.5}
   .item.done label .il{text-decoration:line-through;color:var(--ink-3)}
   .prio{font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;flex:none;margin-top:2px}
   .p1{background:var(--crit-soft);color:var(--crit)} .p2{background:var(--warn-soft);color:var(--warn)} .p3{background:var(--panel-2);color:var(--ink-3)}
@@ -931,8 +932,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <tr><td>주유</td><td><span class="name">서원경주유소</span></td><td>봉명동 직지대로579 · 0.15km</td><td class="util">지도앱 확인</td><td>현대오일뱅크 직영·최근접</td></tr>
           <tr><td>주유</td><td><span class="name">서청주주유소</span></td><td>봉명동 1순환로572 · 0.33km</td><td class="util">043-268-5151</td><td>S-OIL</td></tr>
           <tr><td>주유(셀프)</td><td><span class="name">직지셀프주유소</span></td><td>직지대로677 · 차2~3분</td><td class="util">043-260-5156</td><td>현대 직영 셀프·저가</td></tr>
-          <tr><td>블랙박스·후방</td><td><span class="name">홍카클럽</span></td><td>성화동 · 3~4km <span class="badge b-est">2km밖</span></td><td class="util">043-231-5011</td><td>최근접 검증(루카스)</td></tr>
-          <tr><td>블랙박스·후방</td><td><span class="name">디에이치모터스</span></td><td>출장(봉명 가능)</td><td class="util">070-5228-1774</td><td>출장 설치</td></tr>
+          <tr><td>블박·후방</td><td><span class="name">홍카클럽</span></td><td>성화동 · 3~4km <span class="badge b-est">2km밖</span></td><td class="util">043-231-5011</td><td>최근접 검증(루카스)</td></tr>
+          <tr><td>블박·후방</td><td><span class="name">디에이치모터스</span></td><td>출장(봉명 가능)</td><td class="util">070-5228-1774</td><td>출장 설치</td></tr>
           <tr><td>발판·자동문</td><td><span class="name">아성자동문</span></td><td>미평동 궁뜰로33번길43 · 남동 ~5km·차15분</td><td class="util">043-296-5759</td><td>자동발판·자동문·어린이보호차량 안전장치(대표 김운달)</td></tr>
         </tbody>
       </table></div>
