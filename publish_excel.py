@@ -137,15 +137,33 @@ def upload_file(token: str, path: Path, folder_id: str, drive_name: str) -> dict
 
 # ---------- 슬랙 ----------
 def send_slack(payload: dict | str) -> None:
-    # 아롱이 앱 웹훅 (없으면 기존 차량관리 웹훅으로 폴백)
+    if isinstance(payload, str):
+        payload = {"text": payload}
+    # 1순위: 봇(chat.postMessage) — 발신자 이름을 '지점관리'로 지정 (chat:write.customize 필요)
+    bot = (os.environ.get("SLACK_BOT_TOKEN")
+           or (keyring.get_password("carefor-auto", "slack_bot_token") if keyring else None))
+    channel = os.environ.get("CONSULT_CHANNEL") or "C0BC37EB38C"  # 프로그램관리 채널
+    if bot and channel:
+        p = dict(payload)
+        p["channel"] = channel
+        p.setdefault("username", "지점관리")
+        p.setdefault("icon_emoji", ":office:")
+        body = json.dumps(p).encode("utf-8")
+        req = urllib.request.Request(
+            "https://slack.com/api/chat.postMessage", data=body,
+            headers={"Content-Type": "application/json; charset=utf-8",
+                     "Authorization": f"Bearer {bot}"})
+        out = json.loads(urllib.request.urlopen(req, timeout=30).read().decode("utf-8"))
+        if not out.get("ok"):
+            raise SystemExit(f"슬랙(봇) 전송 실패: {out.get('error')} — {out}")
+        return
+    # 폴백: 기존 웹훅 (봇 토큰 없을 때)
     hook = (os.environ.get("ARONGI_WEBHOOK_URL")
             or (keyring.get_password("carefor-auto", "arongi_webhook_url") if keyring else None)
             or os.environ.get("SLACK_WEBHOOK_URL")
             or (keyring.get_password("carefor-auto", "slack_webhook_url") if keyring else None))
     if not hook:
-        raise SystemExit("arongi_webhook_url 자격증명이 없습니다.")
-    if isinstance(payload, str):
-        payload = {"text": payload}
+        raise SystemExit("발송 자격증명(봇 토큰/웹훅) 없음.")
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(hook, data=body,
                                  headers={"Content-Type": "application/json; charset=utf-8"})

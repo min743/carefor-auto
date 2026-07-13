@@ -127,6 +127,7 @@ jobs:
         env:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GOOGLE_OAUTH_JSON: ${{ secrets.GOOGLE_OAUTH_JSON }}
         run: |
           # 예약/외부 자동 실행은 상담 미입력만. 수동 실행은 입력값(기본 consult) 따름.
