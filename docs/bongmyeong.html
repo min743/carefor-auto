@@ -685,12 +685,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
   h1,h2,h3{text-wrap:balance;letter-spacing:-.02em;line-height:1.25;margin:0}
   .num{font-variant-numeric:tabular-nums}
-  header{padding:44px 0 28px;border-bottom:1px solid var(--line)}
-  .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
-  header h1{font-size:clamp(27px,4.6vw,42px);font-weight:700}
+  header{position:relative;padding:52px 0 34px;background:linear-gradient(180deg,var(--accent-soft),transparent 82%)}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent 52%)}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:16px}
+  .eyebrow::before{content:"";width:24px;height:3px;border-radius:2px;background:var(--accent)}
+  header h1{font-size:clamp(28px,4.8vw,46px);font-weight:700;line-height:1.14;letter-spacing:-.02em}
+  .specs{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .spec{display:inline-flex;align-items:baseline;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--ink);box-shadow:var(--shadow)}
+  .spec i{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--accent-ink);text-transform:uppercase}
   .sub{color:var(--ink-2);font-size:16px;margin-top:12px;max-width:none}
-  .meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font-size:13px;color:var(--ink-3)}
-  .meta b{color:var(--ink-2);font-weight:600}
+  .meta{display:flex;flex-wrap:wrap;gap:7px 9px;margin-top:22px;font-size:12px;color:var(--ink-3);align-items:center}
+  .meta>span{background:var(--panel-2);border-radius:20px;padding:5px 12px}
+  .meta b{color:var(--ink-2);font-weight:700}
   nav{position:sticky;top:0;z-index:1000;background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-bottom:6px}
   nav .wrap{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;scrollbar-width:none}
   nav .wrap::-webkit-scrollbar{display:none}
@@ -798,7 +804,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
 <header><div class="wrap">
   <div class="eyebrow">입지 · 송영권역 · 홍보전략 리포트</div>
   <h1>봉명동 주간보호센터 오픈 브리핑</h1>
-  <p class="sub">청주시 흥덕구 봉명동 168-5 (직지대로582번길 4) · 2026년 10월 개소 예정 · 정원 60명(법인) · 송영 편도 20분(권장)~30분(확장)</p>
+  <div class="specs">
+    <span class="spec"><i>주소</i> 청주 흥덕구 봉명동 168-5 (직지대로582번길 4)</span>
+    <span class="spec"><i>개소</i> 2026년 10월 예정</span>
+    <span class="spec"><i>정원</i> 60명 · 법인</span>
+    <span class="spec"><i>송영</i> 편도 20분(권장)~30분(확장)</span>
+  </div>
   <div class="meta">
     <span><b>대상</b> 본부 보고 + 현장 홍보팀 실행</span>
     <span><b>작성</b> 2026-07-09</span>
@@ -934,23 +945,39 @@ svg.leaflet-image-layer.leaflet-interactive path {
         <tbody>
           <tr><td>정비·타이어</td><td><span class="name">티스테이션 청주봉명점</span></td><td>봉명동 1순환로565번길2 · 차5분</td><td class="util">043-276-9321</td><td>한국타이어·휠얼라이먼트</td></tr>
           <tr><td>정비·타이어</td><td><span class="name">공임나라 청주봉명점</span></td><td>봉명동 2438 · 차5분</td><td class="util">043-267-5109</td><td>일반정비·엔진오일·타이어</td></tr>
-          <tr><td>주유</td><td><span class="name">서원경주유소</span></td><td>봉명동 직지대로579 · 0.15km</td><td class="util">지도앱 확인</td><td>현대오일뱅크 직영·최근접</td></tr>
-          <tr><td>주유</td><td><span class="name">서청주주유소</span></td><td>봉명동 1순환로572 · 0.33km</td><td class="util">043-268-5151</td><td>S-OIL</td></tr>
-          <tr><td>주유(셀프)</td><td><span class="name">직지셀프주유소</span></td><td>직지대로677 · 차2~3분</td><td class="util">043-260-5156</td><td>현대 직영 셀프·저가</td></tr>
-          <tr><td>블박·후방</td><td><span class="name">홍카클럽</span></td><td>성화동 · 3~4km <span class="badge b-est">2km밖</span></td><td class="util">043-231-5011</td><td>최근접 검증(루카스)</td></tr>
-          <tr><td>블박·후방</td><td><span class="name">디에이치모터스</span></td><td>출장(봉명 가능)</td><td class="util">070-5228-1774</td><td>출장 설치</td></tr>
+          <tr><td>주유·일반</td><td><span class="name">서원경주유소</span></td><td>봉명동 직지대로579 · 0.15km</td><td class="util">043-274-2505</td><td>HD현대오일뱅크·일반(비셀프)·최근접</td></tr>
+          <tr><td>주유·일반</td><td><span class="name">서청주주유소</span></td><td>봉명동 1순환로572 · 0.33km</td><td class="util">043-268-5151</td><td>S-OIL·일반(비셀프)</td></tr>
+          <tr><td>주유·셀프</td><td><span class="name">직지셀프주유소</span></td><td>봉명동 직지대로677 · 차2~3분</td><td class="util">043-260-5156</td><td>HD현대 직영·셀프·전기차충전·24시간</td></tr>
+          <tr><td>LPG·가스</td><td><span class="name">중도가스 사직충전소</span></td><td>1순환로428 · ~1.5~2km</td><td class="util">043-274-8065</td><td>승합차 LPG(가스)·별도 충전소</td></tr>
+          <tr><td>블박·후방</td><td><span class="name">복대 블박·후방 전문점</span></td><td>복대동 158-8 · ~1.6km</td><td class="util">043-233-0898</td><td>썬팅·블박·후방 명시 · <span class="badge b-est">상호 확인중</span></td></tr>
+          <tr><td>블박·후방</td><td><span class="name">기가엑스</span></td><td>신봉동 1순환로436번길126 · ~1.7km</td><td class="util">070-4411-0109</td><td>카튜닝·전장(블박 시공 전화 확인)</td></tr>
+          <tr><td>블박·후방</td><td><span class="name">에스나인 멀티샵</span></td><td>가경동 · ~3km <span class="badge b-est">2km밖</span></td><td class="util">확인필요</td><td>3M썬팅+블랙박스</td></tr>
           <tr><td>발판·자동문</td><td><span class="name">아성자동문</span></td><td>미평동 궁뜰로33번길43 · 남동 ~5km·차15분</td><td class="util">043-296-5759</td><td>자동발판·자동문·어린이보호차량 안전장치(대표 김운달)</td></tr>
         </tbody>
       </table></div>
-      <p class="catdesc" style="margin-top:8px">블랙박스·후방카메라는 <b>봉명동 2km 이내 검증 업체가 없어</b> 최근접(성화동)·출장으로 표기 — 가경·운천·복대 후보는 지도앱 "봉명동 블랙박스"로 확인. <b>아성자동문</b>(미평동)은 자동발판·자동문·어린이보호차량 안전장치 전문(043-296-5759) — 승합차 승하차 개조 대응.</p>
+      <p class="catdesc" style="margin-top:8px"><b>주유</b>: 인근 4곳 모두 <b>일반 주유(휘발유·경유)</b>이며 <b>직지셀프</b>만 셀프. <b>LPG(가스)</b>는 별도 충전소(중도가스 등). <b>블박·후방</b>: 재검증 결과 <b>복대동·신봉동에 2km 이내 업체 확인</b>(승합차 후방카메라 시공 범위는 전화로 확인 권장). <b>아성자동문</b>(미평동)은 자동발판·자동문·어린이보호차량 안전장치 전문(043-296-5759). 전체 후보는 시트 참조. <span class="badge b-est">확인필요</span></p>
     </div>
 
-    <h3 style="margin:22px 0 8px">🏥 의료 연계 · 홍보 대상 병·의원</h3>
-    <p class="lead" style="margin-bottom:10px">이용 어르신 진료를 의뢰·연계하고, 원무·사회복지(진료협력)팀을 홍보 접촉하는 대상입니다. <b>정형외과·재활·요양병원의 연계 가치가 가장 큽니다.</b></p>
+    <h3 style="margin:22px 0 8px">🏥 홍보 대상 병의원 (동네 의원 — 내과·정형외과·이비인후과)</h3>
+    <p class="lead" style="margin-bottom:10px">이용 어르신이 다니고, <b>리플릿 비치·원무 접촉으로 홍보</b>할 1차 의원입니다(우선 3개 과). 봉명동 관내엔 다과목 <b>서울연합의원</b>(내과+이비인후과)이 가장 가깝습니다. <span class="badge b-src">출처</span> 하이닥·메디우스·모두닥 등</p>
+    <div class="twrap"><table>
+      <thead><tr><th>진료과</th><th>의원</th><th>위치 · 센터서 소요</th><th>연락처</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>내과·이비인후과</td><td><span class="name">서울연합의원</span></td><td>봉명동 직지대로667 · 0.5km(도보권)</td><td class="util">043-274-8274</td><td>다과목(내과+이비인후과)·최근접</td></tr>
+        <tr><td>내과</td><td><span class="name">오세진내과의원</span></td><td>복대동 대농로47 · 차 7분</td><td class="util">확인필요</td><td>만성질환</td></tr>
+        <tr><td>정형외과</td><td><span class="name">서울정형외과의원</span></td><td>봉명동 1순환로509 · 차 5분</td><td class="util">043-266-7612</td><td>근골격·통증 1차·봉명 최근접</td></tr>
+        <tr><td>정형외과</td><td><span class="name">바로나은정형외과</span></td><td>복대동 288-6 · 차 7분</td><td class="util">043-715-7700</td><td>통증+정형</td></tr>
+        <tr><td>정형외과</td><td><span class="name">서울드림정형외과</span></td><td>가경동 가경로9-1 · 차 8~10분</td><td class="util">043-715-6836</td><td>가경 상권</td></tr>
+        <tr><td>이비인후과</td><td><span class="name">이솜이비인후과</span></td><td>복대동 대농로47 · 차 7분</td><td class="util">043-234-5079</td><td>봉명동은 서울연합의원</td></tr>
+      </tbody>
+    </table></div>
+    <p class="catdesc" style="margin-top:8px">우선 3개 과(내과·정형외과·이비인후과)만 반영. 봉명동 단과 의원은 적고 복대동(지웰·대농로 상권)에 밀집. 오세진내과 전화는 확인 필요. <span class="badge b-est">확인필요</span></p>
+
+    <h3 style="margin:22px 0 8px">🏥 의료 연계 (입원↔주보 의뢰·협력 — 병원급)</h3>
+    <p class="lead" style="margin-bottom:10px">퇴원·수술 후 어르신을 <b>상호 의뢰</b>하고 사회복지(진료협력)팀과 협력하는 병원입니다. <b>요양병원·재활·종합병원의 연계 가치가 큽니다.</b></p>
     <div class="twrap"><table>
       <thead><tr><th>구분</th><th>기관</th><th>위치 · 센터서 소요</th><th>연락처</th><th>연계 포인트</th></tr></thead>
       <tbody>
-        <tr><td>정형외과</td><td><span class="name">서울정형외과의원</span></td><td>봉명동 1순환로509 · 차 5분</td><td class="util">043-266-7612</td><td>근골격·퇴행성 통증 1차 연계 · 최근접</td></tr>
         <tr><td>척추·관절</td><td><span class="name">청주프라임병원</span></td><td>복대동 짐대로72번길37 · 차 5~10분</td><td class="util">043-221-1122</td><td>인공관절·척추수술+재활 → 수술 후 주보 복귀</td></tr>
         <tr><td>재활</td><td><span class="name">청주삼성재활병원</span></td><td>복대동 162-1 · 차 5~10분</td><td class="util">043-235-5555 <span class="badge b-est">확인필요</span></td><td>뇌졸중·골절 후 전문재활 → 입원↔주보 상호의뢰</td></tr>
         <tr><td>신경과</td><td><span class="name">브레인신경과의원</span></td><td>복대동 대농로56 · 차 5~10분</td><td class="util">043-238-7588</td><td>치매·어지럼·뇌혈류 진단·관리</td></tr>
@@ -960,7 +987,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
         <tr><td>공공병원</td><td><span class="name">충북 청주의료원</span></td><td>사직동 흥덕로48 · 차 10~15분</td><td class="util">043-279-2300</td><td>공공·사회사업 → 의료급여·취약 어르신 연계</td></tr>
       </tbody>
     </table></div>
-    <p class="catdesc" style="margin-top:8px">봉명동 관내 <b>내과의원</b>은 이번 조사에서 특정하지 못함(당장은 종합병원 내과로 대체) — 개소 전 지도 검색으로 근거리 내과 확정. <span class="badge b-est">확인필요</span></p>
 
     <h3 style="margin:22px 0 8px">🏛 행정 · 복지 연계 창구</h3>
     <div class="grid2">
