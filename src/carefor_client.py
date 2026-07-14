@@ -399,7 +399,8 @@ def scrape_car_oil_change(page: Page, default_interval: int = 8000) -> dict:
     if cur:
         records.append(' '.join(cur))
 
-    oil_rows = [r for r in records if ('엔진오일' in r and '교환' in r)]
+    # '엔진오일'/'엔진 오일' 둘 다 인식 (지점이 띄어쓰기로 입력하는 경우 대응)
+    oil_rows = [r for r in records if (re.search(r'엔진\s*오일', r) and '교환' in r)]
     if not oil_rows:
         return {}
 
@@ -410,15 +411,17 @@ def scrape_car_oil_change(page: Page, default_interval: int = 8000) -> dict:
     date_m = re.search(r'(\d{4})\.(\d{2})\.(\d{2})', row_text)
     oil_date = f"{date_m.group(1)}-{date_m.group(2)}-{date_m.group(3)}" if date_m else None
 
-    # 교환 km: 형식1) 현 주행거리 80,829km  형식2) 엔진오일 교환(1000km)
+    # 교환 km: 형식1) 현 주행거리 80,829km  형식2) 엔진오일 교환(1000km) / 엔진 오일 교환 67,000
     # '현 주행거리'를 먼저 확인 — '차후 엔진오일 교환 NNkm'이 교환km 패턴에 잘못 걸리는 것 방지
-    km_m = re.search(r'현\s*주행거리\s*([\d,]+)\s*km', row_text) \
-        or re.search(r'(?<!차후)(?<!차후\s)엔진오일\s*교환\s*[\(（]?\s*([\d,]+)\s*km', row_text)
+    # 띄어쓰기(엔진 오일) 허용 + km 접미사 선택(지점이 km 없이 숫자만 입력하는 경우 대응)
+    km_m = re.search(r'현\s*주행거리\s*([\d,]+)\s*(?:km)?', row_text) \
+        or re.search(r'(?<!차후)(?<!차후\s)엔진\s*오일\s*교환\s*[\(（]?\s*([\d,]+)\s*(?:km)?', row_text)
     oil_km = int(km_m.group(1).replace(',', '')) if km_m else None
 
-    # 다음 교환 km: 형식1) 다음교체주기 9000km  형식2) 차후 엔진오일 교환 88,829km
-    next_km_m = re.search(r'다음교체주기\s*([\d,]+)\s*km', row_text) \
-        or re.search(r'차후\s*엔진오일\s*교환\s*([\d,]+)\s*km', row_text)
+    # 다음 교환 km: 형식1) 다음교체주기 9000km / 다음 교체 주기 75,000  형식2) 차후 엔진오일 교환 88,829km
+    # 띄어쓰기 허용 + km 접미사 선택
+    next_km_m = re.search(r'다음\s*교체\s*주기\s*([\d,]+)\s*(?:km)?', row_text) \
+        or re.search(r'차후\s*엔진\s*오일\s*교환\s*([\d,]+)\s*(?:km)?', row_text)
     if next_km_m:
         oil_next_km = int(next_km_m.group(1).replace(',', ''))
     elif oil_km is not None:
