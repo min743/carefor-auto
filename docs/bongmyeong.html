@@ -782,6 +782,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--panel);min-width:720px}
   th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line-2);vertical-align:top}
   thead th{background:var(--panel-2);font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+  thead th small{font-size:9.5px;font-weight:700;color:var(--ink-3);margin-left:3px;letter-spacing:.02em}
   tbody tr:last-child td{border-bottom:none}
   tbody tr.me{background:var(--accent-soft)} tbody tr.me td{font-weight:600}
   td .name{font-weight:700;color:var(--ink)}
@@ -968,7 +969,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="sec-head"><div class="n">05</div><h2>인근 주간보호센터 (주야간보호)</h2></div>
     <p class="lead">송영 반경 내 확인된 주야간보호 시설입니다. 정원 대비 현원이 꽉 찬 곳은 대기수요가 우리 센터로 넘어올 신호입니다. <b>‘지도’ 버튼을 누르면 위 지도에서 해당 센터로 이동</b>합니다. <span class="badge b-src">출처</span> 국민건강보험공단 장기요양기관 조회 · 2026-07-09 기준(기관별 최종변경일 상이)</p>
     <div class="twrap"><table>
-      <thead><tr><th>센터명</th><th>위치</th><th>정원</th><th>현원</th><th>등급</th><th>개소일</th><th>지도</th><th>시사점</th></tr></thead>
+      <thead><tr><th>센터명</th><th>위치</th><th>거리<small>직선</small></th><th>정원</th><th>현원</th><th>등급</th><th>개소일</th><th>지도</th><th>시사점</th></tr></thead>
       <tbody id="comptbody"></tbody>
     </table></div>
     <div class="grid2" style="margin-top:16px">
@@ -1172,6 +1173,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
   var CENTER=[36.6424,127.4576];
   function ringBounds(km){var d=km/111,dl=d/Math.cos(CENTER[0]*Math.PI/180);
     return [[CENTER[0]-d,CENTER[1]-dl],[CENTER[0]+d,CENTER[1]+dl]];}
+  function distKm(a,b){var R=6371,p=Math.PI/180,dLa=(b[0]-a[0])*p,dLo=(b[1]-a[1])*p,
+    h=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*p)*Math.cos(b[0]*p)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return 2*R*Math.asin(Math.sqrt(h));}
   var RING30=ringBounds(12);
 
   // id, type, name, addr, ll, meta, (comp/center: jw,hw,grade,gcls,note,approx)
@@ -1262,7 +1266,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   (function(){var tb=document.getElementById('comptbody');
     SITES.filter(function(s){return s.type==='center'||s.type==='comp';}).forEach(function(s){
       var tr=document.createElement('tr'); if(s.type==='center')tr.className='me';
-      tr.innerHTML='<td><span class="name">'+s.name+'</span></td><td>'+(s.loc||s.addr)+'</td><td class="util">'+s.jw+'</td><td class="util">'+s.hw+'</td>'
+      tr.innerHTML='<td><span class="name">'+s.name+'</span></td><td>'+(s.loc||s.addr)+'</td><td class="util">'+(s.type==='center'?'<b>기준</b>':'~'+distKm(CENTER,s.ll).toFixed(1)+'km')+'</td><td class="util">'+s.jw+'</td><td class="util">'+s.hw+'</td>'
         +'<td><span class="pill '+s.gcls+'">'+s.grade+'</span></td>'
         +'<td class="util">'+(s.open||'—')+'</td><td><button class="mbtn" data-id="'+s.id+'">지도▸</button></td><td>'+s.note+'</td>';
       tb.appendChild(tr);
