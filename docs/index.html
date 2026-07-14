@@ -1011,6 +1011,12 @@ window.addEventListener('appinstalled', () => {
   if (btn) btn.style.display = 'none';
 });
 </script>
-<a href="hq.html" title="본부 공유 허브로" style="position:fixed;left:10px;top:10px;z-index:500;background:#fff;color:#1e3a8a;padding:7px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)">← 🏢 본부 허브</a>
+<style>
+.hubback{position:fixed;left:12px;top:12px;z-index:500;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.96);color:#1f3360;border:1px solid #d8e0ee;padding:8px 15px;border-radius:999px;text-decoration:none;font-size:12.5px;font-weight:700;box-shadow:0 3px 12px rgba(31,51,96,.16);backdrop-filter:blur(4px);transition:transform .14s,box-shadow .14s,background .14s,color .14s}
+.hubback:hover{background:#1f3360;color:#fff;transform:translateY(-1px);box-shadow:0 7px 18px rgba(31,51,96,.30)}
+.hubback .ar{font-weight:800;transition:transform .14s}
+.hubback:hover .ar{transform:translateX(-3px)}
+</style>
+<a href="hq.html" class="hubback" title="본부 공유 허브로"><span class="ar">←</span>🏢 본부 공유 허브</a>
 </body>
 </html>

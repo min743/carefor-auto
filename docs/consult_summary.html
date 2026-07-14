@@ -19,7 +19,10 @@ td.brk{text-align:left;color:#555;font-size:14px}
 tr.sum td{background:#f6f8fc;font-weight:bold}
 .ok{color:#2c8a41}.bad{color:#c02020;font-weight:bold}.warn{color:#b57a00;font-weight:bold}
 .empty{background:#fff;border-radius:8px;padding:24px;text-align:center;color:#888;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-.back{display:inline-block;margin:0 0 6px;background:#eef2f9;color:#2f5496;padding:6px 15px;border-radius:16px;text-decoration:none;font-size:14px;font-weight:bold}
+.back{display:inline-flex;align-items:center;gap:7px;margin:0 0 8px;background:#fff;color:#1f3360;border:1px solid #d8e0ee;padding:8px 15px;border-radius:999px;text-decoration:none;font-size:12.5px;font-weight:700;box-shadow:0 2px 10px rgba(31,51,96,.12);transition:transform .14s,box-shadow .14s,background .14s,color .14s}
+.back:hover{background:#1f3360;color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(31,51,96,.26)}
+.back .ar{font-weight:800;transition:transform .14s}
+.back:hover .ar{transform:translateX(-3px)}
 .note{font-size:12.5px;color:#777;margin-top:10px;line-height:1.5}
 #gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
 #gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
@@ -28,7 +31,7 @@ tr.sum td{background:#f6f8fc;font-weight:bold}
 <input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
 <header><h1>☎️ 상담 현황 요약 (본부 공유용)</h1><div class="sub">생성: 2026-07-13 · 2026년 05월~ 누적 · 전일자 기준</div></header>
 <div class="wrap">
-<a class="back" href="hq.html">← 🏢 본부 허브</a>
+<a class="back" href="hq.html"><span class="ar">←</span>🏢 본부 공유 허브</a>
 <h2>📋 신규상담 상담시트 입력 현황</h2>
 <table><tr><th>센터</th><th>신규상담(누적)</th><th>시트 미입력</th><th>미입력률</th></tr><tr><td class="name">둔산</td><td>51</td><td class="bad">26</td><td class="bad">51%</td></tr><tr><td class="name">서구</td><td>49</td><td class="bad">10</td><td class="warn">20%</td></tr><tr><td class="name">천안</td><td>49</td><td class="ok">0</td><td class="ok">0%</td></tr><tr><td class="name">청주오창</td><td>15</td><td class="bad">3</td><td class="warn">20%</td></tr><tr class="sum"><td class="name">합계</td><td>164</td><td class="bad">39</td><td>24%</td></tr></table>
 <h2 class="sec2">📞 센터별 상담 대기 명단</h2>
