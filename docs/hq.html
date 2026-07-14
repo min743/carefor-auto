@@ -42,7 +42,8 @@
   .sectlabel::before{content:"";width:15px;height:2px;background:var(--navy2);border-radius:2px}
   .sectlabel span{color:var(--faint);font-weight:600;letter-spacing:0;text-transform:none}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin-bottom:26px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:680px){.grid{grid-template-columns:1fr}}
 
   .card{background:var(--card);border-radius:16px;position:relative;overflow:hidden;
@@ -123,7 +124,7 @@
     <div class="card" style="--c:var(--teal);--cbg:var(--tealbg)">
       <a class="cardmain" href="junggu.html">
         <div class="cardhead"><div class="ico">🏙️</div>
-          <div class="ttl">대전 중구 개소 리포트</div><div class="arrow">→</div></div>
+          <div class="ttl">대전 중구 리포트</div><div class="arrow">→</div></div>
         <div class="desc">대전 중구점 신규 개소 준비 — 원도심 초고령 입지·송영권 지도, 인근 센터·응급/연계망, 홍보 전략.</div>
         <div class="tags"><span class="tag">🗓️ 2026.11 개소</span><span class="tag">📍 대전 대흥동</span><span class="tag">🚐 송영 30분권</span></div>
       </a>
