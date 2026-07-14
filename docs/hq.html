@@ -45,6 +45,8 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:30px}
   @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .gridopen{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-bottom:30px}
+  @media(max-width:680px){.gridopen{grid-template-columns:1fr}}
 
   .card{background:var(--card);border-radius:18px;position:relative;overflow:hidden;
     border:1px solid var(--line);box-shadow:0 3px 14px rgba(31,45,71,.06);
@@ -109,8 +111,8 @@
     <div class="t"><b>개인정보 보호 안내.</b> 이 페이지에는 수급자 <b>실명이 포함되지 않습니다</b> — 상세 명단은 센터 단위 집계 또는 <b>이름 마스킹(강○례)</b> 형태로만 표시됩니다. 접속 번호로 보호되며 검색엔진에 노출되지 않습니다.</div>
   </div>
 
-  <div class="sectlabel">충청본부 주요 자료 <span>· 자동 점검·집계</span></div>
-  <div class="grid">
+  <div class="sectlabel">신규 개소 리포트 <span>· 지점 오픈 입지·홍보</span></div>
+  <div class="gridopen">
 
     <div class="card" style="--c:var(--teal);--cbg:var(--tealbg)">
       <a class="cardmain" href="bongmyeong.html">
@@ -129,6 +131,11 @@
         <div class="tags"><span class="tag">🗓️ 2026.11 개소</span><span class="tag">📍 대전 대흥동</span><span class="tag">🚐 송영 30분권</span></div>
       </a>
     </div>
+
+  </div>
+
+  <div class="sectlabel">본부 운영 자료 <span>· 자동 점검·집계</span></div>
+  <div class="grid">
 
     <div class="card" style="--c:var(--violet);--cbg:var(--violetbg)">
       <a class="cardmain" href="consult_summary.html">
