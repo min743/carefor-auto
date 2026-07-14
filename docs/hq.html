@@ -5,65 +5,77 @@
 <title>충청본부 공유 허브</title>
 <style>
   :root{
-    --navy:#22376a; --navy2:#2f5496; --ink:#1e2733; --muted:#6b7684;
+    --navy:#1f3360; --navy2:#2f5496; --ink:#1e2733; --muted:#6b7684; --faint:#9aa4b2;
     --line:#e5e9f0; --bg:#eef2f8; --card:#fff;
-    --teal:#0f766e; --violet:#6d3fbf; --amber:#b4690e; --blue:#2563a8;
+    --teal:#0f766e; --tealbg:#e5f3f1; --violet:#6d3fbf; --violetbg:#f1eafb;
+    --amber:#b4690e; --amberbg:#fbf0e0; --blue:#2563a8; --bluebg:#e6eff8;
   }
   *{box-sizing:border-box}
   body{font-family:'Malgun Gothic','맑은 고딕',-apple-system,BlinkMacSystemFont,sans-serif;
     margin:0;color:var(--ink);
-    background:
-      radial-gradient(1200px 500px at 50% -140px, #dbe4f4 0%, rgba(219,228,244,0) 70%),
-      var(--bg);
-    min-height:100vh}
+    background:radial-gradient(1200px 480px at 50% -160px,#dbe4f4 0%,rgba(219,228,244,0) 72%),var(--bg);
+    min-height:100vh;line-height:1.5}
+  a{color:inherit}
 
   header{position:relative;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
-    color:#fff;padding:30px 20px 34px;text-align:center;overflow:hidden}
+    color:#fff;padding:30px 20px 26px;text-align:center;overflow:hidden}
   header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
     background:linear-gradient(90deg,var(--teal),var(--violet),var(--amber),var(--blue))}
-  header .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;
-    background:rgba(255,255,255,.14);padding:5px 13px;border-radius:999px;margin-bottom:12px;
-    letter-spacing:.3px}
-  header h1{font-size:23px;margin:0;font-weight:800;letter-spacing:-.3px}
+  header .badge{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+    background:rgba(255,255,255,.15);padding:5px 13px;border-radius:999px;margin-bottom:11px;letter-spacing:.3px}
+  header h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.4px}
   header .sub{font-size:12.5px;opacity:.82;margin-top:7px}
+  .pills{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .pill{font-size:11px;font-weight:600;background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.18);padding:4px 11px;border-radius:999px}
 
-  .wrap{padding:26px 18px 40px;max-width:900px;margin:0 auto}
-  .sectlabel{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;
-    text-transform:uppercase;margin:2px 4px 14px;display:flex;align-items:center;gap:8px}
-  .sectlabel::before{content:"";width:14px;height:2px;background:var(--navy2);border-radius:2px}
+  .wrap{padding:22px 18px 40px;max-width:920px;margin:0 auto}
 
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .intro{display:flex;gap:13px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:15px 17px;margin-bottom:24px;box-shadow:0 2px 10px rgba(31,45,71,.05)}
+  .intro .i{font-size:20px;flex-shrink:0;line-height:1.3}
+  .intro .t{font-size:12.5px;color:var(--muted);line-height:1.65}
+  .intro .t b{color:var(--ink)}
+
+  .sectlabel{font-size:11.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;
+    text-transform:uppercase;margin:6px 4px 13px;display:flex;align-items:center;gap:9px}
+  .sectlabel::before{content:"";width:15px;height:2px;background:var(--navy2);border-radius:2px}
+  .sectlabel span{color:var(--faint);font-weight:600;letter-spacing:0;text-transform:none}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:26px}
   @media(max-width:680px){.grid{grid-template-columns:1fr}}
 
-  .card{background:var(--card);border-radius:16px;overflow:hidden;
+  .card{background:var(--card);border-radius:16px;position:relative;overflow:hidden;
     border:1px solid var(--line);box-shadow:0 3px 14px rgba(31,45,71,.06);
-    transition:transform .14s ease,box-shadow .14s ease;position:relative}
+    transition:transform .14s ease,box-shadow .14s ease}
   .card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--c)}
-  .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(31,45,71,.13)}
-  .cardmain{display:block;padding:22px 20px 18px;text-decoration:none;color:var(--ink)}
-  .cardhead{display:flex;align-items:center;gap:13px;margin-bottom:11px}
-  .ico{width:46px;height:46px;border-radius:12px;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:24px;
-    background:var(--cbg);color:var(--c)}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(31,45,71,.14)}
+  .cardmain{display:block;padding:20px 20px 16px;text-decoration:none;color:var(--ink)}
+  .cardhead{display:flex;align-items:center;gap:13px;margin-bottom:10px}
+  .ico{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:23px;background:var(--cbg);color:var(--c)}
   .ttl{font-size:16.5px;font-weight:800;color:var(--ink);letter-spacing:-.2px;flex:1;min-width:0}
-  .arrow{color:var(--c);font-size:18px;opacity:.55;transition:transform .14s,opacity .14s}
+  .arrow{color:var(--c);font-size:18px;opacity:.5;transition:transform .14s,opacity .14s}
   .card:hover .arrow{opacity:1;transform:translateX(3px)}
   .desc{font-size:12.5px;color:var(--muted);line-height:1.6}
-  .sublink{display:inline-flex;align-items:center;gap:5px;margin:2px 20px 18px;
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tag{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:7px;
+    background:var(--cbg);color:var(--c);white-space:nowrap}
+  .sublink{display:inline-flex;align-items:center;gap:5px;margin:0 20px 16px;
     padding:7px 12px;border-radius:9px;background:#f5f0fb;color:var(--violet);
-    text-decoration:none;font-size:12px;font-weight:700}
+    text-decoration:none;font-size:11.5px;font-weight:700}
   .sublink:hover{background:#ede4f8}
 
-  footer{max-width:900px;margin:8px auto 0;padding:18px;background:var(--card);
-    border:1px solid var(--line);border-radius:14px;font-size:11.5px;color:var(--muted);
-    line-height:1.75}
-  footer .brand{font-weight:700;color:var(--ink);margin-bottom:6px;
-    display:flex;align-items:center;gap:7px}
-  footer .dot{color:#c3ccd8}
+  footer{max-width:920px;margin:6px auto 0;padding:0 4px}
+  .fbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .fbox .brand{font-weight:800;color:var(--ink);display:flex;align-items:center;gap:7px;font-size:13px}
+  .fbox .brand small{display:block;font-weight:500;color:var(--faint);font-size:11px;margin-top:3px}
+  .fnote{font-size:11px;color:var(--muted);line-height:1.7;max-width:520px}
+  .fnote .k{color:#b4690e;font-weight:700}
 
   #gate{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;
-    flex-direction:column;gap:16px;color:#fff;
-    background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)}
+    flex-direction:column;gap:15px;color:#fff;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)}
   #gate .lock{font-size:34px}
   #gate h2{color:#fff;margin:0;font-size:20px;font-weight:800}
   #gate p{margin:0;font-size:13px;opacity:.85}
@@ -79,67 +91,76 @@
 </div>
 
 <header>
-  <div class="badge">🏢 충청본부 · 내부 공유</div>
+  <div class="badge">🏢 충청본부 · 내부 공유 전용</div>
   <h1>충청본부 공유 허브</h1>
-  <div class="sub">본부 공유용 집계 페이지 · 개인정보(수급자 실명) 미포함</div>
+  <div class="sub">지점 자동 점검·집계 결과를 본부와 공유하는 페이지</div>
+  <div class="pills">
+    <span class="pill">📍 청주 오창</span><span class="pill">📍 서구</span>
+    <span class="pill">📍 둔산</span><span class="pill">📍 천안</span>
+    <span class="pill">🌱 봉명동(개소예정)</span>
+  </div>
 </header>
 
 <div class="wrap">
-  <div class="sectlabel">공유 자료</div>
+
+  <div class="intro">
+    <div class="i">🛡️</div>
+    <div class="t"><b>개인정보 보호 안내.</b> 이 페이지에는 수급자 <b>실명이 포함되지 않습니다</b> — 상세 명단은 센터 단위 집계 또는 <b>이름 마스킹(강○례)</b> 형태로만 표시됩니다. 접속 번호로 보호되며 검색엔진에 노출되지 않습니다.</div>
+  </div>
+
+  <div class="sectlabel">지점 운영 현황 <span>· 자동 점검·집계</span></div>
   <div class="grid">
 
-    <div class="card" style="--c:var(--teal);--cbg:#e5f3f1">
-      <a class="cardmain" href="bongmyeong.html">
-        <div class="cardhead">
-          <div class="ico">🗺️</div>
-          <div class="ttl">봉명동 주간보호 개소 리포트</div>
-          <div class="arrow">→</div>
-        </div>
-        <div class="desc">청주 봉명점(2026.10 개소) 입지·송영 30분권 실시간 지도 · 인근 센터 정원/현원/등급/개소일(공단 조회) · 홍보 대상·전략</div>
-      </a>
-    </div>
-
-    <div class="card" style="--c:var(--violet);--cbg:#f1eafb">
+    <div class="card" style="--c:var(--violet);--cbg:var(--violetbg)">
       <a class="cardmain" href="consult_summary.html">
-        <div class="cardhead">
-          <div class="ico">☎️</div>
-          <div class="ttl">상담 현황 요약</div>
-          <div class="arrow">→</div>
-        </div>
-        <div class="desc">신규상담 상담시트 입력 현황 · 센터별 상담 대기 명단 (센터 단위 집계, 매일 갱신)</div>
+        <div class="cardhead"><div class="ico">☎️</div>
+          <div class="ttl">상담 현황 요약</div><div class="arrow">→</div></div>
+        <div class="desc">신규상담 상담시트 입력 현황 · 센터별 상담 대기 명단. 센터 단위 집계라 개인정보 없음.</div>
+        <div class="tags"><span class="tag">🔄 매일 갱신</span><span class="tag">📋 센터별 집계</span><span class="tag">📊 미입력·대기 현황</span></div>
       </a>
     </div>
 
-    <div class="card" style="--c:var(--amber);--cbg:#fbf0e0">
+    <div class="card" style="--c:var(--amber);--cbg:var(--amberbg)">
       <a class="cardmain" href="branch_dashboard.html">
-        <div class="cardhead">
-          <div class="ico">📋</div>
-          <div class="ttl">지점 점검 대시보드</div>
-          <div class="arrow">→</div>
-        </div>
-        <div class="desc">평가 매뉴얼 36개 항목 지점별 신호등·점수·판정내용 + 상세 명단(수급자 실명 ○○○ 마스킹) — 지점 대시보드 그대로, 이름만 제거</div>
+        <div class="cardhead"><div class="ico">📋</div>
+          <div class="ttl">지점 점검 대시보드</div><div class="arrow">→</div></div>
+        <div class="desc">평가 매뉴얼 36개 항목 지점별 신호등·점수·판정내용 + 상세 명단(수급자 실명 마스킹).</div>
+        <div class="tags"><span class="tag">📊 평가 36개 항목</span><span class="tag">🚦 신호등 판정</span><span class="tag">🔒 이름 마스킹</span></div>
       </a>
       <a class="sublink" href="audit_summary.html">📄 지점 점검 한눈 요약본 →</a>
     </div>
 
-    <div class="card" style="--c:var(--blue);--cbg:#e6eff8">
+    <div class="card" style="--c:var(--blue);--cbg:var(--bluebg)">
       <a class="cardmain" href="index.html">
-        <div class="cardhead">
-          <div class="ico">🚗</div>
-          <div class="ttl">차량 관리</div>
-          <div class="arrow">→</div>
-        </div>
-        <div class="desc">지점별 차량 주행거리 · 엔진오일 · 정기검사 현황</div>
+        <div class="cardhead"><div class="ico">🚗</div>
+          <div class="ttl">차량 관리</div><div class="arrow">→</div></div>
+        <div class="desc">지점별 차량 주행거리 · 엔진오일 교환 · 정기검사 현황을 한 곳에서.</div>
+        <div class="tags"><span class="tag">🚗 지점별 차량</span><span class="tag">🛢️ 오일 교환</span><span class="tag">🗓️ 정기검사</span></div>
+      </a>
+    </div>
+
+    <div class="card" style="--c:var(--teal);--cbg:var(--tealbg)">
+      <a class="cardmain" href="bongmyeong.html">
+        <div class="cardhead"><div class="ico">🗺️</div>
+          <div class="ttl">봉명동 개소 리포트</div><div class="arrow">→</div></div>
+        <div class="desc">청주 봉명점 신규 개소 준비 — 입지·송영권 지도, 인근 센터 현황, 홍보 전략.</div>
+        <div class="tags"><span class="tag">🗓️ 2026.10 개소</span><span class="tag">📍 청주 봉명동</span><span class="tag">🚐 송영 30분권</span></div>
       </a>
     </div>
 
   </div>
 
   <footer>
-    <div class="brand">🏢 충청본부 공유 허브</div>
-    상세(수급자별) 내역은 각 지점 PC 대시보드 / 슬랙 엑셀 링크에서만 확인됩니다.<span class="dot"> · </span>이 허브 링크만 본부에 공유하면 됩니다.<br>
-    이 페이지는 접속 번호로 보호되며, 검색엔진에 노출되지 않습니다.
+    <div class="fbox">
+      <div class="brand">🏢 충청본부 공유 허브
+        <small id="today">— 자동 점검·집계</small></div>
+      <div class="fnote">
+        상세(수급자별) 내역은 각 지점 PC 대시보드 / 슬랙 엑셀 링크에서만 확인됩니다.<br>
+        본부에는 <span class="k">이 허브 링크만</span> 공유하면 됩니다. · 접속번호 보호 · 검색 비노출(noindex)
+      </div>
+    </div>
   </footer>
+
 </div>
 
 <script>
@@ -148,5 +169,7 @@ document.getElementById('pin').addEventListener('input',e=>{
   if(e.target.value===PIN){document.getElementById('gate').style.display='none';sessionStorage.setItem('ap','1');}
 });
 if(sessionStorage.getItem('ap')==='1')document.getElementById('gate').style.display='none';
+(function(){var d=new Date();var s=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  var el=document.getElementById('today');if(el)el.textContent='— 오늘 기준 '+s;})();
 </script>
 </body></html>
