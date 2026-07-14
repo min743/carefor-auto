@@ -685,18 +685,37 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
   h1,h2,h3{text-wrap:balance;letter-spacing:-.02em;line-height:1.25;margin:0}
   .num{font-variant-numeric:tabular-nums}
-  header{position:relative;padding:52px 0 34px;background:linear-gradient(180deg,var(--accent-soft),transparent 82%)}
+  header{position:relative;overflow:hidden;padding:56px 0 40px;background:
+    radial-gradient(115% 130% at 92% -20%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 52%),
+    radial-gradient(90% 120% at -5% -10%,color-mix(in srgb,var(--geo) 13%,transparent),transparent 46%),
+    linear-gradient(180deg,var(--accent-soft),transparent 86%)}
   header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent 52%)}
+  .hero{position:relative;display:grid;grid-template-columns:1.5fr .95fr;gap:26px;align-items:center}
+  .hero-main{min-width:0}
+  .hero-main>*{opacity:0;animation:heroUp .6s cubic-bezier(.2,.7,.2,1) forwards}
+  .hero-main>*:nth-child(2){animation-delay:.08s}.hero-main>*:nth-child(3){animation-delay:.16s}
+  .hero-main>*:nth-child(4){animation-delay:.24s}.hero-main>*:nth-child(5){animation-delay:.32s}
+  @keyframes heroUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:16px}
-  .eyebrow::before{content:"";width:24px;height:3px;border-radius:2px;background:var(--accent)}
-  header h1{font-size:clamp(28px,4.8vw,46px);font-weight:700;line-height:1.14;letter-spacing:-.02em}
-  .specs{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-  .spec{display:inline-flex;align-items:baseline;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--ink);box-shadow:var(--shadow)}
+  .eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--accent)}
+  header h1{font-size:clamp(30px,5vw,50px);font-weight:700;line-height:1.1;letter-spacing:-.025em}
+  header h1 .hl{color:var(--accent-ink)}
+  .hero-lead{margin:16px 0 0;font-size:16.5px;line-height:1.5;color:var(--ink-2);max-width:50ch}
+  .specs{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .spec{display:inline-flex;align-items:baseline;gap:8px;background:color-mix(in srgb,var(--panel) 82%,transparent);backdrop-filter:blur(4px);border:1px solid var(--line);border-radius:11px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--ink);box-shadow:var(--shadow)}
   .spec i{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--accent-ink);text-transform:uppercase}
-  .sub{color:var(--ink-2);font-size:16px;margin-top:12px;max-width:none}
   .meta{display:flex;flex-wrap:wrap;gap:7px 9px;margin-top:22px;font-size:12px;color:var(--ink-3);align-items:center}
   .meta>span{background:var(--panel-2);border-radius:20px;padding:5px 12px}
   .meta b{color:var(--ink-2);font-weight:700}
+  .hero-art{position:relative;height:250px;animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .2s both}
+  .hero-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .hero-art .ping{transform-box:fill-box;transform-origin:center;animation:ping 3.4s ease-out infinite}
+  @keyframes ping{0%{transform:scale(.22);opacity:.5}70%{opacity:0}100%{transform:scale(1);opacity:0}}
+  .art-cap{position:absolute;font-size:11px;font-weight:700;letter-spacing:.02em;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px 9px;box-shadow:var(--shadow);white-space:nowrap}
+  .art-cap.c1{top:6%;right:1%;color:var(--accent-ink)}
+  .art-cap.c2{top:50%;left:55%;color:var(--ink-2)}
+  @media (max-width:820px){.hero{grid-template-columns:1fr}.hero-art{display:none}}
+  @media (prefers-reduced-motion:reduce){.hero-main>*,.hero-art{animation:none;opacity:1}.hero-art .ping{animation:none}}
   nav{position:sticky;top:0;z-index:1000;background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-bottom:6px}
   nav .wrap{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;scrollbar-width:none}
   nav .wrap::-webkit-scrollbar{display:none}
@@ -810,19 +829,37 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </style>
 
 <a href="hq.html" style="position:fixed;top:10px;left:10px;z-index:2000;background:#2f5496;color:#fff;text-decoration:none;padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:700;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)">← 🏢 본부 허브</a>
-<header><div class="wrap">
-  <div class="eyebrow">입지 · 송영권역 · 홍보전략 리포트</div>
-  <h1>봉명동 주간보호센터 오픈 브리핑</h1>
-  <div class="specs">
-    <span class="spec"><i>주소</i> 청주 흥덕구 봉명동 168-5 (직지대로582번길 4)</span>
-    <span class="spec"><i>개소</i> 2026년 10월 예정</span>
-    <span class="spec"><i>정원</i> 60명 · 법인</span>
-    <span class="spec"><i>송영</i> 편도 20분(권장)~30분(확장)</span>
+<header><div class="wrap hero">
+  <div class="hero-main">
+    <div class="eyebrow">입지 · 송영권역 · 홍보전략 리포트</div>
+    <h1><span class="hl">봉명동</span> 주간보호센터 오픈 브리핑</h1>
+    <p class="hero-lead">청주 서부 구도심 봉명동, <b>60명 신축·법인 대형센터</b>의 개소 입지·송영권역·홍보 전략을 한 페이지로 정리했습니다.</p>
+    <div class="specs">
+      <span class="spec"><i>주소</i> 청주 흥덕구 봉명동 168-5</span>
+      <span class="spec"><i>개소</i> 2026년 10월 예정</span>
+      <span class="spec"><i>정원</i> 60명 · 법인</span>
+      <span class="spec"><i>송영</i> 편도 20~30분</span>
+    </div>
+    <div class="meta">
+      <span><b>대상</b> 본부 보고 + 현장 홍보팀 실행</span>
+      <span><b>작성</b> 2026-07-09</span>
+      <span><b>표기</b> <span class="badge b-src">출처</span> 확인자료 · <span class="badge b-est">추정</span> 산정치 · <span class="badge b-op">의견</span> 권고</span>
+    </div>
   </div>
-  <div class="meta">
-    <span><b>대상</b> 본부 보고 + 현장 홍보팀 실행</span>
-    <span><b>작성</b> 2026-07-09</span>
-    <span><b>표기</b> <span class="badge b-src">출처</span> 확인자료 · <span class="badge b-est">추정</span> 산정치 · <span class="badge b-op">의견</span> 권고</span>
+  <div class="hero-art" aria-hidden="true">
+    <svg viewBox="0 0 300 250" preserveAspectRatio="xMidYMid meet">
+      <g transform="translate(165,125)">
+        <circle r="120" fill="none" stroke="#6d766f" stroke-width="1.4" stroke-dasharray="4 7" opacity=".3"/>
+        <circle r="90" fill="none" stroke="#b57619" stroke-width="1.4" stroke-dasharray="4 7" opacity=".45"/>
+        <circle r="60" fill="none" stroke="#2f6f9f" stroke-width="1.5" stroke-dasharray="4 7" opacity=".55"/>
+        <circle class="ping" r="120" fill="none" stroke="#157f6b" stroke-width="2"/>
+        <circle r="32" fill="#157f6b" fill-opacity=".10"/>
+        <circle r="32" fill="none" stroke="#157f6b" stroke-width="1.6" stroke-dasharray="4 6"/>
+        <circle r="6.5" fill="#157f6b" stroke="#fff" stroke-width="2"/>
+      </g>
+    </svg>
+    <span class="art-cap c1">편도 30분 송영권</span>
+    <span class="art-cap c2">우리 센터</span>
   </div>
 </div></header>
 
