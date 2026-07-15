@@ -20,10 +20,10 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  schedule:
-    - cron: '0 0 * * 1-6'  # 월~토 KST 09:00 (UTC 00:00) — 시트 갱신만 (일요일 제외)
-    # 월요일 슬랙 보고(11:10)는 cron-job.org가 정시 발송 — force=true dispatch (2026-07-11 이전).
-    #   GitHub schedule은 9~12h 지연돼 중복/지연 방지 위해 제거.
+  # ⚠️ GitHub schedule 제거(2026-07-15): '0 0 * * 1-6'(매일 시트갱신)이 9~11h 지연돼
+  #   실제로 매일 16~20시로 들쭉날쭉 실행됐음. 정시 트리거는 cron-job.org 전담:
+  #     · job 8099996 : 매일 09:00(월~토) dry_run=true → 시트갱신만(슬랙X)
+  #     · job 8073514 : 월 11:10 force=true → 주간 슬랙 보고
   workflow_dispatch:
     inputs:
       dry_run:
