@@ -1,0 +1,15 @@
+{
+  "name": "충청본부 공유 허브",
+  "short_name": "충청본부",
+  "description": "충청본부 지점 자동 점검·집계 공유 허브",
+  "start_url": "hq.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#152647",
+  "theme_color": "#152647",
+  "icons": [
+    { "src": "icons/hub-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/hub-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

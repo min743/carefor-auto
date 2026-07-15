@@ -18,3 +18,6 @@ apps_script/consult_read.gs
 점검표/
 평가준비/
 *.xlsx
+
+# PWA 매니페스트는 커밋 필요 (docs 공개 페이지)
+!docs/hq-manifest.json
