@@ -169,15 +169,15 @@ jobs:
       #       '오늘 성공 없음'으로 보고 공지를 중복 발송함. 발송 무결성 > 요약 최신성.
       # ⚠️ continue-on-error 스텝은 실패해도 API가 conclusion=success로 보고한다.
       #    성공 여부는 반드시 로그(outcome)로 확인할 것.
+      # 요약페이지는 '매일 업데이트'(dry_run 포함) 대상 — 조건 없이 항상 갱신.
+      # (발송은 화·목만, 요약/엑셀은 매일. continue-on-error라 실패해도 런 영향 없음)
       - name: 본부 공유 요약페이지 생성 (개인정보 없음)
-        if: ${{ github.event.inputs.dry_run != 'true' }}
         continue-on-error: true
         env:
           CONSULT_WEBHOOK_URL: ${{ secrets.CONSULT_WEBHOOK_URL }}
         run: python consult_summary_page.py
 
       - name: 요약페이지 커밋 (docs/consult_summary.html)
-        if: ${{ github.event.inputs.dry_run != 'true' }}
         continue-on-error: true
         run: |
           git config user.name "consult-bot"
