@@ -25,6 +25,8 @@ import waitlist_report as wr
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs" / "consult_summary.html"
 PIN = "15771389"  # 지점점검 요약페이지와 동일 (본부 공유용 간단 잠금)
+# 실시간 집계 엔드포인트 (consult_read 웹앱, action=summary — 토큰 불필요·센터별 숫자만 반환)
+SUMMARY_URL = "https://script.google.com/macros/s/AKfycbyOmM6yo_sWcSJjHpxaWIPMyjruC8Uc9-aDAmxS4UtibkfYWUAx0hFui9Czb9PY7-gj/exec?action=summary"
 
 
 def consult_rows() -> list[dict]:
@@ -147,8 +149,8 @@ tr.sum td{background:#f6f8fc;font-weight:bold}
 <header><h1>☎️ 상담 현황 요약 (본부 공유용)</h1><div class="sub">생성: __GEN__ · __CUTOFF__~ 누적 · 전일자 기준</div></header>
 <div class="wrap">
 <a class="back" href="hq.html">← 🏢 본부 허브</a>
-<h2>📋 신규상담 상담시트 입력 현황</h2>
-__CONSULT_TABLE__
+<h2>📋 신규상담 상담시트 입력 현황 <span id="liveStat" style="font-size:12px;color:#888;font-weight:normal">⏳ 실시간 조회 중…</span></h2>
+<div id="consultLive">__CONSULT_TABLE__</div>
 <h2 class="sec2">📞 센터별 상담 대기 명단</h2>
 __WAITLIST_TABLE__
 <div class="note">· 이 페이지에는 수급자 개인정보(이름·연락처)가 포함되어 있지 않습니다 — 센터 단위 집계만.<br>
@@ -161,6 +163,27 @@ document.getElementById('pin').addEventListener('input',e=>{
   if(e.target.value===PIN){document.getElementById('gate').style.display='none';sessionStorage.setItem('ap','1');}
 });
 if(sessionStorage.getItem('ap')==='1')document.getElementById('gate').style.display='none';
+
+// 실시간 미입력 현황: 열 때마다 집계 엔드포인트 조회해 표 교체 (실패 시 서버 렌더값 유지)
+const SUMMARY_URL='__SUMMARY_URL__';
+function _rateCls(r){return r>=30?'bad':(r>0?'warn':'ok');}
+function _renderConsult(d){
+  let tot=0,miss=0,body='';
+  (d.centers||[]).forEach(c=>{tot+=c.total;miss+=c.miss;
+    body+='<tr><td class="name">'+c.short+'</td><td>'+c.total+'</td>'+
+      '<td class="'+(c.miss?'bad':'ok')+'">'+c.miss+'</td>'+
+      '<td class="'+_rateCls(c.rate)+'">'+c.rate+'%</td></tr>';});
+  const ra=tot?Math.round(miss/tot*100):0;
+  body+='<tr class="sum"><td class="name">합계</td><td>'+tot+'</td>'+
+    '<td class="'+(miss?'bad':'ok')+'">'+miss+'</td><td>'+ra+'%</td></tr>';
+  document.getElementById('consultLive').innerHTML=
+    '<table><tr><th>센터</th><th>신규상담(누적)</th><th>시트 미입력</th><th>미입력률</th></tr>'+body+'</table>';
+  const st=document.getElementById('liveStat');
+  if(st) st.textContent='🟢 실시간 · '+(d.generated||'')+' 기준';
+}
+fetch(SUMMARY_URL).then(r=>r.json()).then(d=>{if(d&&d.ok)_renderConsult(d);
+    else{const st=document.getElementById('liveStat');if(st)st.textContent='(실시간 조회 실패 — 최근 갱신값 표시)';}})
+  .catch(()=>{const st=document.getElementById('liveStat');if(st)st.textContent='(실시간 조회 실패 — 최근 갱신값 표시)';});
 </script>
 </body></html>"""
 
@@ -177,6 +200,7 @@ def generate() -> Path:
             .replace("__WAITLIST_TABLE__", waitlist_html)
             .replace("__GEN__", today.strftime("%Y-%m-%d"))
             .replace("__CUTOFF__", cr.CUTOFF_YM)
+            .replace("__SUMMARY_URL__", SUMMARY_URL)
             .replace("__PIN__", PIN))
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
