@@ -108,7 +108,12 @@ _PHONE_CACHE: dict = {}
 
 
 def _norm_phone(s: str) -> str:
-    return re.sub(r"\D", "", str(s or ""))
+    # 하이픈 없이 입력하면 구글시트가 숫자로 인식해 앞자리 0을 떨어뜨림(01012345678 → 1012345678).
+    # 10자리인데 0으로 시작 안 하면 잃어버린 앞 0을 복원해 양쪽 비교를 일치시킨다.
+    p = re.sub(r"\D", "", str(s or ""))
+    if len(p) == 10 and not p.startswith("0"):
+        p = "0" + p
+    return p
 
 
 def _webapp_values(ss: str = None, sheet: str = None, ssid: str = None) -> list:
