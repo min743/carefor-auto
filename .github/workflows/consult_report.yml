@@ -82,6 +82,15 @@ jobs:
               print("강제/미리보기 — 발송 진행")
               raise SystemExit(0)
 
+          # 정례 발송 시작일 가드: 2026-07-21(화)부터 화·목 발송 시작.
+          #  사용자 요청 '다음주부터' → 이번 주 목(2026-07-16)은 스킵. 7/21 지나면 자동 무효(자기만료).
+          #  (업데이트 dry_run은 위에서 이미 통과 — 매일 갱신엔 영향 없음)
+          _kst_now = datetime.now(timezone(timedelta(hours=9)))
+          if _kst_now.date() < __import__("datetime").date(2026, 7, 21):
+              out.write("send=no\n")
+              print(f"정례 발송 시작(2026-07-21) 이전({_kst_now.date()}) — 발송 스킵")
+              raise SystemExit(0)
+
           # 오늘(KST) 이미 성공한 실행이 있으면 스킵
           kst = timezone(timedelta(hours=9))
           midnight = datetime.now(kst).replace(hour=0, minute=0, second=0, microsecond=0)
