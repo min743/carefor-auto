@@ -42,6 +42,14 @@ on:
         default: "false"
         type: choice
         options: ["false", "true"]
+      channel:
+        description: "발송 채널 ID (비우면 기본 프로그램관리 채널). 지점방=C0870HLTG9Z"
+        required: false
+        default: ""
+      mentions:
+        description: "태그할 이름(콤마구분). 예: 박경민,김민진,김미림,박세영"
+        required: false
+        default: ""
 
 jobs:
   gate:
@@ -129,6 +137,8 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GOOGLE_OAUTH_JSON: ${{ secrets.GOOGLE_OAUTH_JSON }}
+          CONSULT_CHANNEL: ${{ github.event.inputs.channel }}
+          CONSULT_MENTIONS: ${{ github.event.inputs.mentions }}
         run: |
           # 예약/외부 자동 실행은 상담 미입력만. 수동 실행은 입력값(기본 consult) 따름.
           REPORT="${{ github.event.inputs.report || 'consult' }}"

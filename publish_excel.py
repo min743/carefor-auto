@@ -172,6 +172,43 @@ def send_slack(payload: dict | str) -> None:
         raise SystemExit(f"슬랙 전송 실패: {out}")
 
 
+def resolve_mention_ids(names: list) -> dict:
+    """이름 목록 → 슬랙 user ID 매핑 (봇 토큰으로 users.list 조회). 못 찾은 이름은 결과에서 빠짐."""
+    tok = (os.environ.get("SLACK_BOT_TOKEN")
+           or (keyring.get_password("carefor-auto", "slack_bot_token") if keyring else None))
+    if not tok or not names:
+        return {}
+    import urllib.parse
+    idmap = {}
+    cursor = ""
+    while True:
+        url = "https://slack.com/api/users.list?limit=200"
+        if cursor:
+            url += "&cursor=" + urllib.parse.quote(cursor)
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {tok}"})
+        d = json.loads(urllib.request.urlopen(req, timeout=30).read().decode("utf-8"))
+        if not d.get("ok"):
+            print(f"[경고] users.list 실패: {d.get('error')}")
+            break
+        for m in d.get("members", []):
+            if m.get("deleted") or m.get("is_bot"):
+                continue
+            prof = m.get("profile", {})
+            cand = [(m.get("real_name") or ""), (prof.get("real_name") or ""),
+                    (prof.get("display_name") or ""), (prof.get("real_name_normalized") or ""),
+                    (prof.get("display_name_normalized") or "")]
+            cand = [c.strip() for c in cand]
+            for nm in names:
+                if nm in idmap:
+                    continue
+                if any(c == nm for c in cand) or any(nm in c for c in cand if c):
+                    idmap[nm] = m["id"]
+        cursor = d.get("response_metadata", {}).get("next_cursor", "")
+        if not cursor:
+            break
+    return idmap
+
+
 def _download(token: str, file_id: str) -> bytes:
     req = urllib.request.Request(
         f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media",
@@ -300,9 +337,24 @@ def main():
             {"type": "context", "elements": [{"type": "mrkdwn",
                 "text": "📝 상담시트 입력 부탁드립니다. 연락처·아웃콜 차수 등 상세는 엑셀(링크 고정) 참조.\n"
                         "주간보호가 아닌 건은 엑셀 맨 뒤 '제외 ✔' 칸을 체크하시면 다음날 자동 제외됩니다.\n"
-                        "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏"}]},
+                        "상담 시트 관련 문의 사항이 있으시면 본부 매니저에게 문의 부탁드립니다. 감사합니다. 🙏\n"
+                        "🗓️ 이 공지는 매주 화·목요일 오전 9시 30분에 발송됩니다."}]},
         ],
     }
+
+    # 센터장 태그 (CONSULT_MENTIONS: 콤마구분 이름) — 봇 토큰으로 ID 조회 후 상단 멘션 블록 삽입
+    mnames = [x.strip() for x in os.environ.get("CONSULT_MENTIONS", "").split(",") if x.strip()]
+    if mnames:
+        idmap = resolve_mention_ids(mnames)
+        found = [idmap[n] for n in mnames if n in idmap]
+        missing = [n for n in mnames if n not in idmap]
+        print(f"태그 조회 결과: " + ", ".join(f"{n}={idmap.get(n,'못찾음')}" for n in mnames))
+        if missing:
+            print(f"[경고] 태그 ID 못 찾은 이름: {missing}")
+        if found:
+            mtext = " ".join(f"<@{i}>" for i in found)
+            msg["text"] = mtext + " " + msg["text"]
+            msg["blocks"].insert(0, {"type": "section", "text": {"type": "mrkdwn", "text": mtext}})
 
     print("--- 슬랙 메시지 ---")
     print(json.dumps(msg, ensure_ascii=False)[:1500])
