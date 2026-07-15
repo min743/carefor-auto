@@ -342,13 +342,23 @@ def main():
         ],
     }
 
-    # 센터장 태그 (CONSULT_MENTIONS: 콤마구분 이름) — 봇 토큰으로 ID 조회 후 상단 멘션 블록 삽입
+    # 센터장 태그 (CONSULT_MENTIONS: 콤마구분, 슬랙 user ID(U…/W…) 또는 이름 혼용 가능)
+    # ID는 그대로 사용, 이름은 users.list로 조회(봇에 users:read 스코프 필요).
     mnames = [x.strip() for x in os.environ.get("CONSULT_MENTIONS", "").split(",") if x.strip()]
     if mnames:
-        idmap = resolve_mention_ids(mnames)
-        found = [idmap[n] for n in mnames if n in idmap]
-        missing = [n for n in mnames if n not in idmap]
-        print(f"태그 조회 결과: " + ", ".join(f"{n}={idmap.get(n,'못찾음')}" for n in mnames))
+        import re as _re
+        by_name = [n for n in mnames if not _re.fullmatch(r"[UW][A-Z0-9]{5,}", n)]
+        idmap = resolve_mention_ids(by_name) if by_name else {}
+        found, missing = [], []
+        for n in mnames:
+            if _re.fullmatch(r"[UW][A-Z0-9]{5,}", n):
+                found.append(n)               # 이미 ID
+            elif n in idmap:
+                found.append(idmap[n])
+            else:
+                missing.append(n)
+        print("태그 결과: " + ", ".join(
+            (n if _re.fullmatch(r'[UW][A-Z0-9]{5,}', n) else f"{n}={idmap.get(n,'못찾음')}") for n in mnames))
         if missing:
             print(f"[경고] 태그 ID 못 찾은 이름: {missing}")
         if found:
