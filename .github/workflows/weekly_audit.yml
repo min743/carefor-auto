@@ -63,11 +63,9 @@ jobs:
           CAREFOR_PW:  ${{ secrets.CAREFOR_PW }}
           CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
           CI: "true"
-        run: |
-          for b in "청주" "둔산" "서구" "천안"; do
-            echo "── 결과평가 수집: $b"
-            python -m audit.collect_result_eval "$b" || echo "  $b 수집 실패 — 34② 스킵됨(점검은 계속)"
-          done
+        # audit.collect_result_eval 을 직접 부르면 안 된다 — 로컬 전제(keyring 자격증명 +
+        # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
+        run: python collect_result_eval_headless.py
 
       - name: 지점 점검 실행
         env:
