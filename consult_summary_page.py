@@ -150,7 +150,10 @@ tr.sum td{background:#f6f8fc;font-weight:bold}
 <div class="wrap">
 <a class="back" href="hq.html">← 🏢 본부 허브</a>
 <h2>📋 신규상담 상담시트 입력 현황 <span id="liveStat" style="font-size:12px;color:#888;font-weight:normal">⏳ 실시간 조회 중…</span></h2>
-<div id="consultLive">__CONSULT_TABLE__</div>
+<div id="consultLive"><div style="padding:18px;color:#888;font-size:14px">⏳ 실시간 집계를 불러오는 중입니다…</div></div>
+<!-- 실시간 조회 실패 시에만 쓰는 폴백(페이지 생성 시점의 값). 첫 화면에 보이면 옛 숫자를
+     현재값으로 오해하므로 숨겨둔다 — 2026-07-17: 이틀 전 값이 그대로 보이던 문제. -->
+<div id="consultFallback" style="display:none">__CONSULT_TABLE__</div>
 <h2 class="sec2">📞 센터별 상담 대기 명단</h2>
 __WAITLIST_TABLE__
 <div class="note">· 이 페이지에는 수급자 개인정보(이름·연락처)가 포함되어 있지 않습니다 — 센터 단위 집계만.<br>
@@ -181,9 +184,15 @@ function _renderConsult(d){
   const st=document.getElementById('liveStat');
   if(st) st.textContent='🟢 실시간 · '+(d.generated||'')+' 기준';
 }
-fetch(SUMMARY_URL).then(r=>r.json()).then(d=>{if(d&&d.ok)_renderConsult(d);
-    else{const st=document.getElementById('liveStat');if(st)st.textContent='(실시간 조회 실패 — 최근 갱신값 표시)';}})
-  .catch(()=>{const st=document.getElementById('liveStat');if(st)st.textContent='(실시간 조회 실패 — 최근 갱신값 표시)';});
+// 실시간 실패 시에만 폴백(생성 시점 값)을 꺼내 보여주고, 언제 기준인지 명시한다.
+const GEN='__GEN__';
+function _useFallback(){
+  document.getElementById('consultLive').innerHTML=document.getElementById('consultFallback').innerHTML;
+  const st=document.getElementById('liveStat');
+  if(st){st.textContent='⚠️ '+GEN+' 기준 (실시간 조회 실패 — 현재값 아님)';st.style.color='#c00';}
+}
+fetch(SUMMARY_URL).then(r=>r.json()).then(d=>{if(d&&d.ok)_renderConsult(d);else _useFallback();})
+  .catch(_useFallback);
 </script>
 </body></html>"""
 
