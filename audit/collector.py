@@ -170,6 +170,24 @@ def run_branch_audit(
         except Exception as e:
             progress_cb(f"[{branch_name}] 항목 34② 판정 건너뜀: {e}")
 
+        # 항목 34③ 보강: 7-1 청구서 발송이력의 급여제공기록지 '포함' 여부 (사전 수집물 있을 때만)
+        # '제외'만인 수급자도 수기 서명부 보관 시 충족 → 미흡 아닌 '주의(확인요망)' 만 낸다.
+        try:
+            from .item34 import judge3 as judge34_3
+            r34_3 = judge34_3(branch_name, cutoff)
+            if r34_3:
+                cur = analysis["item_results"].get("34")
+                if cur:
+                    cur["sub_status"] = {**(cur.get("sub_status") or {}), **r34_3["sub_status"]}
+                    cur["detail"] = (cur.get("detail") or "") + " / " + r34_3["detail"]
+                    if r34_3["status"] == "주의" and cur.get("status") != "미흡":
+                        cur["status"] = "주의"
+                else:
+                    analysis["item_results"]["34"] = r34_3
+                progress_cb(f"[{branch_name}] 항목 34③: {r34_3['status']}")
+        except Exception as e:
+            progress_cb(f"[{branch_name}] 항목 34③ 판정 건너뜀: {e}")
+
         # 항목 8③ 보강: 노션 생일쿠폰 대조 (토큰 있을 때만 — 클라우드 전용)
         try:
             from .notion_birthday import compare as notion_compare

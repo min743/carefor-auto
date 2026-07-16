@@ -125,3 +125,85 @@ def judge(branch_name: str, results: list[dict], cutoff: str) -> dict | None:
         "detail": f"[②30일 재작성] 결과평가 {total}건 중 충족 {ok}건"
                   + ((" — " + " · ".join(parts)) if parts else " — 전건 충족"),
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 항목 34③ — 급여제공기록지 월 1회 이상 제공 (2점)
+#
+# 소스: audit_results/청구발송_<지점명>.json (audit.collect_billing_history 산출)
+#       7-1 본인부담금 청구관리 → '청구서 발송' → '청구서 발송이력' 의 [9]급여제공기록지 열
+#       = '포함'(기록지 동봉 발송) / '제외'(기록지 없이 발송)
+#
+# 판정 규칙 (사용자 확정 2026-07-16):
+#   1. 대상 = 청구서 발송되는 수급자 전원 (제외 없음)
+#   2. 충족 = 수급자별로 '포함' 발송 이력이 1건이라도 있으면 OK
+#   3. ★중복 발송 이력이 실재함(같은 사람·같은 달 최대 8건 관측) → 수급자 단위로 dedup 후 카운트.
+#      중복 자체는 지적 대상이 아니다.
+#   4. ★'제외'만 있는 수급자 = '미흡' 확정 금지. 지점이 수기 서명부를 보관하면 충족이므로
+#      '주의(확인요망 — 수기 서명부 확인)' 로만 표시한다. (선례: 33③ 상담일지+요양기록지 확인요망)
+#      → 이 판정은 어떤 경우에도 '미흡' 을 내지 않는다.
+#
+# 수집물이 없으면 None 을 반환해 판정을 건너뛴다(없는 걸 미흡으로 찍지 않는다).
+# ─────────────────────────────────────────────────────────────────────────────
+INCLUDED = "포함"
+EXCLUDED = "제외"
+
+
+def _ym(s: str) -> tuple[int, int] | None:
+    """'2026.03' / '202603' → (2026, 3)."""
+    m = re.search(r"(\d{4})[.\-]?(\d{1,2})", s or "")
+    if not m:
+        return None
+    y, mo = int(m.group(1)), int(m.group(2))
+    return (y, mo) if 1 <= mo <= 12 else None
+
+
+def judge3(branch_name: str, cutoff: str) -> dict | None:
+    """항목 34③ 판정. 수집물 없으면 None."""
+    src = RES / f"청구발송_{branch_name}.json"
+    if not src.exists():
+        return None
+    try:
+        data = json.loads(src.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+    cut = _d(cutoff)
+    cut_ym = (cut.year, cut.month) if cut else None
+
+    # 수급자 단위 dedup — 이름별로 '포함'/'제외' 이력 유무만 집계(중복 횟수는 무시)
+    per: dict[str, dict] = {}
+    for r in data.get("rows") or []:
+        name = (r.get("수급자") or "").strip()
+        rec = (r.get("기록지") or "").strip()
+        if not name or rec not in (INCLUDED, EXCLUDED):
+            continue
+        ym = _ym(r.get("청구년월") or "")
+        if cut_ym and ym and ym < cut_ym:
+            continue                      # 평가기간 밖 청구년월
+        st = per.setdefault(name, {"inc": 0, "exc": 0, "months": set()})
+        if rec == INCLUDED:
+            st["inc"] += 1
+        else:
+            st["exc"] += 1
+        if ym:
+            st["months"].add(ym)
+
+    total = len(per)
+    if not total:
+        return None
+
+    ok = sorted(n for n, st in per.items() if st["inc"] > 0)
+    warn = sorted(n for n, st in per.items() if st["inc"] == 0)   # '제외'만 = 확인요망
+
+    def _cut(xs, n=5):
+        return ", ".join(xs[:n]) + (f" 외 {len(xs)-n}명" if len(xs) > n else "")
+
+    status = "주의" if warn else "양호"
+    detail = f"[③기록지 월1회 제공] 청구서 발송 수급자 {total}명 중 기록지 '포함' 발송 {len(ok)}명"
+    if warn:
+        detail += (f" · 기록지 '제외'만 {len(warn)}명 → 수기 서명부 확인요망(자동 미흡 아님) — "
+                   + _cut(warn))
+    else:
+        detail += " — 전원 충족"
+    return {"status": status, "sub_status": {"③": status}, "detail": detail}
