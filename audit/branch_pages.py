@@ -322,19 +322,29 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
         progress_cb(f"  1-2 결과평가 수집 실패(건너뜀): {e}")
 
     # 3-1-3 특이사항 '안전관리' 검색 (항목 19③ 부분 — 2026~. 2024~25는 전 지점 입력 관행 없어 제외)
+    # 지점마다 기재란이 다르다: 청주는 신체(cdssnch), 서구는 인지관리(cdsinji)에 쓴다.
+    # (실측 2026: 서구 신체 0명/인지 8명, 청주 신체 1명/인지 0명)
+    # → 한쪽만 검색하면 반대편 관행 지점이 통째로 '미기재'로 뒤집힌다. 둘 다 검색해 합집합으로 본다.
+    # 두 칸에 동시에 값이 있으면 AND 로 걸려 0건이 되므로 매 검색마다 반대편 칸을 비운다.
     out["bigo_safety"] = {}
+    out["bigo_safety_inji"] = {}
     try:
         _goto(page, "bigo", g_pammgno)
         page.evaluate(CLOSE_MODAL_JS)
         for y in [yy for yy in years if yy >= 2026]:
             e_d = f"{y}1231" if y < _date.today().year else _date.today().strftime("%Y%m%d")
-            page.evaluate(f"document.querySelector('#id_sdate').value='{y}0101';"
-                          f"document.querySelector('#id_edate').value='{e_d}';"
-                          "document.querySelector('input[name=cdssnch]').value='안전관리';"
-                          "load_contents_form('carebigoInquiry')")
-            page.wait_for_timeout(3000)
-            out["bigo_safety"][str(y)] = page.evaluate(GET_TEXT_JS)
-        progress_cb(f"  3-1-3 안전관리 특이사항 {len(out['bigo_safety'])}개년 수집")
+            for fld, key in (("cdssnch", "bigo_safety"), ("cdsinji", "bigo_safety_inji")):
+                page.evaluate(f"document.querySelector('#id_sdate').value='{y}0101';"
+                              f"document.querySelector('#id_edate').value='{e_d}';"
+                              "['cdssnch','cdsinji'].forEach(n => {"
+                              "  const el = document.querySelector('input[name='+n+']');"
+                              "  if (el) el.value = '';"
+                              "});"
+                              f"document.querySelector('input[name={fld}]').value='안전관리';"
+                              "load_contents_form('carebigoInquiry')")
+                page.wait_for_timeout(3000)
+                out[key][str(y)] = page.evaluate(GET_TEXT_JS)
+        progress_cb(f"  3-1-3 안전관리 특이사항 {len(out['bigo_safety'])}개년 수집(신체+인지)")
     except Exception as e:
         progress_cb(f"  3-1-3 수집 실패(건너뜀): {e}")
 
@@ -1507,13 +1517,16 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
                 else:
                     eval_note.append(f"{y} {half} 결과평가 {r[0]}/{r[1]}(진행중)")
 
-    # ---- 항목 19③(부분): 신체활동 특이사항 '안전관리' 교육 입력 (3-1-3, 연 1회 가정) ----
+    # ---- 항목 19③(부분): 특이사항 '안전관리' 교육 입력 (3-1-3, 연 1회 가정) ----
+    # 기재란은 지점 관행에 따라 신체(cdssnch) 또는 인지관리(cdsinji)다 — 둘 중 어디든 있으면 기재로 본다.
     safety_edu_miss, safety_edu_note = [], []
     for ys in sorted(data.get("bigo_safety") or {}):
         y = int(ys)
         if y < 2026 or not _period_ok(date(y, 1, 1), date(y, 12, 31)):
             continue  # 안전관리 문구 입력은 2026년 시작 관행 — 이전 연도 판정 시 허위 미흡
         have = {r["name"] for r in parse_bigo((data["bigo_safety"] or {}).get(ys) or "")}
+        # 인지란은 신 수집분에만 있다(구 raw 는 키 없음) → 있을 때만 합집합
+        have |= {r["name"] for r in parse_bigo((data.get("bigo_safety_inji") or {}).get(ys) or "")}
         c = (data.get("consult") or {}).get(ys) or {}
         roster = {r["name"] for r in (c.get("rows") or []) if r.get("stat") in ("수급중", "보류")}
         if not roster:
@@ -1522,7 +1535,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
         missing = sorted(roster - have)
         if missing:
             # 1-6 '설명탭'(④)과 다른 지표임을 문구로 분리 — 기재/대상 인원도 함께 표기
-            msg = (f"{y}년 [3-1-3 기록지] 특이사항 '안전관리' 문구 미기재 {len(missing)}명"
+            msg = (f"{y}년 [3-1-3 기록지] 특이사항(신체·인지란) '안전관리' 문구 미기재 {len(missing)}명"
                    f"(기재 {len(roster & have)}/대상 {len(roster)}명)"
                    f"({', '.join(missing[:5])}{'…' if len(missing) > 5 else ''})")
             if y < today.year:
