@@ -399,9 +399,19 @@ def scrape_car_oil_change(page: Page, default_interval: int = 8000) -> dict:
     if cur:
         records.append(' '.join(cur))
 
-    # 오일 교환/교체 기록 인식 — 지점마다 표현이 다양함:
+    # 오일 교환/교체 '완료' 기록만 인식 — 지점마다 표현이 다양함:
     #  '엔진오일'/'엔진 오일'/'오일', '교환'/'교체', 띄어쓰기 유무, Km/km 대소문자 등.
-    oil_rows = [r for r in records if ('오일' in r and re.search(r'교[환체]', r))]
+    #  ⚠️ '엔진오일 필요교체까지 849km'·'엔진오일교체필요' 같은 점검 예고(아직 안 함)는 제외해야 함.
+    #     → '필요교체/교체필요/엔진오일필요' 문구가 있고, '완료·다음교체주기·교환(Nkm)' 같은
+    #        실제 교환 신호가 없으면 점검 메모로 보고 건너뛴다.
+    def _is_real_change(r):
+        if '오일' not in r or not re.search(r'교[환체]', r):
+            return False
+        note = re.search(r'필요\s*교[환체]|교[환체]\s*필요|엔진\s*오일\s*필요', r)
+        done = (re.search(r'완료', r) or re.search(r'다음\s*교[환체]\s*주기', r)
+                or re.search(r'교[환체]\s*[\(（]?\s*[\d,]{3}', r))
+        return not (note and not done)
+    oil_rows = [r for r in records if _is_real_change(r)]
     if not oil_rows:
         return {}
 
