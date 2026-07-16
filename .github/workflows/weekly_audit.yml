@@ -51,6 +51,24 @@ jobs:
       - name: Playwright 브라우저 설치
         run: playwright install chromium --with-deps
 
+      # 34② 판정용 결과평가 팝업 수집. judge()는 audit_results/결과평가_<지점>/index.json 을 읽는데
+      # 그건 로컬 수집물(수급자명·총평=개인정보라 커밋 금지)이라 CI 러너엔 없어 ②가 조용히 스킵됐다.
+      # → CI가 매 실행마다 직접 수집(러너 안에서만 사용, 커밋하지 않음).
+      # continue-on-error: 수집이 실패해도 본 점검은 그대로 진행되고 ②만 스킵된다(기존 동작과 동일).
+      - name: 34② 결과평가 수집 (러너 내 임시 — 커밋 안 함)
+        continue-on-error: true
+        timeout-minutes: 90   # 수집이 늘어져도 본 점검(154분) + 6시간 잡 한도를 넘기지 않게 상한
+        env:
+          CAREFOR_ID:  ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:  ${{ secrets.CAREFOR_PW }}
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+          CI: "true"
+        run: |
+          for b in "청주" "둔산" "서구" "천안"; do
+            echo "── 결과평가 수집: $b"
+            python -m audit.collect_result_eval "$b" || echo "  $b 수집 실패 — 34② 스킵됨(점검은 계속)"
+          done
+
       - name: 지점 점검 실행
         env:
           CAREFOR_ID:        ${{ secrets.CAREFOR_ID }}
