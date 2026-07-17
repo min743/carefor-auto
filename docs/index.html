@@ -265,6 +265,14 @@
   .hist-part { font-size: 11.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: #fff2e0; color: #a85a00; }
   .hist-desc { font-size: 12.5px; color: #4b5563; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
   .hist-clip { font-size: 11.5px; color: #9aa1ab; margin-left: 6px; }
+  /* 첨부(정비 내역서) — 드라이브 링크. caring.co.kr 계정으로 로그인돼 있어야 열린다. */
+  .hist-atts { display: flex; flex-direction: column; gap: 5px; margin-top: 7px; }
+  .hist-att {
+    display: inline-block; font-size: 12px; color: #1a5fb4; text-decoration: none;
+    background: #eef4fd; border: 1px solid #d3e2f7; border-radius: 6px; padding: 6px 9px;
+    word-break: break-all;
+  }
+  .hist-att:active { background: #dce9fb; }
   .modal-overlay {
     display: none;
     position: fixed;
@@ -921,9 +929,11 @@ function openHistory(carNumber) {
         <span class="hist-date">${escapeHtml(h.date)}</span>
         ${h.type ? `<span class="hist-type">${escapeHtml(h.type)}</span>` : ''}
         ${(h.parts || []).map(p => `<span class="hist-part">${escapeHtml(p)}</span>`).join('')}
-        ${h.files ? `<span class="hist-clip">📎 ${h.files}</span>` : ''}
       </div>
       <div class="hist-desc">${escapeHtml(h.desc || '')}</div>
+      ${(h.atts || []).length ? `<div class="hist-atts">${h.atts.map(a =>
+        `<a class="hist-att" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">📎 ${escapeHtml(a.name)}</a>`
+      ).join('')}</div>` : ''}
     </div>`).join('')
     : `<div class="empty" style="padding:24px"><div>정비이력이 없습니다</div></div>`;
   document.getElementById('historyModal').classList.add('show');

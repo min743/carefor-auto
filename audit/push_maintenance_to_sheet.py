@@ -67,7 +67,9 @@ def build():
             parts = [h["part"] for h in find_parts(r.get("desc", ""))]
             history.append([branch, num, car, r["date"], r.get("type", ""),
                             (r.get("desc") or "").replace("\u200E", "").strip()[:500],
-                            ",".join(parts), nfile])
+                            ",".join(parts), nfile,
+                            "\n".join(r.get("files_url") or []),   # 드라이브 링크(caring.co.kr 한정 공개)
+                            "\n".join(r.get("files") or [])])      # 원본 파일명 — 앱에서 링크 텍스트로 쓴다
             # 타이어 사이즈는 OCR(첨부) + 케어포 정비내역 텍스트 양쪽에서 — 한쪽만 있는 차량이 있다
             found = ((r.get("ocr") or {}).get("sizes_all") or []) + find_sizes(r.get("desc", ""))
             for s in found:
