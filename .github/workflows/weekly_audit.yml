@@ -154,6 +154,23 @@ jobs:
         # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
         run: python collect_needs_full_headless.py "$BRANCH"
 
+      # 18① 판정용 롱텀 공개조회(정보 게시율) 수집.
+      # 위 세 스텝과 달리 케어포가 아니라 longtermcare.or.kr 공개조회라 로그인·인증서가 없다
+      # → headless 래퍼 불필요(래퍼는 keyring 자격증명 주입이 목적). 기관기호(=config 의 ctmnumb)만
+      #   있으면 되므로 CONFIG_YAML 만 넘기고 스크립트가 직접 파일로 떨군다.
+      # 실측 지점당 2.7초(요청 2건 + 예의상 2초 간격) — playwright 도 안 쓴다.
+      # 🔴 미확인 리스크: 이 조회를 GitHub Actions 러너(클라우드 IP)에서 시도한 적이 없다.
+      #    공단이 클라우드 대역을 차단/캡차하면 이 스텝만 실패하고 18①은 '수집전'로 남는다.
+      #    continue-on-error 로 본 점검은 그대로 진행시킨다(로컬 수집물이 있으면 그걸로 판정).
+      - name: 18① 롱텀 공개조회 게시율 수집 (러너 내 임시 — 커밋 안 함)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+          BRANCH:      ${{ matrix.name }}
+          CI: "true"
+        run: python -X utf8 -m audit.collect_ltc_public "$BRANCH"
+
       - name: 지점 점검 실행
         env:
           CAREFOR_ID:        ${{ secrets.CAREFOR_ID }}

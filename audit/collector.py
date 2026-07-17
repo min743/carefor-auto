@@ -189,6 +189,17 @@ def run_branch_audit(
         except Exception as e:
             progress_cb(f"[{branch_name}] 항목 34③ 판정 건너뜀: {e}")
 
+        # 항목 18①: 롱텀 공개조회 '정보 게시율' (사전 수집물 있을 때만 — audit.collect_ltc_public)
+        # 게시율은 매뉴얼 항목집합의 부분집합(지자체 신고항목 제외)이라 100% 여도 '주의' 까지만 낸다.
+        try:
+            from .collect_ltc_public import judge18
+            r18 = judge18(branch_name)
+            if r18:
+                analysis["item_results"]["18"] = r18
+                progress_cb(f"[{branch_name}] 항목 18①: {r18['status']}")
+        except Exception as e:
+            progress_cb(f"[{branch_name}] 항목 18① 판정 건너뜀: {e}")
+
         # 항목 8③ 보강: 노션 생일쿠폰 대조 (토큰 있을 때만 — 클라우드 전용)
         try:
             from .notion_birthday import compare as notion_compare

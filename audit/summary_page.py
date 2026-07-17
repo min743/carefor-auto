@@ -118,9 +118,11 @@ th{background:#eef2f9}
 td.name{text-align:left;white-space:nowrap}
 .det{font-size:10.5px;color:#555;margin-top:3px;text-align:left;white-space:normal;line-height:1.4}
 .ok{color:#2c8a41;font-weight:bold}.bad{color:#c02020;font-weight:bold}
+.warn{color:#b57a00;font-weight:bold}
 .na{color:#999}.man{color:#4a69b0}
 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 .d-ok{background:#35a94e}.d-bad{background:#d93a3a}.d-na{background:#c2c2c2}.d-man{background:#6f8fd6}
+.d-warn{background:#e8a01f}
 #gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
 #gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
 .note{font-size:11px;color:#777;margin-top:10px;line-height:1.6}
@@ -135,7 +137,7 @@ td.name{text-align:left;white-space:nowrap}
 <table id="tbl"></table>
 <div class="note">· 이 페이지에는 수급자 개인정보가 포함되어 있지 않습니다 (지점 단위 집계만).<br>
 · 상세 내역(수급자별)은 지점 점검 PC의 대시보드에서만 확인할 수 있습니다.<br>
-· 상태 기준 — <span class="ok">양호</span>: 문제 0건 / <span class="bad">미흡</span>: 문제 있음 / <span class="na">수집전</span>: 자동수집 미구현·미실행 / <span class="man">수기</span>: 현장 확인 항목</div>
+· 상태 기준 — <span class="ok">양호</span>: 문제 0건 / <span class="warn">주의</span>: 자동확인 범위 밖 — 현장 확인요망(미흡 아님) / <span class="bad">미흡</span>: 문제 있음 / <span class="na">수집전</span>: 자동수집 미구현·미실행 / <span class="man">수기</span>: 현장 확인 항목</div>
 </div>
 <script>
 const DATA = __PAYLOAD__;
@@ -184,6 +186,9 @@ function cell(b, it){
   if(!r) return '<span class="dot d-na"></span><span class="na">수집전</span>';
   const det = r.detail ? `<div class="det">${r.detail}</div>` : '';
   if(r.status==='양호') return '<span class="dot d-ok"></span><span class="ok">양호</span>'+det;
+  // '주의'(확인요망)를 미흡으로 칠하지 않는다 — 34③·18① 등은 '미흡 확정'이 아니라 수기 확인 대상이다.
+  // (지점 대시보드 audit_dashboard.html 은 이미 주의를 노란불로 구분해 표시한다.)
+  if(r.status==='주의') return '<span class="dot d-warn"></span><span class="warn">주의</span>'+det;
   return '<span class="dot d-bad"></span><span class="bad">미흡</span>'+det;
 }
 function scoreCell(b, it){
