@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 
+# 항목 20① 판정(욕구사정 상세). 최상단에서 import 해 모듈이 없으면 스캔 시작 '전' 에 터지게 한다
+# — 45분짜리 지점 스캔이 끝난 뒤 분석 단계에서 죽으면 원인 파악도, 재실행 비용도 커진다.
+from .item20 import judge as judge20
+
 
 def _d(s: str) -> date:
     return datetime.strptime(s, "%Y.%m.%d").date()
@@ -50,8 +54,12 @@ def find_gaps(cover: list[tuple[str, str]], s: str, e: str) -> list[str]:
     return [f"{_fmt(a)}~{_fmt(b)}" for a, b in gaps if a <= b]
 
 
-def analyze(results: list[dict], cutoff: str) -> dict:
-    """스캔 결과 전체 분석. 반환: dict(대조리스트/연간점검/계획문제/항목판정)"""
+def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) -> dict:
+    """스캔 결과 전체 분석. 반환: dict(대조리스트/연간점검/계획문제/항목판정)
+
+    branch_name: 항목 20① 판정에 필요(audit_results/needs_full_<지점>.json 을 읽는다).
+                 없으면 20① 은 '주의(미수집)' 로 남는다 — 조용히 양호가 되지 않는다.
+    """
     today = _fmt(date.today())
     rows_match = []      # 낙상↔욕구 대조
     rows_check = []      # 수급기간/연간작성/계약/계획
@@ -280,22 +288,34 @@ def analyze(results: list[dict], cutoff: str) -> dict:
     def st(n):
         return "양호" if n == 0 else "미흡"
 
+    # ---- 항목 20①: 종합 욕구사정 (매뉴얼 5요건) ----
+    # 소스는 욕구사정 상세 폼(needs_full_<지점>.json) — 1-1 스캔만으로는 작성자·총평·판단근거를
+    # 알 수 없다. 옛 판정은 '낙상↔욕구 불일치 + 순서위반' 두 가지로 20 을 매겼는데 둘 다
+    # 매뉴얼 20① 요건이 아니다(순서위반은 22① 지표라 아래에서 22 로 이관, 불일치는 참고 병기).
+    # 수집물이 없으면 None(조용한 스킵)이 아니라 '주의' 를 낸다 — 안 본 것이 양호로 보이면 안 된다.
     item_results = {
-        "20": {
-            "status": "양호" if (n_disc == 0 and n_order == 0) else "미흡",
-            "sub_status": {"①": "양호" if (n_disc == 0 and n_order == 0) else "미흡"},
-            "detail": f"낙상↔욕구사정 불일치 {n_disc}건, 계획-평가 순서 위반 {n_order}건",
-        },
+        "20": judge20(branch_name or "", cutoff, n_disc),
         "21": {
             "status": status_of(n_half),
             "sub_status": {"①": st(half_by_kind["낙상"]), "②": st(half_by_kind["욕창"]), "③": st(half_by_kind["인지"])},
             "detail": (f"반기별 누락 {n_half}건 — 낙상 {half_by_kind['낙상']}, "
                        f"욕창 {half_by_kind['욕창']}, 인지 {half_by_kind['인지']}"),
         },
+        # 항목 22①: '욕구사정·낙상·욕창·인지 평가를 반영한' 급여제공계획 (매뉴얼 22① 지표)
+        #   계획 작성일이 기초평가일보다 앞서면 그 평가를 반영했을 수 없다 → ① 위반.
+        #   (옛 코드는 이걸 20 에 넣었으나 20① 요건이 아니다 — 여기로 이관. 사용자 확정 2026-07-17)
+        #   ★부분판정: ① 은 작성자명·세부목표·종합의견 등도 요구하는데 여기선 '반영 순서' 만 본다.
+        #     그래서 items.py 의 22 auto_subs 에 '①' 을 넣지 않는다 — 양호가 점수로 자동기입되면
+        #     안 본 요건까지 충족으로 둔갑한다(27번이 auto_subs=None 으로 같은 처리).
         "22": {
-            "status": status_of(n_plan),
-            "sub_status": {"②": status_of(n_plan)},
-            "detail": f"급여제공계획 발송·서명 문제 {n_plan}건",
+            "status": status_of(n_plan) if n_order == 0 else "미흡",
+            "sub_status": {"①": "양호" if n_order == 0 else "미흡", "②": status_of(n_plan)},
+            "detail": (f"[②발송·서명] 급여제공계획 발송·서명 문제 {n_plan}건"
+                       f" / [부분판정: ①평가 반영] 계획 작성일이 기초평가일보다 앞선 건 {n_order}건"
+                       + ((" — " + "; ".join(f"{r[0]}({r[1]})" for r in order_issues[:5])
+                           + (f" 외 {len(order_issues)-5}건" if len(order_issues) > 5 else ""))
+                          if order_issues else "")
+                       + " (①의 작성자명·세부목표·종합의견 등 나머지 요건은 수기 확인)"),
         },
     }
     if rehab_total:

@@ -126,7 +126,8 @@ def run_branch_audit(
         browser.close()
 
     progress_cb(f"[{branch_name}] 분석 중... ({len(results)}명)")
-    analysis = analyze(results, cutoff)
+    # branch_name: 항목 20① 이 audit_results/needs_full_<지점>.json 을 읽는다(없으면 '주의')
+    analysis = analyze(results, cutoff, branch_name)
     if branch_pages:
         analysis["item_results"].update(branch_pages["item_results"])
 
