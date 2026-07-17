@@ -40,6 +40,7 @@ HUB_URL = "https://script.google.com/a/macros/caring.co.kr/s/AKfycby4fQaPyn3Athr
 CODE = r"""
 const SHEET_ID = '%s';
 const LOG_SHEET = '_허브접속';
+const NAME_SHEET = '_이름표';   // 이메일→이름 (구글은 이름을 안 준다)
 const HEADERS = ['시각', '이메일', '이름', '항목'];
 
 /** 최초 1회 편집기에서 이 함수를 골라 ▶실행 → 승인.
@@ -66,10 +67,58 @@ function who_() {
   return e;
 }
 
-/** 이메일 → 표시용 이름. 시트에 이름이 없으니 아이디에서 만든다(구글시트처럼 두 글자는 불가). */
+/** 이메일 → 표시용 이름.
+ *  구글은 이메일까지만 준다(이름은 관리자 권한이 필요한 디렉터리 API 에나 있다).
+ *  → `_이름표` 탭에서 찾고, 없으면 아이디를 쓴다. 처음 보는 이메일은 자동으로 이름표에 추가되므로
+ *    사람이 이름 칸만 채우면 그때부터 이름으로 뜬다. */
 function nameOf_(email) {
   if (!email) return '(확인 안 됨)';
-  return email.split('@')[0];
+  var m = nameMap_();
+  return m[email] || email.split('@')[0];
+}
+
+function nameSheet_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sh = ss.getSheetByName(NAME_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(NAME_SHEET);
+    sh.getRange(1, 1, 1, 2).setValues([['이메일', '이름']])
+      .setFontWeight('bold').setBackground('#e8eaf6');
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(1, 240);
+    sh.getRange('C1').setValue('← 이름 칸을 채우면 허브에 그 이름으로 뜹니다 (접속한 이메일은 자동 추가)')
+      .setFontColor('#888');
+  }
+  return sh;
+}
+
+/** 이메일→이름 (한 번 읽어 캐시 — 요청마다 시트를 여러 번 읽지 않게) */
+var _nm = null;
+function nameMap_() {
+  if (_nm) return _nm;
+  _nm = {};
+  try {
+    var sh = nameSheet_();
+    if (sh.getLastRow() > 1) {
+      sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) {
+        var e = String(r[0] || '').trim(), n = String(r[1] || '').trim();
+        if (e && n) _nm[e] = n;
+      });
+    }
+  } catch (err) {}
+  return _nm;
+}
+
+/** 처음 보는 이메일이면 이름표에 빈 줄로 추가 — 채울 대상이 저절로 모인다 */
+function seedName_(email) {
+  if (!email) return;
+  try {
+    var sh = nameSheet_();
+    var have = sh.getLastRow() > 1
+      ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().map(function (r) { return String(r[0]).trim(); })
+      : [];
+    if (have.indexOf(email) === -1) sh.appendRow([email, '']);
+  } catch (err) {}
 }
 
 function sheet_() {
@@ -87,6 +136,7 @@ function sheet_() {
 function log_(item) {
   try {
     var email = who_();
+    seedName_(email);   // 처음 보는 사람이면 이름표에 빈 줄로 올려둔다
     sheet_().appendRow([new Date(), email, nameOf_(email), item]);
   } catch (err) { /* 로깅 실패가 허브를 막으면 안 된다 */ }
 }
@@ -97,7 +147,14 @@ function logItem(item) { log_(String(item || '').slice(0, 60)); return true; }
 /** 상단 바에 뿌릴 현황: 나 · 최근 접속자 · 항목별 조회수 */
 function status() {
   var email = who_();
-  var out = { me: nameOf_(email), recent: [], items: [] };
+  var out = { me: nameOf_(email), recent: [], items: [], todo: 0 };
+  try {   // 이름 안 채워진 사람이 몇인지 — 안 알려주면 이름표가 영영 안 채워진다
+    var ns = nameSheet_();
+    if (ns.getLastRow() > 1) {
+      out.todo = ns.getRange(2, 1, ns.getLastRow() - 1, 2).getValues()
+        .filter(function (r) { return String(r[0]).trim() && !String(r[1]).trim(); }).length;
+    }
+  } catch (err) {}
   try {
     var sh = sheet_();
     var last = sh.getLastRow();
@@ -146,6 +203,12 @@ google.script.run.withSuccessHandler(function(s){
   else rc.textContent = s.recent.length
     ? '최근 접속 — ' + s.recent.map(function(r){return r.name+'('+r.at+')';}).join(', ')
     : '최근 접속 기록 없음';
+  if (s.todo) {
+    var w = document.createElement('span');
+    w.style.cssText = 'color:#a85a00;font-weight:700';
+    w.textContent = ' · 이름 미등록 ' + s.todo + '명 (시트 _이름표 에 이름만 적으면 됩니다)';
+    rc.parentNode.appendChild(w);
+  }
   document.getElementById('whoItems').innerHTML = s.items.map(function(i){
     return '<span style="background:#eef2f9;border-radius:999px;padding:3px 10px;font-size:11.5px;'
          + 'font-weight:700;color:#152647">'+i.item+' '+i.n+'</span>';}).join('');
