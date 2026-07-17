@@ -67,6 +67,23 @@ jobs:
         # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
         run: python collect_result_eval_headless.py
 
+      # 34③ 판정용 7-1 청구서 발송이력 수집. judge3()는 audit_results/청구발송_<지점>.json 을 읽는데
+      # 그것도 로컬 수집물(수급자명=개인정보라 커밋 금지)이라 CI 러너엔 없어 ③이 조용히 스킵됐다(34②와 동일 원인).
+      # 청구년월은 지점별 BRANCH_CUTOFFS(평가기간 시작)부터 이번 달까지 — judge3()가 그 이전 월을
+      # 어차피 버리므로 판정은 동일하고 월별 루프가 짧아진다(실측 4지점 합계 93개월 ≈ 8분).
+      # continue-on-error: 수집이 실패해도 본 점검은 그대로 진행되고 ③만 스킵된다(기존 동작과 동일).
+      - name: 34③ 청구발송이력 수집 (러너 내 임시 — 커밋 안 함)
+        continue-on-error: true
+        timeout-minutes: 30   # 실측 ~8분 — 러너가 느려도 본 점검(176분) + 잡 한도(350분)를 넘기지 않게 상한
+        env:
+          CAREFOR_ID:  ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:  ${{ secrets.CAREFOR_PW }}
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+          CI: "true"
+        # audit.collect_billing_history 를 직접 부르면 안 된다 — 34②와 같은 로컬 전제(keyring +
+        # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
+        run: python collect_billing_history_headless.py
+
       - name: 지점 점검 실행
         env:
           CAREFOR_ID:        ${{ secrets.CAREFOR_ID }}
