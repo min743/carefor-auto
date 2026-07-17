@@ -21,3 +21,6 @@ apps_script/consult_read.gs
 
 # PWA 매니페스트는 커밋 필요 (docs 공개 페이지)
 !docs/hq-manifest.json
+
+# 라이브 Slack 웹훅이 들어있다 — 실수로 커밋되면 GitHub 푸시보호에 막힌다(실제로 막혔다)
+apps_script_full.js
