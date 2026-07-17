@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>충청본부 공유 허브</title>
+<!-- 홈 화면 설치(PWA) — 아이폰·안드로이드 공용 -->
+<link rel="manifest" href="hq-manifest.json">
+<meta name="theme-color" content="#152647">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="충청본부">
+<link rel="apple-touch-icon" href="icons/hub-180.png">
+<link rel="icon" type="image/png" href="icons/hub-192.png">
+<style>
+  :root{
+    --navy:#152647; --navy2:#294c8a; --ink:#19212e; --muted:#5c6775; --faint:#93a0b0;
+    --line:#e5e9f0; --bg:#eef2f8; --card:#fff;
+    --teal:#0d7268; --tealbg:#e1f1ee; --violet:#5b46ac; --violetbg:#ebe6f8;
+    --amber:#a45f11; --amberbg:#f8ecd9; --blue:#1f5697; --bluebg:#e3edf7;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Malgun Gothic','맑은 고딕',-apple-system,BlinkMacSystemFont,sans-serif;
+    margin:0;color:var(--ink);
+    background:radial-gradient(1200px 480px at 50% -160px,#dbe4f4 0%,rgba(219,228,244,0) 72%),var(--bg);
+    min-height:100vh;line-height:1.5}
+  a{color:inherit}
+
+  header{position:relative;background:linear-gradient(120deg,var(--navy) 0%,var(--navy2) 62%,#3159a0 100%);
+    color:#fff;padding:22px 20px 20px;text-align:center;overflow:hidden}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background:linear-gradient(90deg,var(--teal),var(--violet),var(--amber),var(--blue))}
+  header .badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+    background:rgba(255,255,255,.15);padding:6px 16px;border-radius:999px;margin-bottom:6px;letter-spacing:.3px}
+  header h1{font-size:clamp(23px,2.5vw,31px);margin:0;font-weight:800;letter-spacing:-.6px}
+  header .sub{font-size:14px;opacity:.88;margin-top:7px}
+  .pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+  .pill{font-size:13px;font-weight:600;background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.18);padding:6px 15px;border-radius:999px}
+
+  .wrap{padding:28px 34px 56px;max-width:1400px;margin:0 auto}
+
+  .intro{display:flex;gap:12px;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);
+    border-radius:15px;padding:17px 22px;margin-bottom:26px;box-shadow:0 2px 10px rgba(31,45,71,.05)}
+  .intro .i{font-size:23px;flex-shrink:0;line-height:1;position:relative;top:2px}
+  .intro .t{font-size:15px;color:var(--muted);line-height:1.55;text-align:center}
+  .intro .t b{color:var(--ink)}
+
+  .sectlabel{font-size:13.5px;font-weight:800;color:var(--navy2);letter-spacing:.6px;
+    text-transform:uppercase;margin:12px 4px 16px;display:flex;align-items:center;gap:10px}
+  .sectlabel::before{content:"";width:15px;height:2px;background:var(--navy2);border-radius:2px}
+  .sectlabel span{color:var(--faint);font-weight:600;letter-spacing:0;text-transform:none}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:28px}
+  @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .gridopen{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-bottom:28px}
+  @media(max-width:680px){.gridopen{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border-radius:18px;position:relative;overflow:hidden;
+    border:1px solid var(--line);box-shadow:0 3px 14px rgba(31,45,71,.06);
+    transition:transform .14s ease,box-shadow .14s ease}
+  .card::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--c)}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(31,45,71,.14)}
+  .cardmain{display:block;padding:26px 26px 24px;text-decoration:none;color:var(--ink)}
+  .cardhead{display:flex;align-items:center;gap:15px;margin-bottom:14px}
+  .ico{width:50px;height:50px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:26px;background:var(--cbg);color:var(--c)}
+  .ttl{font-size:21.5px;font-weight:800;color:var(--ink);letter-spacing:-.4px;flex:1;min-width:0}
+  .arrow{color:var(--c);font-size:22px;opacity:.5;transition:transform .14s,opacity .14s}
+  .card:hover .arrow{opacity:1;transform:translateX(3px)}
+  .desc{font-size:15px;color:var(--muted);line-height:1.7}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:17px}
+  .tag{font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;
+    background:var(--cbg);color:var(--c)}
+  .sublink{display:inline-flex;align-items:center;gap:5px;margin:0 28px 22px;
+    padding:9px 15px;border-radius:10px;background:#f5f0fb;color:var(--violet);
+    text-decoration:none;font-size:13px;font-weight:700}
+  .sublink:hover{background:#ede4f8}
+
+  footer{max-width:1400px;margin:8px auto 0;padding:0 4px}
+  .fbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .fbox .brand{font-weight:800;color:var(--ink);display:flex;align-items:center;gap:7px;font-size:13px}
+  .fbox .brand small{display:block;font-weight:500;color:var(--faint);font-size:11px;margin-top:3px}
+  .fnote{font-size:11px;color:var(--muted);line-height:1.7;max-width:520px}
+  .fnote .k{color:#b4690e;font-weight:700}
+
+  #gate{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:15px;color:#fff;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%)}
+  #gate .lock{font-size:34px}
+  #gate h2{color:#fff;margin:0;font-size:20px;font-weight:800}
+  #gate p{margin:0;font-size:13px;opacity:.85}
+  #gate input{font-size:22px;padding:11px 16px;border-radius:12px;border:0;width:170px;
+    text-align:center;letter-spacing:8px;box-shadow:0 6px 20px rgba(0,0,0,.2);outline:none}
+  /* 홈화면 설치 버튼 + iOS 안내 */
+  .installbar{display:none;margin:2px 0 20px}
+  .installbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border:0;
+    padding:15px 18px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;
+    box-shadow:0 6px 18px rgba(21,38,71,.28);font-family:inherit;text-align:left}
+  .installbtn .em{font-size:22px}
+  .installbtn small{display:block;font-weight:500;opacity:.82;font-size:11.5px;margin-top:2px}
+  .installbtn:active{transform:translateY(1px)}
+  .iosguide{display:none;position:fixed;inset:0;z-index:120;background:rgba(10,18,35,.6);
+    align-items:center;justify-content:center;padding:24px}
+  .iosbox{background:#fff;border-radius:18px;padding:24px 22px;max-width:340px;text-align:center;
+    box-shadow:0 14px 44px rgba(0,0,0,.32)}
+  .iosbox .bi{font-size:34px}
+  .iosbox h3{margin:8px 0 8px;color:var(--navy);font-size:18px}
+  .iosbox p{font-size:13.5px;color:var(--muted);line-height:1.8;margin:0 0 18px}
+  .iosbox .sh{display:inline-block;background:#eef2f9;border-radius:7px;padding:1px 8px;font-weight:700;color:var(--navy2)}
+  .iosbox button{background:var(--navy);color:#fff;border:0;padding:11px 22px;border-radius:10px;
+    font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+</style></head><body>
+
+<div id="gate">
+  <div class="lock">🔒</div>
+  <h2>충청본부 공유 허브</h2>
+  <p>접속 번호를 입력하세요</p>
+  <input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus>
+</div>
+
+<header>
+  <h1>충청본부 공유 허브</h1>
+  <div class="sub">지점 자동 점검·집계 결과를 본부와 공유하는 페이지</div>
+  <div class="pills">
+    <span class="pill">📍 둔산</span><span class="pill">📍 서구</span>
+    <span class="pill">📍 천안</span><span class="pill">📍 청주 오창</span>
+    <span class="pill">🌱 청주점(개소예정)</span><span class="pill">🌱 대전중구점(개소예정)</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <div class="i">🛡️</div>
+    <div class="t"><b>개인정보 보호.</b> 수급자 <b>실명 없음</b> — 상세는 센터 단위 집계 또는 <b>이름 마스킹(강○례)</b>. 접속 번호로 보호 · 검색엔진 비노출.</div>
+  </div>
+
+  <div class="installbar" id="installBar">
+    <button class="installbtn" id="installBtn">
+      <span class="em">📲</span>
+      <span>홈 화면에 추가 — 앱처럼 열기<small>주소창 없이 전체화면 · 아이콘 한 번에 접속 (아이폰·안드로이드)</small></span>
+    </button>
+  </div>
+
+  <div class="sectlabel">신규 개소 리포트 <span>· 지점 오픈 입지·홍보</span></div>
+  <div class="gridopen">
+
+    <div class="card" style="--c:var(--teal);--cbg:var(--tealbg)">
+      <a class="cardmain" href="bongmyeong.html">
+        <div class="cardhead"><div class="ico">🗺️</div>
+          <div class="ttl">청주 봉명동 개소 리포트</div><div class="arrow">→</div></div>
+        <div class="desc">청주 봉명점 개소 — 입지·송영권·인근 센터 현황·홍보 전략.</div>
+        <div class="tags"><span class="tag">🗓️ 2026.10 개소</span><span class="tag">📍 청주 봉명동</span><span class="tag">🚐 송영 30분권</span></div>
+      </a>
+    </div>
+
+    <div class="card" style="--c:var(--teal);--cbg:var(--tealbg)">
+      <a class="cardmain" href="junggu.html">
+        <div class="cardhead"><div class="ico">🏙️</div>
+          <div class="ttl">대전 중구 개소 리포트</div><div class="arrow">→</div></div>
+        <div class="desc">대전 중구점 개소 — 원도심 초고령 입지·송영권·인근 센터·응급망.</div>
+        <div class="tags"><span class="tag">🗓️ 2026.11 개소</span><span class="tag">📍 대전 대흥동</span><span class="tag">🚐 송영 30분권</span></div>
+      </a>
+    </div>
+
+  </div>
+
+  <div class="sectlabel">본부 운영 자료 <span>· 자동 점검·집계</span></div>
+  <div class="grid">
+
+    <div class="card" style="--c:var(--violet);--cbg:var(--violetbg)">
+      <a class="cardmain" href="consult_summary.html">
+        <div class="cardhead"><div class="ico">☎️</div>
+          <div class="ttl">상담 현황 요약</div><div class="arrow">→</div></div>
+        <div class="desc">신규상담 상담시트 입력 현황 · 센터별 상담 대기 명단. 센터 단위 집계라 개인정보 없음.</div>
+        <div class="tags"><span class="tag">🔄 매일 갱신</span><span class="tag">📋 센터별 집계</span><span class="tag">📊 미입력·대기</span></div>
+      </a>
+    </div>
+
+    <div class="card" style="--c:var(--amber);--cbg:var(--amberbg)">
+      <a class="cardmain" href="branch_dashboard.html">
+        <div class="cardhead"><div class="ico">📋</div>
+          <div class="ttl">지점 점검 대시보드</div><div class="arrow">→</div></div>
+        <div class="desc">평가 매뉴얼 36개 항목 지점별 신호등·점수·판정내용 + 상세 명단(수급자 실명 마스킹).</div>
+        <div class="tags"><span class="tag">📊 평가 36항목</span><span class="tag">🚦 신호등 판정</span><span class="tag">🔒 이름 마스킹</span></div>
+      </a>
+      <a class="sublink" href="audit_summary.html">📄 지점 점검 한눈 요약본 →</a>
+    </div>
+
+    <div class="card" style="--c:var(--blue);--cbg:var(--bluebg)">
+      <a class="cardmain" href="index.html">
+        <div class="cardhead"><div class="ico">🚗</div>
+          <div class="ttl">차량 관리</div><div class="arrow">→</div></div>
+        <div class="desc">지점별 차량 주행거리 · 엔진오일 교환 · 정기검사 현황을 한 곳에서.</div>
+        <div class="tags"><span class="tag">🚗 지점별 차량</span><span class="tag">🛢️ 오일 교환</span><span class="tag">🗓️ 정기검사</span></div>
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="fbox">
+      <div class="brand">🏢 충청본부 공유 허브
+        <small id="today">— 자동 점검·집계</small></div>
+      <div class="fnote">
+        상세(수급자별) 내역은 각 지점 PC 대시보드 / 슬랙 엑셀 링크에서만 확인됩니다.<br>
+        본부에는 <span class="k">이 허브 링크만</span> 공유하면 됩니다. · 접속번호 보호 · 검색 비노출(noindex)
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<div class="iosguide" id="iosGuide">
+  <div class="iosbox">
+    <div class="bi">📲</div>
+    <h3>홈 화면에 추가</h3>
+    <p id="guideText">사파리 아래쪽 <span class="sh">공유 ⬆️</span> 버튼을 누른 뒤<br><b>"홈 화면에 추가"</b>를 선택하세요.</p>
+    <button onclick="document.getElementById('iosGuide').style.display='none'">확인</button>
+  </div>
+</div>
+
+<script>
+const PIN='15771389';
+document.getElementById('pin').addEventListener('input',e=>{
+  if(e.target.value===PIN){document.getElementById('gate').style.display='none';sessionStorage.setItem('ap','1');}
+});
+if(sessionStorage.getItem('ap')==='1')document.getElementById('gate').style.display='none';
+(function(){var d=new Date();var s=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  var el=document.getElementById('today');if(el)el.textContent='— 오늘 기준 '+s;})();
+
+// 서비스워커 등록 (정식 PWA 설치 요건 충족 → 안드로이드 설치 안정화)
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
+
+// 홈 화면 설치 (안드로이드=네이티브 프롬프트 / 아이폰=수동 안내)
+(function(){
+  var bar=document.getElementById('installBar'), btn=document.getElementById('installBtn'),
+      guide=document.getElementById('iosGuide'), gtext=document.getElementById('guideText'), dp=null;
+  function standalone(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+  function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+  if(standalone()) return;               // 이미 설치됨 → 버튼 숨김 유지
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); dp=e; bar.style.display='block'; });
+  if(isIOS()) bar.style.display='block'; // iOS는 프롬프트 없음 → 안내용 버튼
+  function showGuide(){
+    if(isIOS()){ gtext.innerHTML='사파리 아래쪽 <span class="sh">공유 ⬆️</span> 버튼을 누른 뒤<br><b>"홈 화면에 추가"</b>를 선택하세요.'; }
+    else { gtext.innerHTML='크롬 오른쪽 위 <span class="sh">⋮ 메뉴</span> 를 누르고<br><b>"홈 화면에 추가"</b> 또는 <b>"앱 설치"</b>를 선택하세요.<br><br><small>설치 후 아이콘은 <b>앱 서랍(전체 앱 목록)</b>에 생깁니다. 길게 눌러 홈 화면으로 옮길 수 있어요.</small>'; }
+    guide.style.display='flex';
+  }
+  btn.addEventListener('click', function(){
+    // 안드로이드: 네이티브 프롬프트. 취소해도 버튼은 유지(재시도/수동안내 가능)
+    if(dp){ dp.prompt(); dp.userChoice.then(function(){ dp=null; }); }
+    else { showGuide(); }  // iOS 또는 프롬프트 미발생 → OS별 수동 안내
+  });
+  window.addEventListener('appinstalled', function(){ bar.style.display='none'; });  // 설치 완료 시에만 숨김
+})();
+</script>
+</body></html>
