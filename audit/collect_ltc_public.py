@@ -141,21 +141,36 @@ def collect(branch_name: str, sym: str) -> dict:
 #   '변경 시 수정'(현행성)은 애초에 자동 확인이 불가능하다.
 #   → 100% 는 '주의(자동확인 범위는 전부 충족 · 나머지는 수기)' 로 둔다. 선례: 33③·34③.
 # ─────────────────────────────────────────────────────────────────────────────
+def _uncollected(why: str) -> dict:
+    return {"status": "주의", "sub_status": {"①": "주의"},
+            "detail": f"[①정보게시] 판정 보류 — {why}. 롱텀 공개조회 게시율 확인 후 수기 판단요망"}
+
+
 def judge18(branch_name: str) -> dict | None:
-    """항목 18① 판정. 수집물 없거나 판정 불가면 None(있는 그대로 스킵)."""
+    """항목 18① 판정.
+
+    수집 실패·파싱 실패는 None(조용한 스킵)이 아니라 '주의' 를 낸다 — 18 은 원래 method:"manual"
+    (항상 사람이 보는 항목)이었다. None 을 내면 대시보드가 '수집전' 으로만 표시해
+    '사람이 봐야 한다'는 신호가 오히려 약해진다. 선례: item20.judge()(조용한 스킵 금지, 사용자 확정).
+    단 '주야간보호 미제공 기관' 은 진짜 해당없음이라 None(스킵).
+    """
     src = RES / f"롱텀공개_{branch_name}.json"
     if not src.exists():
-        return None
+        return _uncollected("롱텀 공개조회 미수집(롱텀공개_*.json 없음 — 수집 스텝 실패 가능성)")
     try:
         d = json.loads(src.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
-        return None
+        return _uncollected("수집물을 읽을 수 없음")
 
     rate, items = d.get("rate"), d.get("items") or []
+    services = d.get("services")
     if rate is None:
-        return None
+        return _uncollected("게시율을 읽지 못함(포털 화면 변경 가능성)")
+    if not services:
+        # '제공서비스' 파싱 실패를 '주야간보호 미제공' 으로 오독해 조용히 넘기지 않는다
+        return _uncollected("제공서비스를 읽지 못해 주야간보호 대상 여부 확인 불가")
     # 주야간보호 미제공 기관이면 B03 게시율 0% 가 '미게시'가 아니라 '해당없음' → 판정하지 않는다
-    if SVC_DAYCARE not in (d.get("services") or ""):
+    if SVC_DAYCARE not in services:
         return None
 
     head = f"[①정보게시] 롱텀 공개조회 게시율 {rate}% ({d.get('rate_label') or '주야간보호'}, {len(items)}개 항목)"
@@ -228,9 +243,12 @@ def main() -> int:
               f"· 미게시 {n_bad}개 → {d['rate_label']}", flush=True)
 
     if failed:
-        print(f"\n⚠️ 수집 실패: {failed} — 해당 지점 18번은 판정에서 스킵됩니다(점검은 계속).")
-    else:
-        print("\n✅ 롱텀 공개조회 수집 완료 (18번 판정 가능)")
+        # 실패했는데 0 으로 끝내면 CI 스텝이 초록으로 떠 실패가 로그 한 줄에 묻힌다
+        # → 0 이 아닌 코드로 끝내고, 본 점검은 워크플로의 continue-on-error 가 계속 진행시킨다.
+        #   (18① 은 수집물이 없으면 judge18 이 '주의(미수집)' 를 내므로 조용히 넘어가지도 않는다.)
+        print(f"\n⚠️ 수집 실패: {failed} — 해당 지점 18①은 '주의(미수집)' 로 표시됩니다(점검은 계속).")
+        return 1
+    print("\n✅ 롱텀 공개조회 수집 완료 (18번 판정 가능)")
     return 0
 
 
