@@ -100,3 +100,19 @@ def get_audit_webhook() -> str | None:
 
 def set_audit_webhook(url: str) -> None:
     set_(KEY_AUDIT_WEBHOOK, url)
+
+
+# ---- CI 아티팩트 복호화 열쇠 (audit.sync_from_ci 전용) ----
+# GitHub Secrets 의 AUDIT_ARTIFACT_KEY 와 '같은 값'을 로컬 keyring 에도 둔다.
+# CI 는 지점 결과(수급자 실명 포함)를 이 열쇠로 대칭 암호화해 아티팩트로 올리고,
+# merge job 이 받아 푼다. sync_from_ci 는 로컬에서 같은 일을 해 audit_results/ 를
+# 되살린다(2시간 재스캔 없이). 열쇠가 없으면 아티팩트는 열리지 않는다.
+KEY_AUDIT_ARTIFACT = "audit_artifact_key"
+
+
+def get_audit_artifact_key() -> str | None:
+    return get(KEY_AUDIT_ARTIFACT)
+
+
+def set_audit_artifact_key(key: str) -> None:
+    set_(KEY_AUDIT_ARTIFACT, key)

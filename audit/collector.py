@@ -206,7 +206,10 @@ def run_branch_audit(
             r8 = analysis["item_results"].get("8")
             blog = (branch_pages.get("detail") or {}).get("birthday_log", {})
             if r8:
-                res = notion_compare(branch_name, blog, progress_cb=progress_cb)
+                # 개소 전·평가기간 전 달은 대조 대상이 아니다 — 안 넘기면 서구점(2025.03 개소)에
+                # 2024-02 미지급이 뜬다(실측 165건 중 76건이 개소 전이었다).
+                res = notion_compare(branch_name, blog, progress_cb=progress_cb,
+                                     opened=branch_pages.get("opened"), cutoff=cutoff)
                 if res is not None:
                     missing, months = res
                     if missing:
@@ -218,11 +221,18 @@ def run_branch_audit(
                             r8["status"] = "주의"
                         if r8.get("sub_status", {}).get("③") == "양호":
                             r8["sub_status"]["③"] = "주의"
-                        r8["detail"] += (f" · 생일쿠폰 미지급 의심 {len(missing)}건(확인요망): "
-                                         f"{', '.join(missing)}")
+                        r8["detail"] += (f" · 생일쿠폰 미지급 의심 {len(missing)}건(확인요망, "
+                                         f"{months[0]}~{months[-1]} 대조): {', '.join(missing)}")
                     elif months:
-                        r8["detail"] += (f" · 생일쿠폰 노션 대조 {len(months)}개월 일치"
-                                         f"({months[0]}~{months[-1]}, 생일자 없는 달 포함)")
+                        # '몇 개월 봤다'가 아니라 '어느 구간을 봤다'가 드러나야 한다.
+                        # 종전 문구는 개소 전까지 세어 커버리지를 부풀렸다(천안·청주 "29개월 일치(2024-02~)").
+                        r8["detail"] += (f" · 생일쿠폰 노션 대조 {months[0]}~{months[-1]} "
+                                         f"{len(months)}개월 일치(생일자 없는 달 포함)")
+                    else:
+                        # 대조한 달이 0개 — 개소가 노션 최신월보다 늦으면 여기 온다(예: 봉명동
+                        # 2026-10 개소). 판정은 옳지만(볼 게 없음) 조용히 넘어가면 '대조해서
+                        # 깨끗한 것'과 구분이 안 된다 → 안 봤다는 걸 드러낸다.
+                        r8["detail"] += " · 생일쿠폰 노션 대조 대상 월 없음(개소·평가기간 이후 자료 없음)"
         except Exception as e:
             progress_cb(f"[{branch_name}] 생일쿠폰 대조 건너뜀: {e}")
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 import io
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 
 PAGE_ID = "aaf9857c2dab4e88be4fddc595d8ccd5"  # 생일쿠폰 발송 내역 페이지
 NOTION_VERSION = "2022-06-28"
@@ -185,17 +185,54 @@ def fetch_birthdays(progress_cb=print) -> dict | None:
         return None
 
 
+def _floor_ym(opened: str | None, cutoff: str | None) -> str | None:
+    """대조 시작 월 'YYYY-MM' = max(기관 지정일, 평가기간 시작). 둘 다 없으면 None(제한 없음).
+
+    ★ 2026-07-17 이전엔 이 필터가 없어 노션에 있는 '모든 달'을 돌았다. 그 결과:
+      · 서구점(개소 2025.03) 미지급 의심 165건 중 76건이 2024-02~2025-02 — 지점이
+        존재하지도 않던 시기다. 지점은 그 76건을 헛으로 확인해야 했다.
+      · 천안(2024.06 개소)·청주(2024.08 개소) 의 "29개월 일치(2024-02~2026-06)" 도
+        사실이 아니었다. 개소 전 4~6개월은 '대조해서 맞은' 게 아니라 대상이 아니었는데
+        커버리지를 부풀려 말했다.
+      branch_pages.py:1132 이 이미 같은 개념(eff = max(cut, opened))을 쓰고 있었는데
+      생일쿠폰만 안 탔다.
+    """
+    ds = []
+    for s in (opened, cutoff):
+        if not s:
+            continue
+        try:
+            ds.append(datetime.strptime(s.strip(), "%Y.%m.%d").date())
+        except (ValueError, AttributeError):
+            continue
+    if not ds:
+        return None
+    eff = max(ds)
+    return f"{eff.year:04d}-{eff.month:02d}"
+
+
 def compare(branch_name: str, birthday_log: dict, today: date | None = None,
-            progress_cb=print) -> tuple[list, list] | None:
+            progress_cb=print, opened: str | None = None,
+            cutoff: str | None = None) -> tuple[list, list] | None:
     """노션 생일자 vs 케어포 대장 지급 대조.
-    반환: (미지급 의심 ["YYYY-MM 이름", ...], 판정 월 목록) / 토큰 없으면 None"""
+
+    opened: 기관 지정일자 'YYYY.MM.DD' (9-1 화면). 개소 전 달은 대조 대상이 아니다.
+    cutoff: 평가기간 시작 'YYYY.MM.DD'. 평가와 무관한 달까지 지적할 이유가 없다.
+    둘 다 안 주면 종전처럼 전 기간을 돈다(호출부가 못 넘기는 경우의 안전한 기본값).
+
+    반환: (미지급 의심 ["YYYY-MM 이름", ...], 판정 월 목록) / 토큰 없으면 None
+    """
     today = today or date.today()
     data = fetch_birthdays(progress_cb)
     if data is None:
         return None
     key = branch_name.replace(" ", "")
-    missing, months = [], []
+    floor = _floor_ym(opened, cutoff)
+    missing, months, skipped = [], [], 0
     for ym in sorted(data):
+        if floor and ym < floor:
+            skipped += 1          # 개소 전·평가기간 전 — 대조 대상 아님
+            continue
         y, m = int(ym[:4]), int(ym[5:7])
         # N월 자료는 (N+1)월 8일 이후에만 판정
         ny, nm = (y + 1, 1) if m == 12 else (y, m + 1)
@@ -208,4 +245,6 @@ def compare(branch_name: str, birthday_log: dict, today: date | None = None,
         for n in expected:
             if n not in given:
                 missing.append(f"{ym} {n}")
+    if skipped:
+        progress_cb(f"  노션 생일쿠폰: {floor} 이전 {skipped}개월 제외(개소·평가기간 전)")
     return missing, months
