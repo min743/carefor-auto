@@ -73,7 +73,8 @@ jobs:
   audit:
     needs: setup
     runs-on: ubuntu-latest
-    # 단일 러너 350분 → 지점 1개분으로 축소. 실측 최장 천안점 45분 + 수집 6분 + 설치 3분 ≈ 54분.
+    # 단일 러너 350분 → 지점 1개분으로 축소.
+    # 실측 최장 천안점 45분 + 수집(34② ~4분 + 34③ ~2분 + 20① ~4.5분) + 설치 3분 ≈ 59분.
     # 러너가 느려지거나 인원이 늘어도 견디도록 120분.
     timeout-minutes: 120
     strategy:
@@ -133,6 +134,25 @@ jobs:
         # audit.collect_billing_history 를 직접 부르면 안 된다 — 34②와 같은 로컬 전제(keyring +
         # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
         run: python collect_billing_history_headless.py "$BRANCH"
+
+      # 20① 판정용 욕구사정 상세 폼 수집. item20.judge()는 audit_results/needs_full_<지점>.json 을
+      # 읽는데 그것도 로컬 수집물(수급자명·총평·판단근거=개인정보라 커밋 금지)이라 CI 러너엔 없다.
+      # 34②③과 달리 20①은 없으면 조용히 스킵하지 않고 '주의(미수집)'로 뜬다 — 안 본 걸 양호로 두지 않는다.
+      # collect_needs_full 의 want 프리필터를 없애 목록 전원을 긁으므로 base scan(본 점검) 전에 돌 수 있다.
+      # 실측 인당 1.01초 → 지점당 3~4.5분 예상(목록 전원 기준).
+      # continue-on-error: 수집이 실패해도 본 점검은 그대로 진행되고 20①만 '주의'가 된다.
+      - name: 20① 욕구사정 상세 수집 (러너 내 임시 — 커밋 안 함)
+        continue-on-error: true
+        timeout-minutes: 30
+        env:
+          CAREFOR_ID:  ${{ secrets.CAREFOR_ID }}
+          CAREFOR_PW:  ${{ secrets.CAREFOR_PW }}
+          CONFIG_YAML: ${{ secrets.CONFIG_YAML }}
+          BRANCH:      ${{ matrix.name }}
+          CI: "true"
+        # audit.collect_needs_full 을 직접 부르면 안 된다 — 34②③과 같은 로컬 전제(keyring +
+        # config_path() 의 config.yaml)라 CI 에서 실패한다. headless 래퍼가 env 주입을 해준다.
+        run: python collect_needs_full_headless.py "$BRANCH"
 
       - name: 지점 점검 실행
         env:
