@@ -94,7 +94,7 @@ jobs:
           cache: 'pip'
 
       - name: 패키지 설치
-        run: pip install requests PyYAML playwright keyring keyrings.alt openpyxl
+        run: pip install -r requirements-ci.txt
 
       - name: Playwright 브라우저 설치
         run: playwright install chromium --with-deps
@@ -228,9 +228,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      # merge 는 케어포를 긁지 않는다 → playwright 브라우저 설치 불필요(약 3분 절약).
+      # merge 는 케어포를 긁지 않는다 → playwright '브라우저' 설치는 불필요(약 3분 절약).
+      # 단, playwright '패키지' 는 빼면 안 된다 — run_audit_headless.py:59 가 merge 모드
+      # 분기(68행) 이전에 audit.collector 를 무조건 import 하고, collector.py:13 이
+      # sync_playwright 를 import 한다. 뺐다가 merge job 이 100% 죽었다(2026-07-17).
       - name: 패키지 설치
-        run: pip install requests PyYAML keyring keyrings.alt openpyxl
+        run: pip install -r requirements-ci.txt
 
       - name: 지점 결과 아티팩트 내려받기
         uses: actions/download-artifact@v4

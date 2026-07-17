@@ -1,0 +1,28 @@
+# GitHub Actions(weekly_audit.yml) 전용 패키지 목록.
+#
+# ★ 이 파일이 존재하는 이유 — 2026-07-17 사고:
+#   워크플로가 `pip install requests PyYAML playwright ...` 처럼 job 마다 패키지를 손으로
+#   나열했고, 두 목록이 갈라져 아래 두 가지가 동시에 터지기 직전이었다.
+#     · merge job 에 playwright 누락 → run_audit_headless.py:59 가 merge 모드 분기(68행)
+#       '이전에' audit.collector 를 무조건 import → ModuleNotFoundError.
+#       4지점 60분 스캔이 다 성공하고 merge 에서 전멸(시트·대시보드 갱신 0).
+#     · audit job 에 beautifulsoup4·lxml 누락 → needs_form.py 가 죽는데 그 스텝이
+#       continue-on-error 라 '초록불'로 통과하고 20① 만 조용히 '주의(미수집)'.
+#   → 목록은 한 곳에만 둔다. 패키지를 job 에 직접 나열하지 말 것.
+#
+# requirements.txt 를 그대로 쓰지 않는 이유: PySide6(GUI)·pyperclip(클립보드) 등
+# CI 에서 안 쓰는 무거운 의존이 들어 있다. 여기엔 CI 진입점이 실제로 import 하는 것만 둔다.
+#
+# 진입점(2026-07-17 기준): collect_result_eval_headless / collect_billing_history_headless /
+#   collect_needs_full_headless / audit.collect_ltc_public / run_audit_headless /
+#   audit.publish_hq_dashboard
+# 진입점이나 import 를 바꾸면 이 파일도 같이 갱신할 것.
+
+requests>=2.31.0
+PyYAML>=6.0
+playwright>=1.41.0        # audit/collector.py:13 — merge job 도 필요(위 사고 참조)
+keyring>=24.3.0
+keyrings.alt>=4.2.0       # 헤드리스 리눅스 백엔드
+openpyxl>=3.1.0
+beautifulsoup4>=4.12.0    # audit/needs_form.py:12 — 20① 욕구사정 폼 파서
+lxml>=5.0.0               # needs_form.py:61 이 BeautifulSoup(html, "lxml") 로 지정한 파서
