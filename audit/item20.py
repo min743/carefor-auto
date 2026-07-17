@@ -25,10 +25,15 @@
 ★ 커버리지를 반드시 노출하는 이유 (27번 rehab 선례)
   '판정분만 깨끗'을 '양호'로 읽으면 실제로는 안 본 것을 봤다고 오해한다.
   - 구서식 613건(4지점 합계)은 판정 제외 → detail 에 '판정 N건 / 전체 M건' 표기
-  - 연1회는 분모 자체가 불완전 → 커버리지 미달인 한 '양호' 를 주지 않는다
-    (수집 소스가 base scan 의 '욕구사정 보유자' 만 긁어와, 사정이 0건인 수급자는
-     needs_full 에 아예 없다 = '연1회 미실시' 를 원리적으로 탐지할 수 없다.
-     collect_needs_full 의 want 프리필터 제거 후 목록 전원이 모이면 그때 확정 판정으로 승격.)
+  - 등급외·등급 미확인자도 세어서 노출한다 — 조용히 continue 하면 커버리지에서 증발한다
+  - 연1회는 아직 판정하지 않는다 → 커버리지 미달인 한 '양호' 를 주지 않는다. 이유 2가지:
+    ① 이 수집물엔 재적기간(enroll)이 없어 '어느 해에 사정이 필요했는지' 를 특정할 수 없다.
+       1-1 스캔(results)에 재적기간이 있지만 pammgno 가 없어 이름으로만 조인해야 하는데,
+       동명이인이 실재해(점검표 EXCLUDE_BIRTH 참조) 조인이 틀리면 엉뚱한 사람이 미흡이 된다.
+    ② 수집물이 옛 want 프리필터 산출물이면 '사정 0건' 수급자가 애초에 없다(= 미실시자를
+       원리적으로 못 본다). 그래서 '사정 0건 N명' 을 detail 에 그대로 노출해, 0명이면
+       옛 산출물임이 드러나게 했다. collect_needs_full 은 2026-07-17 자로 전원 수집이지만,
+       재수집 전까지 파일은 옛 산출물일 수 있다 — 그 상태를 코드가 아니라 데이터로 말한다.
 
 수집물이 없으면 None 이 아니라 '주의' 를 낸다 — 조용한 스킵 금지(사용자 확정).
 """
@@ -139,10 +144,18 @@ def judge(branch_name: str, cutoff: str, n_disc: int = 0) -> dict:
     by_req: dict[str, int] = {}
     by_sec: dict[str, int] = {}
 
+    n_oob = n_nograde = n_zero = 0
     for p in d.get("people") or []:
-        grade = p.get("grade") or ""
-        if not grade or "등급외" in grade:
-            continue                      # 등급외·등급미확인은 급여 대상이 아님
+        grade = (p.get("grade") or "").strip()
+        if "등급외" in grade:
+            n_oob += 1                    # 등급외는 급여 대상이 아님 → 판정 제외(세어서 노출)
+            continue
+        if not grade:
+            # 등급 파싱이 흔들리면 그 사람이 통째로 증발한다 → 조용히 빼지 않고 센다
+            n_nograde += 1
+            continue
+        if not (p.get("assess") or []):
+            n_zero += 1                   # 사정 0건 = 연1회 미실시 후보(아래 커버리지에 노출)
         for a in p.get("assess") or []:
             if pick(a["rows"], "수급자 상태") is None:
                 n_old += 1                # 구서식 → 판정 제외(위 docstring 참조)
@@ -194,7 +207,14 @@ def judge(branch_name: str, cutoff: str, n_disc: int = 0) -> dict:
         detail += " · 형식·판단근거 위반 없음"
     if soft_rows:
         detail += f" · 확인요망 {len(soft_rows)}건(총평 길이 기준은 근거 없어 미흡 아님) — {_fmt_names(soft_rows)}"
-    detail += (" · 연1회 실시는 미판정(주의) — 수집이 '욕구사정 보유자'만 대상이라 "
-               "사정 0건 수급자가 분모에서 빠짐. want 프리필터 제거 후 확정 판정 가능")
+    if n_oob or n_nograde:
+        detail += f" · 판정 제외: 등급외 {n_oob}명"
+        if n_nograde:
+            detail += f", 등급 미확인 {n_nograde}명(확인 필요 — 조용히 빠진 게 아님)"
+    # 연1회: 재적기간이 없어 '필요 연도'를 특정 못 하고, 사정 0건 인원이 0명이면
+    # 수집물이 옛 프리필터 산출물이라는 뜻이다 → 상태를 숫자로 그대로 드러낸다
+    detail += (f" · 연1회 실시는 미판정(주의) — 사정 0건 {n_zero}명"
+               + ("(0명 = 옛 want 프리필터 수집물일 수 있음, 재수집 후 재확인)" if not n_zero else "")
+               + ", 재적기간이 수집물에 없어 '필요 연도' 특정 불가")
     detail += gap + ref
     return {"status": status, "sub_status": {"①": status}, "detail": detail}
