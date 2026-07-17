@@ -86,6 +86,15 @@ def generate() -> Path:
     for f in AUDIT_DIR.glob("*.json"):
         try:
             d = json.loads(f.read_text(encoding="utf-8"))
+            # bafe3b3 와 같은 사고 — 수집 중간산출물(청구발송_·contract_·needs_full_ 등)도
+            # 최상위 *.json 이면서 "branch" 키를 갖는다. 거르지 않으면 glob 순서에 따라
+            # data["<지점>"] 를 빈 요약(people 0 · item_results {})으로 덮어써
+            # 요약페이지가 그 지점 전 항목을 '수집전'으로 표시한다.
+            # (bafe3b3 는 collector._write_dashboard_data 와 sheet_upload.build_payload 만
+            #  고쳤고 여기는 남아 있었다. 로컬에는 청구발송_<지점>.json 이 실제로 존재하고
+            #  glob 순서상 <지점>.json 뒤에 읽혀 재현된다.)
+            if not isinstance(d, dict) or "item_results" not in d:
+                continue
             data[d["branch"]] = _branch_summary(d, rx)
         except Exception:
             continue
