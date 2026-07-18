@@ -1352,6 +1352,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
     for r in rights["rows"]:
         if r["left_before"]:
             continue  # 안내일 이전 퇴소자 제외 (사용자 확정)
+        if r["status"] == "보류":
+            continue  # 보류자 제외 — 수급 보류 중이라 연1회 안내 대상 아님(사용자 확정 2026-07-18, 전지점, 일단 보류)
         if not r["provided"]:
             r7_missing.append(f"{r['name']}({r['status']})")
         elif r["start"] >= "2026" and r["provided"] > r["start"]:
