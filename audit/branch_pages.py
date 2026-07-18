@@ -68,6 +68,15 @@ EVAL12_JS = """
 """
 
 # 1-4 상담일지: 수급자별 분기 셀 complete/none + 행 data-info(연간 상담수·급여반영수)
+# 17③ 월간 소식 게시용 지점별 케어링 네이버 블로그 (사용자 제공 2026-07-18).
+# 네이버가 외부 검색·fetch를 막아 자동 게시 판정 불가 → 대시보드에 링크만 달아 수기 확인요망.
+CARING_BLOG = {
+    "둔산점": "https://blog.naver.com/cc_dg02",
+    "서구점": "https://blog.naver.com/cc_dg03",
+    "천안점": "https://blog.naver.com/cc_gg081",
+    "청주 오창점": "https://blog.naver.com/cc_gg14",
+}
+
 CONSULT_PARSE_JS = """
 (() => {
   const t = document.querySelector('#patient_consult_table');
@@ -1735,13 +1744,18 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> 
                       + " (3인 참여·직원별 의견·30일 기한 준수는 회의록 팝업 수기 확인)",
         }
     if consult_detail:
+        # 17③ 월간 계획표·식단표·소식 월1회 제공: 지점별 네이버 블로그에 게시(사용자 확정 2026-07-18).
+        #   네이버가 외부 검색·fetch를 막아 자동 게시 판정은 불가 → 블로그 링크를 달아 '주의(확인요망)'로만.
+        blog = CARING_BLOG.get(branch_name)
+        blog_txt = (f" · [③월간소식] 지점 블로그 게시 — 확인요망: {blog}" if blog
+                    else " · [③월간소식] 블로그 미등록 — 수기 확인")
         item_results["17"] = {
             "status": st(consult_miss + consult2_miss),
-            "sub_status": {"①": st(consult_miss), "②": st(consult2_miss)},
+            "sub_status": {"①": st(consult_miss), "②": st(consult2_miss), "③": "주의"},
             "detail": "[①분기별 상담·②급여반영 연1회] "
                       + ("; ".join(consult_miss + consult2_miss) or "완료 분기 전 수급자 상담·급여반영 충족")
                       + (" / " + "; ".join(consult_note) if consult_note else "")
-                      + " (③계획표·식단표·소식 월1회 제공은 수기)",
+                      + blog_txt,
         }
 
     item_results |= {
