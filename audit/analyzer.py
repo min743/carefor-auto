@@ -65,7 +65,7 @@ def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) ->
     rows_check = []      # 수급기간/연간작성/계약/계획
     plan_issues = []
     halfyear_miss = []   # 항목 21: 반기별 누락
-    order_issues = []    # 항목 20: 계획일 < 기초평가일 순서 위반
+    order_issues = []    # 항목 22①: 계획 작성일이 기초평가(위험도·욕구사정)보다 앞선 위반
     rehab_miss = []      # 항목 27①: 2026~ 계획서 기능회복훈련 미기재(확정)
     rehab_warn = []      # 항목 27①: 기본동작 세부 누락 등 확인요망
     rehab_checked = 0    # 판정 가능한 2026~ 계획 수
@@ -152,16 +152,23 @@ def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) ->
                         if not has and not prior:
                             halfyear_miss.append([p["name"], p.get("status", ""), f"{y} {half}", kind, f"{_fmt(h_s2)}~{_fmt(h_e2)} 재적"])
 
-        # ---- 항목 20: 계획일이 기초평가일보다 앞서는지 ----
-        all_eval_dates = sorted({dd for key in ("fall", "sore", "cog") for dd in evals.get(key, [])}, key=_d)
+        # ---- 항목 22①: 계획일이 기초평가일(위험도평가·욕구사정)보다 앞서는지 ----
+        # 매뉴얼 22①: 위험도 → 욕구사정 → 급여계획 순서. 급여계획 작성일이 이 평가들보다
+        # 앞서면 그 평가를 반영했을 수 없다 → 위반. (PDF 사례집: 20 "욕구사정 일자가 급여계획
+        # 작성 이후면 감점" + 22 "위험도→욕구사정→급여계획 순서 준수" — 욕구사정 작성일도 대상)
+        # ★ 예전엔 위험도평가(fall/sore/cog)만 봤다. 욕구사정(needs)도 급여계획보다 앞서야 하므로
+        #   둘을 합쳐 본다. ±40일 창으로 '이 계획에 딸린' 평가만 짝지어 무관한 주기 오탐을 막는다.
+        eval_dates = [("위험도", dd) for key in ("fall", "sore", "cog") for dd in evals.get(key, [])]
+        eval_dates += [("욕구사정", nn["date"]) for nn in needs if nn.get("date")]
         for pl in p.get("plans", []):
             wd = pl.get("wd") or ""
             if not wd or _d(wd) < cut_d:
                 continue
-            base = [dd for dd in all_eval_dates if abs((_d(dd) - _d(wd)).days) <= 40]
-            if base and any(_d(dd) > _d(wd) for dd in base):
-                later = [dd for dd in base if _d(dd) > _d(wd)]
-                order_issues.append([p["name"], wd, "계획 작성일보다 늦은 기초평가: " + ", ".join(later)])
+            later = [(kind, dd) for kind, dd in eval_dates
+                     if abs((_d(dd) - _d(wd)).days) <= 40 and _d(dd) > _d(wd)]
+            if later:
+                order_issues.append([p["name"], wd, "계획 작성일보다 늦은 "
+                                     + ", ".join(f"{k}({d})" for k, d in later)])
 
         # ---- 연간작성/계약/계획 ----
         miss_cols = []
