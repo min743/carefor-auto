@@ -1214,7 +1214,8 @@ def _half_of(d: str) -> str:
     return "상반기" if int(d[5:7]) <= 6 else "하반기"
 
 
-def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None) -> dict:
+def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
+                         branch_name: str = "") -> dict:
     today = today or date.today()
     cut = datetime.strptime(cutoff, "%Y.%m.%d").date()
     # 기관 지정일자(오픈일) 반영 — 개소 전 기간은 판정 제외
