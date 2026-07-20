@@ -22,6 +22,14 @@ DN_BASE = "https://dn.carefor.co.kr/"
 # 기관 점검용 가상 계정 — 직원 판정에서 제외 (사용자 확정 2026-07-06)
 EXCLUDE_STAFF = {"관리팀", "평가자"}
 
+# 항목 19(노인인권 안전관리 설명) 대상 아님으로 지점이 확정한 수급자 — 미흡에서 제외.
+#   보류·퇴소예정·재입소보류 등은 상태 데이터로 자동 판별이 안 되는 경우가 있어(재입소 후
+#   status=수급중, '퇴소예정' 상태값 없음) 지점 확정 명단으로 뺀다. 사용자 확정.
+#   ⚠️ 이름 제외라 동명이인이 실제 대상이면 함께 빠짐 — 지점이 확인한 명단만 넣을 것.
+SAFETY_EXCLUDE = {
+    "둔산점": {"최복순", "이말임", "이말이", "이재분", "정구호"},   # 2026-07-20 보류·퇴소예정
+}
+
 PAGES = {
     "edu":       ("left_sub8", "/share/staff/view.staff_education", "8-7.교육일지"),
     "refresher": ("left_sub8", "/share/staff/view.staff_refresher_training", "8-7-1.요양보호사 보수교육"),
@@ -637,12 +645,17 @@ def judge_transport(rows: list, cutoff: str, out_scope: set | None = None) -> di
         except ValueError:
             return None
 
+    today = date.today()
     miss_rule, miss_sheet, stale, n_target, n_skip = [], [], [], 0, 0
     for c in rows:
         if len(c) < 8:
             continue
         status, name, rule, sheet = c[1], c[2], c[6], c[7]
         if out_scope and name in out_scope:  # 평가기간 전 퇴소 확인된 사람만 제외
+            n_skip += 1
+            continue
+        start = _pdate(c[5])
+        if start and start > today:   # 급여개시일 미래 = 아직 계약 전 → 제공 대상 아님(박필순 사례 2026-07-20)
             n_skip += 1
             continue
         n_target += 1
@@ -1217,6 +1230,7 @@ def _half_of(d: str) -> str:
 def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
                          branch_name: str = "") -> dict:
     today = today or date.today()
+    safety_excl = SAFETY_EXCLUDE.get(branch_name, set())   # 항목19 지점 확정 제외 명단
     cut = datetime.strptime(cutoff, "%Y.%m.%d").date()
     # 기관 지정일자(오픈일) 반영 — 개소 전 기간은 판정 제외
     opened = None
@@ -1497,6 +1511,8 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
         for rr in rights["rows"]:
             if not rr["start"] or rr["start"][:4] < "2026" or rr["left_before"]:
                 continue
+            if rr["name"] in safety_excl:   # 보류·퇴소예정 등 지점 확정 제외
+                continue
             try:
                 sd = datetime.strptime(rr["start"], "%Y.%m.%d").date()
             except ValueError:
@@ -1642,6 +1658,7 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
         have |= {r["name"] for r in parse_bigo((data.get("bigo_safety_inji") or {}).get(ys) or "")}
         c = (data.get("consult") or {}).get(ys) or {}
         roster = {r["name"] for r in (c.get("rows") or []) if r.get("stat") in ("수급중", "보류")}
+        roster -= safety_excl   # 보류·퇴소예정 등 지점 확정 제외(항목19 대상 아님)
         if not roster:
             safety_edu_note.append(f"{y}년 [3-1-3 기록지] '안전관리' 문구 기재 {len(have)}명(명단 대조 불가)")
             continue
@@ -1837,14 +1854,32 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
                       + " (3인 참여·직원별 의견·30일 기한 준수는 회의록 팝업 수기 확인)",
         }
     if consult_detail:
-        # 17③ 월간 계획표·식단표·소식 월1회 제공: 지점별 네이버 블로그에 게시(사용자 확정 2026-07-18).
-        #   네이버가 외부 검색·fetch를 막아 자동 게시 판정은 불가 → 블로그 링크를 달아 '주의(확인요망)'로만.
+        # 17③ 월간 계획표·식단표·소식 월1회 제공: 지점 네이버 블로그 RSS로 전월 3종 게시 자동 판정.
+        #   (WebFetch는 막히나 rss.blog.naver.com 은 Playwright로 수신됨 — audit.collect_blog)
         blog = CARING_BLOG.get(branch_name)
-        blog_txt = (f" · [③월간소식] 지점 블로그 게시 — 확인요망: {blog}" if blog
-                    else " · [③월간소식] 블로그 미등록 — 수기 확인")
+        bc = (data or {}).get("blog_check") or {}
+        if bc and not bc.get("error") and bc.get("blog_id"):
+            miss3 = [t for t in ("식단표", "프로그램표", "가정통신문") if not bc.get(t, {}).get("ok")]
+            got = ", ".join(f"{t} {bc[t]['date']}" for t in ("식단표", "프로그램표", "가정통신문")
+                            if bc.get(t, {}).get("ok"))
+            if not miss3:
+                sub3 = "양호"
+                blog_txt = f" · [③월간소식] 블로그 자동확인({blog}) — 전월 3종 게시 확인({got})"
+            elif len(miss3) == 3:
+                # 3종 전무 = 채널 오등록/게시없음 의심 → 미흡 아닌 주의(수기확인)
+                sub3 = "주의"
+                blog_txt = f" · [③월간소식] 블로그({blog}) 전월 3종 미확인 — 채널/게시 수기 확인요망"
+            else:
+                sub3 = "미흡"
+                blog_txt = (f" · [③월간소식] 블로그 자동확인({blog}) — 미게시: {', '.join(miss3)}"
+                            + (f" (확인: {got})" if got else ""))
+        else:
+            sub3 = "주의"
+            reason = bc.get("error", "블로그 미등록/확인불가") if bc else "확인불가"
+            blog_txt = f" · [③월간소식] 블로그 자동확인 실패({blog or '미등록'}: {reason}) — 수기 확인"
         item_results["17"] = {
-            "status": st(consult_miss + consult2_miss),
-            "sub_status": {"①": st(consult_miss), "②": st(consult2_miss), "③": "주의"},
+            "status": st(consult_miss + consult2_miss + (["17③"] if sub3 == "미흡" else [])),
+            "sub_status": {"①": st(consult_miss), "②": st(consult2_miss), "③": sub3},
             "detail": "[①분기별 상담·②급여반영 연1회] "
                       + ("; ".join(consult_miss + consult2_miss) or "완료 분기 전 수급자 상담·급여반영 충족")
                       + (" / " + "; ".join(consult_note) if consult_note else "")
