@@ -113,14 +113,23 @@ def _text_any(prop: dict | None) -> str:
 
 
 def _cert_expiry(names: list[str]) -> tuple[str, str]:
-    """증서 파일명 앞 8자리(YYYYMMDD)를 만기일로 파싱. (만기 'YYYY-MM-DD', 파일명) 반환."""
+    """증서 파일명에서 만기일 파싱. YYYYMMDD(위치 무관) 또는 YYYY-MM-DD/YYYY.MM.DD 허용.
+    여러 날짜가 있으면 가장 늦은 날(갱신 증서의 만기)을 쓴다. (만기 'YYYY-MM-DD', 파일명) 반환."""
     for n in names:
-        m = re.match(r"\s*(\d{8})", n or "")
-        if m:
+        s = n or ""
+        cand = []
+        for m in re.finditer(r"(?:19|20)\d{6}", s):                 # 8자리 날짜(어디든)
             try:
-                return datetime.strptime(m.group(1), "%Y%m%d").strftime("%Y-%m-%d"), n
+                cand.append(datetime.strptime(m.group(0), "%Y%m%d"))
             except ValueError:
-                continue
+                pass
+        for m in re.finditer(r"((?:19|20)\d{2})[-.](\d{1,2})[-.](\d{1,2})", s):  # 구분자 날짜
+            try:
+                cand.append(datetime(int(m.group(1)), int(m.group(2)), int(m.group(3))))
+            except ValueError:
+                pass
+        if cand:
+            return max(cand).strftime("%Y-%m-%d"), n
     return "", (names[0] if names else "")
 
 
@@ -174,14 +183,18 @@ def fetch_insurance() -> tuple[dict[str, dict], list[dict]]:
             names = [f.get("name", "") for f in files]
             expiry, cert = _cert_expiry(names)
 
-            if not insurer and not expiry:
+            if not insurer and not names:
                 errors.append({"car": car_no, "branch": branch, "reason": "보험사·증서 없음"})
                 continue
             if not insurer:
                 errors.append({"car": car_no, "branch": branch, "reason": "보험사 없음"})
                 continue
+            if not names:
+                errors.append({"car": car_no, "branch": branch, "reason": "증서 파일 없음"})
+                continue
             if not expiry:
-                errors.append({"car": car_no, "branch": branch, "reason": "증서 파일명 만기일 파싱 실패", "cert": cert})
+                errors.append({"car": car_no, "branch": branch, "reason": "증서 파일명에 만기 날짜 없음",
+                               "cert": names[0]})
                 continue
             bad = _plate_mismatch(car_no, names)
             if bad:
