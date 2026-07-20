@@ -909,7 +909,7 @@ function renderCars() {
       <div class="info-row"><span class="info-label">마지막 교환</span><span class="info-value">${car.oilDate||'-'}</span></div>
       <div class="info-row"><span class="info-label">교환시 주행</span><span class="info-value">${(car.oilKm||0).toLocaleString()} km</span></div>
       <div class="info-row"><span class="info-label">다음 교환</span><span class="info-value">${(car.oilNextKm||0).toLocaleString()} km</span></div>
-      <div class="info-row"><span class="info-label">정기검사</span><span class="info-value">${car.inspectStart||'-'} ~ ${car.inspectEnd||'-'}${inspectDue?` <span style="color:#6b7280;font-size:0.85em">(공단 만료일 ${inspectDue})</span>`:''}</span></div>
+      <div class="info-row"><span class="info-label">정기검사</span><span class="info-value">${car.inspectStart||'-'} ~ ${car.inspectEnd||'-'}${inspectDue?` <span style="color:#6b7280;font-size:0.85em">(${inspectDue})</span>`:''}</span></div>
       <div class="info-row"><span class="info-label">타이어</span><span class="info-value">${tire ? escapeHtml(tire.size) : ''}</span></div>
       ${car.note?`<div class="info-row"><span class="info-label">비고</span><span class="info-value">${escapeHtml(car.note)}</span></div>`:''}
       <div class="badges">
