@@ -54,6 +54,50 @@ def find_gaps(cover: list[tuple[str, str]], s: str, e: str) -> list[str]:
     return [f"{_fmt(a)}~{_fmt(b)}" for a, b in gaps if a <= b]
 
 
+# 연1회 정기 욕구사정: 재적기간 내 사정 공백이 이 일수를 넘으면 '미실시' 후보.
+# 365(연1회) + 30(grace) = 395. rolling 13개월 기준(사용자 확정 2026-07-20: 경계선도 노출·주의).
+YEARLY_GAP_DAYS = 395
+
+
+def yearly_needs_miss(results: list[dict], cutoff: str, today: str) -> dict:
+    """욕구사정 연1회 실시 판정 — raw 1-1 스캔만으로 계산.
+
+    재적기간 = enroll_periods(급여개시~퇴소, '수급중'=재개 포함) ∩ [평가기간, 오늘].
+    그 구간 안에서 사정(needs 일자) 간격이 YEARLY_GAP_DAYS 를 넘으면 그 구간을 미실시로 본다
+    (재적시작→첫 사정, 사정 사이, 마지막 사정→재적종료 모두 검사, grace 30일).
+    ★raw 사람 객체 단위라 needs_full 조인이 없어 동명이인 문제도 없다.
+    반환: {'judged': N, 'miss_cur': [(name, [gap..])], 'miss_toe': [...]}  (수급중/퇴소 분리)
+    """
+    cut_d, today_d = _d(cutoff), _d(today)
+    grace = timedelta(days=30)
+    judged = 0
+    miss_cur: list[tuple[str, list[str]]] = []
+    miss_toe: list[tuple[str, list[str]]] = []
+    for p in results:
+        if p.get("err"):
+            continue
+        spans = []
+        for ps, pe in enroll_periods(p.get("enroll"), today):
+            s, e = max(_d(ps), cut_d), min(_d(pe), today_d)
+            if s <= e:
+                spans.append((s, e))
+        if not spans:
+            continue  # 평가기간 내 재적 없음 → 대상 아님(평가기간 전 퇴소자 등)
+        judged += 1
+        asm = sorted(_d(n["date"]) for n in (p.get("needs") or []) if n.get("date"))
+        gaps: list[str] = []
+        for s, e in spans:
+            inside = [x for x in asm if s - grace <= x <= e + grace]
+            pts = [s] + inside + [e]
+            for i in range(len(pts) - 1):
+                dd = (pts[i + 1] - pts[i]).days
+                if dd > YEARLY_GAP_DAYS:
+                    gaps.append(f"{_fmt(pts[i])}~{_fmt(pts[i + 1])}({dd}일)")
+        if gaps:
+            (miss_toe if p.get("status") == "퇴소" else miss_cur).append((p["name"], gaps))
+    return {"judged": judged, "miss_cur": miss_cur, "miss_toe": miss_toe}
+
+
 def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) -> dict:
     """스캔 결과 전체 분석. 반환: dict(대조리스트/연간점검/계획문제/항목판정)
 
@@ -301,7 +345,8 @@ def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) ->
     # 매뉴얼 20① 요건이 아니다(순서위반은 22① 지표라 아래에서 22 로 이관, 불일치는 참고 병기).
     # 수집물이 없으면 None(조용한 스킵)이 아니라 '주의' 를 낸다 — 안 본 것이 양호로 보이면 안 된다.
     item_results = {
-        "20": judge20(branch_name or "", cutoff, n_disc),
+        "20": judge20(branch_name or "", cutoff, n_disc,
+                      yearly=yearly_needs_miss(results, cutoff, today)),
         "21": {
             "status": status_of(n_half),
             "sub_status": {"①": st(half_by_kind["낙상"]), "②": st(half_by_kind["욕창"]), "③": st(half_by_kind["인지"])},

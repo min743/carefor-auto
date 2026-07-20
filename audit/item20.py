@@ -123,11 +123,14 @@ def check_needs_c(a: dict) -> tuple[list[str], list[str], list[str], list[str]]:
     return hard, soft, blank, miss_secs
 
 
-def judge(branch_name: str, cutoff: str, n_disc: int = 0) -> dict:
+def judge(branch_name: str, cutoff: str, n_disc: int = 0, yearly: dict | None = None) -> dict:
     """항목 20① 판정. 수집물이 없어도 None 이 아니라 '주의' 를 낸다(조용한 스킵 금지).
 
     n_disc: 낙상↔욕구사정 불일치 건수 — 매뉴얼 20① 요건이 아니라 참고로만 병기한다
             (판정 점수엔 미반영. 사용자 확정 2026-07-17).
+    yearly: analyzer.yearly_needs_miss() 결과(재적기간 내 연1회 사정 실시 판정).
+            None 이면 '미판정(주의)' 로 남긴다(1-1 스캔 없이 호출된 경우).
+            미실시가 있어도 '미흡' 으로 올리지 않고 주의·명단만 낸다(사용자 확정 2026-07-20, ②-A).
     """
     ref = f" · [참고] 낙상↔욕구사정 불일치 {n_disc}건(20① 요건 아님, 수기 확인)" if n_disc else ""
     src = RES / f"needs_full_{branch_name}.json"
@@ -219,10 +222,21 @@ def judge(branch_name: str, cutoff: str, n_disc: int = 0) -> dict:
         detail += f" · 판정 제외: 등급외 {n_oob}명"
         if n_nograde:
             detail += f", 등급 미확인 {n_nograde}명(확인 필요 — 조용히 빠진 게 아님)"
-    # 연1회: 재적기간이 없어 '필요 연도'를 특정 못 하고, 사정 0건 인원이 0명이면
-    # 수집물이 옛 프리필터 산출물이라는 뜻이다 → 상태를 숫자로 그대로 드러낸다
-    detail += (f" · 연1회 실시는 미판정(주의) — 사정 0건 {n_zero}명"
-               + ("(0명 = 옛 want 프리필터 수집물일 수 있음, 재수집 후 재확인)" if not n_zero else "")
-               + ", 재적기간이 수집물에 없어 '필요 연도' 특정 불가")
+    # 연1회 정기 실시: raw 1-1 스캔 enroll(급여개시~퇴소)로 재적기간을 잡아 사정 공백을 본다.
+    # (yearly 가 오면 실제 판정, 없으면 옛 '미판정' 문구 유지)
+    if yearly is not None:
+        cur, toe = yearly["miss_cur"], yearly["miss_toe"]
+        nmiss = len(cur) + len(toe)
+        if nmiss:
+            names = _fmt_names([n for n, _ in cur + toe])
+            detail += (f" · 연1회 실시: 판정 {yearly['judged']}명 중 미실시 {nmiss}명"
+                       f"(수급중 {len(cur)}·퇴소 {len(toe)}, 재적 내 13개월+ 사정공백) — {names}"
+                       " [미흡 아닌 주의·명단, 수기 확인]")
+        else:
+            detail += f" · 연1회 실시: 판정 {yearly['judged']}명 전원 충족(재적 내 13개월+ 공백 없음)"
+    else:
+        detail += (f" · 연1회 실시는 미판정(주의) — 사정 0건 {n_zero}명"
+                   + ("(0명 = 옛 want 프리필터 수집물일 수 있음, 재수집 후 재확인)" if not n_zero else "")
+                   + ", 재적기간이 수집물에 없어 '필요 연도' 특정 불가")
     detail += gap + ref
     return {"status": status, "sub_status": {"①": status}, "detail": detail}
