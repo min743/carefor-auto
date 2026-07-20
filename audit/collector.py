@@ -150,9 +150,12 @@ def run_branch_audit(
                 cut_d = _d(cutoff)
                 today_s = date.today().strftime("%Y.%m.%d")
                 # 이름별로 '모든' 스캔 레코드가 평가기간 전 퇴소일 때만 제외(동명이인 안전)
+                # ★ 재적종료일 > cutoff (초과) 여야 재적으로 본다. '== cutoff' 는 제외 —
+                #   cutoff 는 평가기간 시작(≈개소)일이라 그날 퇴소면 개소 후 서비스 이력이 없다.
+                #   실측: 천안 김병열 퇴소 2024.05.31 = cutoff(개소 6/1 전) → 제외(사용자 확정 2026-07-20).
                 scoped: dict[str, bool] = {}
                 for p in results:
-                    ok = any(_d(e) >= cut_d for _, e in enroll_periods(p.get("enroll"), today_s))
+                    ok = any(_d(e) > cut_d for _, e in enroll_periods(p.get("enroll"), today_s))
                     scoped[p["name"]] = scoped.get(p["name"], False) or ok
                 out_scope = {n for n, ok in scoped.items() if not ok}
                 r28 = judge_transport(tr_rows, cutoff, out_scope)
