@@ -917,9 +917,9 @@ function renderCars() {
         </div>
       </div>
       <div class="info-row"><span class="info-label">누적 주행</span><span class="info-value">${(car.totalKm||0).toLocaleString()} km${car.updatedAt ? `<span style="color:#888;font-size:0.82em;margin-left:6px">(${car.updatedAt})</span>` : ''}</span></div>
-      <div class="info-row"><span class="info-label">마지막 교환</span><span class="info-value">${car.oilDate||'-'}</span></div>
+      <div class="info-row"><span class="info-label">엔진오일교환</span><span class="info-value">${car.oilDate||'-'}</span></div>
       <div class="info-row"><span class="info-label">교환시 주행</span><span class="info-value">${(car.oilKm||0).toLocaleString()} km</span></div>
-      <div class="info-row"><span class="info-label">다음 교환</span><span class="info-value">${(car.oilNextKm||0).toLocaleString()} km</span></div>
+      <div class="info-row"><span class="info-label">추후 오일교환</span><span class="info-value">${(car.oilNextKm||0).toLocaleString()} km</span></div>
       <div class="info-row"><span class="info-label">정기검사</span><span class="info-value">${car.inspectStart||'-'} ~ ${car.inspectEnd||'-'}${inspectDue?` <span style="color:#6b7280;font-size:0.85em">(${inspectDue})</span>`:''}</span></div>
       <div class="info-row"><span class="info-label">보험</span><span class="info-value">${insur ? (escapeHtml(insur.insurer||'') + (insur.expiry ? ` <span style="color:#6b7280;font-size:0.85em">(만기 ${insur.expiry})</span>` : '')) : ''}</span></div>
       <div class="info-row"><span class="info-label">타이어</span><span class="info-value">${tire ? escapeHtml(tire.size) : ''}</span></div>
