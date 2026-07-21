@@ -252,9 +252,9 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
   function standalone(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
   function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
   function isAndroid(){return /android/i.test(navigator.userAgent);}
-  if(standalone()){ if(top) top.style.display='none'; return; }   // 이미 설치됨 → 버튼 숨김
+  // 상단 '바로가기 설치' 버튼은 앱 창(standalone)에서도 항상 노출 — 안 보인다는 혼란 방지
   window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); dp=e; bar.style.display='block'; });
-  if(isIOS()) bar.style.display='block'; // iOS는 프롬프트 없음 → 안내용 바
+  if(isIOS() && !standalone()) bar.style.display='block'; // iOS는 프롬프트 없음 → 안내용 바
   function showGuide(){
     if(isIOS()){ gtext.innerHTML='아이폰 — 사파리 아래쪽 <span class="sh">공유 ⬆️</span> 를 누르고<br><b>"홈 화면에 추가"</b>를 선택하세요.'; }
     else if(isAndroid()){ gtext.innerHTML='안드로이드 — 크롬 오른쪽 위 <span class="sh">⋮ 메뉴</span> 에서<br><b>"홈 화면에 추가"</b>(또는 "앱 설치")를 선택하세요.<br><br><small>아이콘은 앱 서랍에 생깁니다. 길게 눌러 홈 화면으로 옮길 수 있어요.</small>'; }
