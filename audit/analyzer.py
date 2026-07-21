@@ -204,12 +204,19 @@ def analyze(results: list[dict], cutoff: str, branch_name: str | None = None) ->
         #   둘을 합쳐 본다. ±40일 창으로 '이 계획에 딸린' 평가만 짝지어 무관한 주기 오탐을 막는다.
         eval_dates = [("위험도", dd) for key in ("fall", "sore", "cog") for dd in evals.get(key, [])]
         eval_dates += [("욕구사정", nn["date"]) for nn in needs if nn.get("date")]
+        # 기초평가가 2회차 이상이면 각 회차의 평가는 '그 회차의 계획'이 반영한다. 평가일 직후(같은
+        # 사이클, 40일 내)에 그 평가를 반영할 계획이 따로 있으면 앞 회차 계획의 순서위반으로 세지
+        # 않는다(예: 계획04.20 vs 회차2 평가04.27 — 04.27은 계획04.27 소관이라 오탐). ★덮는 계획을
+        # 평가일~+40일로 한정해야 한다 — 무제한이면 다음 연차 계획(356일 뒤)이 앞 해 진짜 위반을
+        # 은폐한다(서구 이순남: 평가03.04·계획03.03 하루전 위반이 26.02.23 계획에 가려짐). 사용자 확정 2026-07-21.
+        plan_dates = [_d(pl.get("wd")) for pl in p.get("plans", []) if pl.get("wd")]
         for pl in p.get("plans", []):
             wd = pl.get("wd") or ""
             if not wd or _d(wd) < cut_d:
                 continue
             later = [(kind, dd) for kind, dd in eval_dates
-                     if abs((_d(dd) - _d(wd)).days) <= 40 and _d(dd) > _d(wd)]
+                     if abs((_d(dd) - _d(wd)).days) <= 40 and _d(dd) > _d(wd)
+                     and not any(_d(dd) <= pd <= _d(dd) + timedelta(days=40) for pd in plan_dates)]
             if later:
                 order_issues.append([p["name"], wd, "계획 작성일보다 늦은 "
                                      + ", ".join(f"{k}({d})" for k, d in later)])
