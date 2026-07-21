@@ -458,7 +458,11 @@ def scrape_branch_pages(page, g_pammgno: str, years: list[int], progress_cb=prin
                 txt = page.evaluate(GET_TEXT_JS)
                 if f"{y}년 {m:02d}월" in txt:
                     break
-            out["status"][f"{y}-{m:02d}"] = txt
+            # 집계행만 쓰던 것을 개인별 그리드로 확대 — 34④에 '누가 미작성인지' 명단이 필요(수기 검수용).
+            # 행=[연번,현황,수급자명,케어그룹,등급,급여개시일,주1..주N], 주 셀은 날짜+작성자 / '미작성' / '급여개시 전'.
+            out["status"][f"{y}-{m:02d}"] = page.evaluate(
+                "()=>({th:[...document.querySelectorAll('g-th')].map(x=>x.innerText.trim()),"
+                "td:[...document.querySelectorAll('g-td')].map(x=>x.innerText.trim())})")
             n_m += 1
             m += 1
             if m > 12:
@@ -932,10 +936,68 @@ def parse_case(text: str) -> dict:
     return out
 
 
-def parse_status(text: str, view_ym: str) -> list:
-    """3-2 상태변화(월 뷰): 주별 [{start(date), end(date), done, total}].
-    주 시작 월이 뷰 월과 같은 주만 반환 (월 경계 중복 제거)."""
-    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+def _parse_status_grid(grid: dict, view_ym: str) -> list:
+    """3-2 g-th/g-td 그리드 → 주별 {start,end,done,total,missing}. parse_status 의 신 경로."""
+    th = [t.strip() for t in (grid.get("th") or [])]
+    td = [t.strip() for t in (grid.get("td") or [])]
+    vy, vm = int(view_ym[:4]), int(view_ym[5:7])
+    week_re = re.compile(r"^(\d{2})\.(\d{2})\s*~\s*(\d{2})\.(\d{2})$")
+    ratio_re = re.compile(r"^(\d+)\s*/\s*(\d+)$")
+    wms = [week_re.match(t) for t in th]
+    weeks = [m for m in wms if m]
+    W = len(weeks)
+    if not W:
+        return []
+    # 비율: '* 작성건수 / 대상자수' 라벨 뒤의 주수만큼
+    ratios = []
+    for i, t in enumerate(th):
+        if "작성건수" in t:
+            for s in th[i + 1:]:
+                r = ratio_re.match(s)
+                if not r:
+                    continue
+                ratios.append((int(r.group(1)), int(r.group(2))))
+                if len(ratios) == W:
+                    break
+            break
+    # 행 복원: 연번(숫자)으로 시작하는 폭 6+W 블록
+    RW, rows, i = 6 + W, [], 0
+    while i + RW <= len(td):
+        if td[i].isdigit():
+            rows.append(td[i:i + RW])
+            i += RW
+        else:
+            i += 1
+    out = []
+    for wi, wm in enumerate(weeks):
+        sm_, sd_, em_, ed_ = (int(wm.group(k)) for k in range(1, 5))
+        if sm_ != vm:
+            continue  # 주 시작이 뷰 월 밖 → 이전 달 뷰에서 처리(중복 제거)
+        sy = vy - 1 if sm_ > vm else vy
+        ey = vy + 1 if em_ < vm else vy
+        try:
+            s, e = date(sy, sm_, sd_), date(ey, em_, ed_)
+        except ValueError:
+            continue
+        missing = [r[2] for r in rows if r[6 + wi] == "미작성"]
+        done, total = ratios[wi] if wi < len(ratios) else (len(rows) - len(missing), len(rows))
+        out.append({"start": s, "end": e, "done": done, "total": total, "missing": missing})
+    return out
+
+
+def parse_status(src, view_ym: str) -> list:
+    """3-2 상태변화(월 뷰): 주별 [{start, end, done, total, missing:[수급자명]}].
+
+    src 가 {th, td} 그리드면 개인별 행까지 파싱해 **미작성자 명단**을 낸다(34④는 수기 검수
+    항목이라 '몇 명'보다 '누가'가 필요하다). 문자열(구 수집물)이면 집계행만 읽는 옛 경로로
+    폴백한다 — 조용히 건너뛰면 34④가 통째로 사라지므로 폴백을 남긴다.
+      행 = [연번, 현황, 수급자명, 케어그룹, 등급, 급여개시일, 주1..주N]
+      주 셀 = '2026.07.03\\n홍성희\\n(2건)'(작성) / '미작성' / '급여개시 전'(대상 아님)
+    done/total 은 케어포 화면의 '작성건수/대상자수' 비율을 그대로 쓴다(주마다 대상자수가 다름).
+    """
+    if isinstance(src, dict):
+        return _parse_status_grid(src, view_ym)
+    lines = [ln.strip() for ln in (src or "").split("\n") if ln.strip()]
     vy, vm = int(view_ym[:4]), int(view_ym[5:7])
     week_re = re.compile(r"^(\d{2})\.(\d{2})\s*~\s*(\d{2})\.(\d{2})$")
     ratio_re = re.compile(r"^(\d+)\s*/\s*(\d+)$")
@@ -1611,7 +1673,18 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
         if w["end"] >= today or w["start"] < eff:
             continue  # 진행중 주·개소 전 주 제외
         if w["total"] and w["done"] < w["total"]:
-            status_miss.append(f"{w['start'].strftime('%y.%m.%d')}주 {w['done']}/{w['total']}")
+            # 34④는 수기 검수 항목 — '몇 명'만으론 지점이 누굴 볼지 모른다. 미작성자 명단을 병기한다
+            # (이름은 본부 공유 살균기가 '김○숙'으로 마스킹).
+            nm = w.get("missing") or []
+            gap = (w["total"] or 0) - (w["done"] or 0)   # 케어포 비율이 말하는 누락 인원
+            if nm:
+                # 명단 수 ≠ 비율상 누락 수 = 행 파싱 드리프트(셀 누락 등) → 조용히 넘기지 않고 드러낸다
+                who = (" (미작성: " + ", ".join(nm[:5])
+                       + (f" 외 {len(nm) - 5}명" if len(nm) > 5 else "")
+                       + (f" ※명단 {len(nm)}≠누락 {gap} 확인요망" if len(nm) != gap else "") + ")")
+            else:
+                who = f" (미작성 명단 미확인 {gap}명)" if gap > 0 else ""
+            status_miss.append(f"{w['start'].strftime('%y.%m.%d')}주 {w['done']}/{w['total']}{who}")
     n_status_miss = len(status_miss)
     if n_status_miss > 10:
         status_miss = status_miss[:10] + [f"외 {n_status_miss - 10}주"]
