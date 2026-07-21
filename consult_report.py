@@ -185,12 +185,15 @@ def load_wait_counts() -> dict:
     except Exception as e:
         print(f"[경고] 대기명단 로드 실패(대기 줄 생략): {e}")
         return {}
+    # 대기명단 센터명('청주점')이 CENTER_ORDER 약칭('청주오창')과 안 맞아 매칭 실패 → 별칭으로 보정.
+    # 둔산·서구·천안은 2글자 약칭이라 '천안점'.startswith('천안')로 정상. 청주만 4글자라 깨졌음.
+    WAIT_ALIAS = {"청주오창": "청주"}
     counts = {short: 0 for short, _ in CENTER_ORDER}
     for row in rows[2:]:  # 헤더 2줄
         if len(row) >= 9 and str(row[0]).strip():
             center = wr.parse_center(str(row[0])).replace(" ", "")
             for short, _ in CENTER_ORDER:
-                if center.startswith(short):
+                if center.startswith(WAIT_ALIAS.get(short, short)):
                     counts[short] += 1
                     break
     return counts
