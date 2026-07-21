@@ -51,11 +51,9 @@
   .sectlabel::before{content:"";width:15px;height:2px;background:var(--navy2);border-radius:2px}
   .sectlabel span{color:var(--faint);font-weight:600;letter-spacing:0;text-transform:none}
 
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:28px}
-  @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:680px){.grid{grid-template-columns:1fr}}
-  .gridopen{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-bottom:28px}
-  @media(max-width:680px){.gridopen{grid-template-columns:1fr}}
+  /* 항목이 늘어날 것이라 세로 1열로(관제탑처럼) — 카드가 위→아래로 쌓인다 */
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:28px}
+  .gridopen{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:28px}
 
   .card{background:var(--card);border-radius:18px;position:relative;overflow:hidden;
     border:1px solid var(--line);box-shadow:0 3px 14px rgba(31,45,71,.06);
