@@ -257,16 +257,29 @@ PAGE_SRC = {
 }
 
 
-def _back_link() -> str:
-    # target=_top: Apps Script iframe 밖(최상위 창)으로 이동해야 허브가 정상 로드된다(안 그러면 빈 페이지)
-    return ('<a href="' + HUB_URL + '" target="_top" style="position:fixed;top:9px;left:9px;z-index:99999;'
-            'background:#152647;color:#fff;text-decoration:none;padding:7px 12px;border-radius:9px;'
-            'font:700 12.5px \'Malgun Gothic\',system-ui,sans-serif;'
-            'box-shadow:0 3px 12px rgba(0,0,0,.28)">← 공유 허브</a>')
+def _mask_name(nm: str) -> str:
+    """수급자 이름 가운데 마스킹 — 김여수→김○수, 이재분→이○분, 남궁민수→남○○수. (앞뒤만 남김)"""
+    nm = nm.strip()
+    if len(nm) <= 1:
+        return nm
+    if len(nm) == 2:
+        return nm[0] + "○"
+    return nm[0] + "○" * (len(nm) - 2) + nm[-1]
+
+
+def _inject_topbar(s: str) -> str:
+    """상단 sticky '← 공유 허브' 바 주입 + 페이지 자체 sticky 툴바(.tabbar/.toolbar)를 그 아래로 밀어 중첩 방지.
+    target=_top: Apps Script iframe 밖(최상위 창)으로 이동해야 허브가 정상 로드됨."""
+    bar = ('<div style="position:sticky;top:0;z-index:100000;height:36px;display:flex;align-items:center;'
+           'padding:0 14px;background:#152647;box-shadow:0 2px 8px rgba(0,0,0,.22)">'
+           '<a href="' + HUB_URL + '" target="_top" style="color:#fff;text-decoration:none;'
+           'font:700 13px \'Malgun Gothic\',system-ui,sans-serif">← 공유 허브</a></div>'
+           '<style>.tabbar,.toolbar{top:36px !important}</style>')
+    return re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + bar, s, count=1)
 
 
 def page_html(kind: str) -> str:
-    """도메인 제한 서빙용 페이지 HTML — 원본 그대로 + 좌상단 '공유 허브' 복귀 링크만 주입."""
+    """도메인 제한 서빙용 페이지 HTML — 원본 + 이름 마스킹(매출) + 상단 복귀 바."""
     p = PAGE_SRC[kind]
     if kind == "revenue":
         cands = sorted((CC / "매출점검").glob("매출점검_합본_*.html"))
@@ -274,8 +287,25 @@ def page_html(kind: str) -> str:
             raise SystemExit("매출점검 합본 HTML을 찾지 못함 (클로드코드/매출점검/)")
         p = cands[-1]
     s = pathlib.Path(p).read_text(encoding="utf-8")
-    s = re.sub(r"(<body[^>]*>)", lambda m: m.group(1) + _back_link(), s, count=1)
+    if kind == "revenue":
+        s = _mask_revenue_names(s)
+    s = _inject_topbar(s)
     return s
+
+
+# 첫 칸에 오지만 이름이 아닌 값(마스킹 제외)
+_NOT_NAME = {"합계", "소계", "총계", "평균", "전체", "미배정", "기타", "계", "구분", "지점"}
+
+
+def _mask_revenue_names(s: str) -> str:
+    """모든 표의 '행 첫 번째 td'가 수급자 이름 — 가운데 마스킹. 사유·금액·합계는 안 건드림.
+    (매출점검 표는 전부 수급자가 첫 컬럼. 실측: 첫칸 한글값 전부 이름, 합계/지점은 첫칸에 없음)"""
+    def repl(m):
+        cls, name = m.group(1) or "", m.group(2)
+        if name in _NOT_NAME or name.endswith("점") or name.endswith("급"):
+            return m.group(0)
+        return "<tr><td" + cls + ">" + _mask_name(name) + "</td>"
+    return re.sub(r"<tr>\s*<td(\s+class='[^']*')?>([가-힣]{2,4})</td>", repl, s)
 
 
 def token() -> str:
