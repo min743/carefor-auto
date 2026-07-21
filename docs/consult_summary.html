@@ -26,16 +26,16 @@ tr.sum td{background:#f6f8fc;font-weight:bold}
 </style></head><body>
 <div id="gate"><h2 style="color:#fff">🔒 상담 현황 요약</h2><div>접속 번호를 입력하세요</div>
 <input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
-<header><h1>☎️ 상담 현황 요약 (본부 공유용)</h1><div class="sub">생성: 2026-07-17 · 2026년 05월~ 누적 · 전일자 기준</div></header>
+<header><h1>☎️ 상담 현황 요약 (본부 공유용)</h1><div class="sub">생성: 2026-07-21 · 2026년 05월~ 누적 · 전일자 기준</div></header>
 <div class="wrap">
 <a class="back" href="hq.html">← 🏢 본부 허브</a>
 <h2>📋 신규상담 상담시트 입력 현황 <span id="liveStat" style="font-size:12px;color:#888;font-weight:normal">⏳ 실시간 조회 중…</span></h2>
 <div id="consultLive"><div style="padding:18px;color:#888;font-size:14px">⏳ 실시간 집계를 불러오는 중입니다…</div></div>
 <!-- 실시간 조회 실패 시에만 쓰는 폴백(페이지 생성 시점의 값). 첫 화면에 보이면 옛 숫자를
      현재값으로 오해하므로 숨겨둔다 — 2026-07-17: 이틀 전 값이 그대로 보이던 문제. -->
-<div id="consultFallback" style="display:none"><table><tr><th>센터</th><th>신규상담(누적)</th><th>시트 미입력</th><th>미입력률</th></tr><tr><td class="name">둔산</td><td>52</td><td class="ok">0</td><td class="ok">0%</td></tr><tr><td class="name">서구</td><td>50</td><td class="bad">6</td><td class="warn">12%</td></tr><tr><td class="name">천안</td><td>53</td><td class="ok">0</td><td class="ok">0%</td></tr><tr><td class="name">청주오창</td><td>16</td><td class="ok">0</td><td class="ok">0%</td></tr><tr class="sum"><td class="name">합계</td><td>171</td><td class="bad">6</td><td>4%</td></tr></table></div>
+<div id="consultFallback" style="display:none"><table><tr><th>센터</th><th>신규상담(누적)</th><th>시트 미입력</th><th>미입력률</th></tr><tr><td class="name">둔산</td><td>57</td><td class="bad">4</td><td class="warn">7%</td></tr><tr><td class="name">서구</td><td>52</td><td class="bad">6</td><td class="warn">12%</td></tr><tr><td class="name">천안</td><td>55</td><td class="bad">2</td><td class="warn">4%</td></tr><tr><td class="name">청주오창</td><td>16</td><td class="ok">0</td><td class="ok">0%</td></tr><tr class="sum"><td class="name">합계</td><td>180</td><td class="bad">12</td><td>7%</td></tr></table></div>
 <h2 class="sec2">📞 센터별 상담 대기 명단</h2>
-<table><tr><th>센터</th><th>대기 건수</th><th>기한경과</th><th>아웃콜 차수 분포</th></tr><tr><td class="name">서구점</td><td>4</td><td class="bad">4</td><td class="brk">1차 아웃콜 1 · 2차 아웃콜 2 · 3차 아웃콜 1</td></tr><tr><td class="name">천안점</td><td>3</td><td class="bad">2</td><td class="brk">1차 아웃콜 2 · 대면상담 1</td></tr><tr><td class="name">청주점</td><td>2</td><td class="bad">2</td><td class="brk">1차 아웃콜 1 · 대면상담 1</td></tr><tr class="sum"><td class="name">합계</td><td>9</td><td colspan="2"></td></tr></table>
+<table><tr><th>센터</th><th>대기 건수</th><th>기한경과</th><th>아웃콜 차수 분포</th></tr><tr><td class="name">천안점</td><td>9</td><td class="bad">8</td><td class="brk">1차 아웃콜 4 · 2차 아웃콜 3 · 3차 아웃콜 1 · 대면상담 1</td></tr><tr><td class="name">청주점</td><td>2</td><td class="bad">2</td><td class="brk">1차 아웃콜 1 · 대면상담 1</td></tr><tr class="sum"><td class="name">합계</td><td>11</td><td colspan="2"></td></tr></table>
 <div class="note">· 이 페이지에는 수급자 개인정보(이름·연락처)가 포함되어 있지 않습니다 — 센터 단위 집계만.<br>
 · 건별 상세(첫상담일·예정일·연락처)는 슬랙 엑셀 링크 공지에서만 확인할 수 있습니다.<br>
 · 미입력률 <span class="bad">30% 이상</span> 붉은색 · 대기 명단은 결과 입력 시 자동 제외.</div>
@@ -65,7 +65,7 @@ function _renderConsult(d){
   if(st) st.textContent='🟢 실시간 · '+(d.generated||'')+' 기준';
 }
 // 실시간 실패 시에만 폴백(생성 시점 값)을 꺼내 보여주고, 언제 기준인지 명시한다.
-const GEN='2026-07-17';
+const GEN='2026-07-21';
 function _useFallback(){
   document.getElementById('consultLive').innerHTML=document.getElementById('consultFallback').innerHTML;
   const st=document.getElementById('liveStat');
