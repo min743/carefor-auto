@@ -1023,61 +1023,6 @@ def combine_month(y: int, m: int, branches, progress=print):
     _tc = date.today()
     partial_c = (" <b>진행중 당월: 등록일정 전체 기준</b>."
                  if (y, m) == (_tc.year, _tc.month) else "")
-    # ── 위쪽 매출표: 과거 달도 볼 수 있게 월별 표를 미리 만들어 둔다 ─────────────
-    # 이번달 표는 위 ov(실시간 수집분) 그대로 쓰고, 과거 달은 이력(revenue_monthly.json)에서
-    # '그 달 vs 그 전달' 로 만든다. 비교 방식은 위쪽 표의 성격(전월 대비)을 그대로 따른다.
-    ovm_blocks, ovm_yms = "", []
-    if _hist:
-        _hk = [(k, n) for k, n, _ in parts if k in _hist]
-        _all = sorted({v for k, _ in _hk for v in _hist.get(k, {})}, reverse=True)
-        for _v in _all:
-            _py = int(_v[:4]); _pm = int(_v[4:])
-            _pv = f"{_py - 1}12" if _pm == 1 else f"{_py}{_pm - 1:02d}"
-            _r, _c, _p = "", {"rev": 0, "o8": 0, "u8": 0, "d": 0}, {"rev": 0, "o8": 0, "u8": 0, "d": 0}
-            for k, nm in _hk:
-                cu = _hist.get(k, {}).get(_v)
-                pr = _hist.get(k, {}).get(_pv) or {}
-                if not cu:
-                    continue
-                for src, acc in ((cu, _c), (pr, _p)):
-                    acc["rev"] += src.get("rev_total", 0)
-                    acc["o8"] += src.get("rev_over8", 0)
-                    acc["u8"] += src.get("rev_under8", 0)
-                    acc["d"] += src.get("pay_days", 0)
-                _r += (f"<tr class='ovrow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
-                       f"<td class='num'>{cu.get('people', 0)}</td>"
-                       f"<td class='num' style='white-space:nowrap'>"
-                       f"{_diff(pr.get('rev_total', 0), cu.get('rev_total', 0), True, '원')}"
-                       f"<div style='font-size:11px;color:#8894a6'>"
-                       f"{pr.get('pay_days', 0):,}건 → {cu.get('pay_days', 0):,}건</div></td>"
-                       + _money(pr.get('rev_over8', 0), cu.get('rev_over8', 0),
-                                pr.get('over8', 0), cu.get('over8', 0), True)
-                       + _money(pr.get('rev_under8', 0), cu.get('rev_under8', 0),
-                                pr.get('u8', 0), cu.get('u8', 0), True)
-                       + "</tr>")
-            _r += ("<tr class='ovsum' style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
-                   f"<td class='num' style='white-space:nowrap'>{_diff(_p['rev'], _c['rev'], True, '원')}"
-                   f"<div style='font-size:11px;color:#667'>{_p['d']:,}건 → {_c['d']:,}건</div></td>"
-                   + _money(_p["o8"], _c["o8"], None, None, True)
-                   + _money(_p["u8"], _c["u8"], None, None, True) + "</tr>")
-            ovm_yms.append(_v)
-            ovm_blocks += (
-                f"<div class='ovblk' data-ym='{_v}'>"
-                f"<div style='overflow-x:auto'><table><thead><tr><th>지점</th><th>이용인원</th>"
-                f"<th>총매출<br><small>전월→해당월</small></th>"
-                f"<th>8시간 이상 매출<br><small>금액 · 건수</small></th>"
-                f"<th>8시간 미만 매출<br><small>금액 · 건수</small></th></tr></thead>"
-                f"<tbody>{_r}</tbody></table></div></div>")
-    _ovyears = sorted({v[:4] for v in ovm_yms}, reverse=True)
-    ovm_pick = ""
-    if ovm_yms:
-        ovm_pick = (f"<div class='histpick'>"
-                    f"<select id='ovY' onchange='ovYear(this.value)'>"
-                    f"<option value='_now'>이번달({y}-{m:02d})</option>"
-                    + "".join(f"<option value='{yy}'>{yy}년</option>" for yy in _ovyears)
-                    + f"</select><select id='ovM' onchange='ovShow(this.value)' "
-                      f"style='display:none'></select></div>")
-
     # ── 위쪽 매출표를 과거 달도 볼 수 있게 ────────────────────────────────────
     # 이번달은 위 ov(실시간 수집분)를 그대로 쓰고, 과거 달은 이력에서 '그 달 vs 그 전달'로 만든다.
     # ⚠️ 잠재매출(근소차 연장 차액)은 사람별 수가 계산이 필요해 이력엔 없다 → 이번달 표에만 있다.
@@ -1087,6 +1032,13 @@ def combine_month(y: int, m: int, branches, progress=print):
         for _v in sorted({x for k, _ in _ok for x in _hist.get(k, {})}, reverse=True):
             _yy, _mm = int(_v[:4]), int(_v[4:])
             _pv = f"{_yy - 1}12" if _mm == 1 else f"{_yy}{_mm - 1:02d}"
+            # ★과거 달 총매출 = 7-1 청구확정(공단+본인) — 공단이 실제 지급한 금액(사용자 확정 2026-07-22).
+            #   케어포 7-1 합계 행을 그대로 읽은 값이라 청구액과 0% 일치한다. 2-8 제공기준(급여수가)은
+            #   한도초과·등급외·가산 때문에 달마다 ±2% 어긋나므로 매출로는 청구확정을 쓴다.
+            #   단 8h이상/미만 세부는 7-1에 그 구분이 없어 2-8(제공기준) 그대로 둔다(참고용).
+            def _bill(dd):
+                _np = (dd.get("nonpay") or {})
+                return _np.get("공단부담금", 0) + _np.get("본인부담금", 0)
             _r = ""
             _c = {"rev": 0, "o8": 0, "u8": 0, "d": 0}
             _pp = {"rev": 0, "o8": 0, "u8": 0, "d": 0}
@@ -1095,15 +1047,15 @@ def combine_month(y: int, m: int, branches, progress=print):
                 if not cu:
                     continue
                 pr = _hist.get(k, {}).get(_pv) or {}
+                _c["rev"] += _bill(cu); _pp["rev"] += _bill(pr)
                 for src, acc in ((cu, _c), (pr, _pp)):
-                    acc["rev"] += src.get("rev_total", 0)
                     acc["o8"] += src.get("rev_over8", 0)
                     acc["u8"] += src.get("rev_under8", 0)
                     acc["d"] += src.get("pay_days", 0)
                 _r += (f"<tr class='ovrow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
                        f"<td class='num'>{cu.get('people', 0)}</td>"
                        f"<td class='num' style='white-space:nowrap'>"
-                       f"{_diff(pr.get('rev_total', 0), cu.get('rev_total', 0), True, '원')}"
+                       f"{_diff(_bill(pr), _bill(cu), True, '원')}"
                        f"<div style='font-size:11px;color:#8894a6'>"
                        f"{pr.get('pay_days', 0):,}건 → {cu.get('pay_days', 0):,}건</div></td>"
                        + _money(pr.get("rev_over8", 0), cu.get("rev_over8", 0),
@@ -1121,10 +1073,18 @@ def combine_month(y: int, m: int, branches, progress=print):
             ovm += (f"<div class='ovblk' data-ym='{_v}' style='display:none'>"
                     f"<div style='overflow-x:auto'><table><thead><tr>"
                     f"<th>지점</th><th>이용인원</th>"
-                    f"<th>총매출<br><small>전월→{_v[:4]}-{_v[4:]}</small></th>"
-                    f"<th>8시간 이상 매출<br><small>금액 · 건수</small></th>"
-                    f"<th>8시간 미만 매출<br><small>금액 · 건수</small></th></tr></thead>"
-                    f"<tbody>{_r}</tbody></table></div></div>")
+                    f"<th>총매출 <span style='font-weight:400;color:#2f6fdb'>청구확정</span>"
+                    f"<br><small>전월→{_v[:4]}-{_v[4:]}</small></th>"
+                    f"<th>8시간 이상 <span style='font-weight:400;color:#8894a6'>제공기준</span>"
+                    f"<br><small>금액 · 건수</small></th>"
+                    f"<th>8시간 미만 <span style='font-weight:400;color:#8894a6'>제공기준</span>"
+                    f"<br><small>금액 · 건수</small></th></tr></thead>"
+                    f"<tbody>{_r}</tbody></table></div>"
+                    f"<div style='font-size:11.5px;color:#8894a6;margin-top:6px'>"
+                    f"· <b>총매출 = 7-1 청구확정</b>(공단+본인 급여비용) = 공단이 실제 지급한 금액. "
+                    f"케어포 7-1 합계와 원 단위 일치.<br>"
+                    f"· 8h이상/미만은 7-1에 구분이 없어 <b>2-8 제공기준</b>(급여수가)입니다 — "
+                    f"한도초과·등급외·가산 때문에 두 합이 총매출과 다를 수 있습니다(참고용).</div></div>")
     ov_pick = ""
     if ovm_yms:
         ov_pick = (f"<div class='histpick'>"
