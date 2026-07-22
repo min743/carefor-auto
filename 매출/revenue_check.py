@@ -1166,8 +1166,14 @@ def combine_month(y: int, m: int, branches, progress=print):
 <title>매출점검 합본 {y}-{m:02d}</title>
 <style>
 {shared_style}
- .tabbar{{position:sticky;top:0;background:#f6f8fb;padding:10px 0 8px;margin:-24px -24px 8px;
-   padding-left:24px;border-bottom:1px solid #dde3ec;z-index:5;display:flex;gap:6px;flex-wrap:wrap}}
+ /* 복귀버튼·제목·탭을 하나의 sticky 헤더(.topgroup)로 묶는다 — 전에는 허브 복귀바(주입)와
+    탭바가 각각 top:0 sticky 라 노트북 화면에서 서로 덮었다(반복된 문제). 한 덩어리면 충돌이 없다. */
+ .topgroup{{position:sticky;top:0;z-index:6;background:#f6f8fb;margin:-24px -24px 10px;
+   box-shadow:0 2px 10px rgba(21,38,71,.06)}}
+ .pagehead{{display:flex;align-items:center;justify-content:space-between;gap:12px;
+   padding:11px 22px 9px;border-bottom:1px solid #e6ebf2}}
+ .pagehead .ph-title{{font-size:16.5px;font-weight:800;color:#1f3360;white-space:nowrap}}
+ .tabbar{{padding:9px 22px 9px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}}
  .tabbtn{{border:1px solid #cdd6e4;background:#fff;border-radius:8px;padding:7px 14px;font-size:14px;
    cursor:pointer;font-family:inherit;color:#334}}
  .tabbtn.active{{background:#2f6fdb;border-color:#2f6fdb;color:#fff;font-weight:700}}
@@ -1242,7 +1248,13 @@ def combine_month(y: int, m: int, branches, progress=print):
     <button onclick="calcDot()">.</button><button class="eq" onclick="calcEq()">=</button>
   </div>
 </div>
-<div class="tabbar">{btns}<button class="calcbtn" onclick="calcToggle()">🧮 계산기</button></div>
+<div class="topgroup">
+  <div class="pagehead">
+    <div class="ph-title">💰 충청본부 매출 점검</div>
+    <span id="hubslot"></span>   <!-- 허브 복귀 버튼이 배포 때 여기로 들어온다(deploy_hub) -->
+  </div>
+  <div class="tabbar">{btns}<button class="calcbtn" onclick="calcToggle()">🧮 계산기</button></div>
+</div>
 {panels}
 <script>
  /* 표 폭 자동 통일 — 기준은 ② 8시간 미만 표(사용자 지정 2026-07-22).

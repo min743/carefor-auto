@@ -315,6 +315,19 @@ def _inject_topbar(s: str) -> str:
     그냥 위에 얹으면 그것들이 덮어 잘렸다 → 복귀 바를 top:0 sticky(z 최상단)로 두고,
     페이지의 sticky 요소는 그 높이만큼 아래로 내려(top:BARH) 겹치지 않게 한다.
     target=_top: Apps Script iframe 밖(최상위 창)으로 이동해야 허브가 정상 로드됨."""
+    # ★페이지에 헤더 슬롯(#hubslot)이 있으면 그 안에 복귀 버튼을 넣는다(매출 페이지).
+    #   전에는 복귀 바를 body 맨 위에 얹었는데, 매출 페이지의 sticky 탭바와 top:0 에서 겹쳐
+    #   노트북 화면에서 서로 덮었다(반복된 문제). 헤더 안에 넣으면 한 덩어리라 충돌이 없다.
+    if 'id="hubslot"' in s:
+        pill = ('<a href="' + HUB_URL + '" target="_top" style="display:inline-flex;'
+                'align-items:center;gap:6px;background:#eaf0f8;color:#152647 !important;'
+                '-webkit-text-fill-color:#152647;border:1px solid #c4d0e6;padding:7px 15px;'
+                'border-radius:999px;text-decoration:none;'
+                'font-family:\'Malgun Gothic\',system-ui,sans-serif;font-size:13px;font-weight:700;'
+                'white-space:nowrap">← 🏢 본부 공유 허브</a>')
+        return s.replace('<span id="hubslot"></span>', '<span id="hubslot">' + pill + '</span>', 1)
+
+    # (그 외 페이지 — 차량 월별 수리비 등) 복귀 바를 맨 위에 얹는다.
     # ⚠️ 오프셋을 상수로 박지 말 것 — 글꼴·확대율에 따라 바 높이가 달라져 탭이 그만큼 잘린다(실제로 그랬다).
     #    바 높이를 실측해 sticky top 에 그대로 넣고, 창 크기·폰트 변화에도 다시 맞춘다.
     bar = ('<div id="hubbackbar" style="background:#eef3fa;'
