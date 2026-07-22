@@ -23,6 +23,9 @@ apps_script/consult_read.gs
 매출점검/
 _8시간미만계약제외.txt
 _보류제외.txt
+# 매출/ 는 프로그램만 커밋. 실행하면 이 안에 지점별 실명 보고서·합본이 생기므로 전부 차단.
+매출/*/
+매출/매출점검_합본_*.html
 
 # PWA 매니페스트는 커밋 필요 (docs 공개 페이지)
 !docs/hq-manifest.json

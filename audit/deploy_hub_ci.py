@@ -30,10 +30,21 @@ import urllib.request
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-from audit.deploy_hub import CODE, MANIFEST, SCRIPT_ID, DEPLOY_ID, build_html, api
+from audit.deploy_hub import (CODE, MANIFEST, SCRIPT_ID, DEPLOY_ID, build_html, api,
+                              _mask_revenue_names, _inject_bg, _inject_topbar)
 
 # 저장소 밖 원본이 필요해 CI 에서 못 만드는 페이지들 — 현재 배포본을 그대로 살린다
 PRESERVE = ("revenue", "carcost", "runbook")
+
+
+def revenue_page_from(path: str) -> str:
+    """CI 가 방금 만든 매출 합본 HTML → 허브용 페이지.
+    ★이름 마스킹 필수 — 합본 원본은 수급자 실명이 그대로 들어 있다."""
+    s = pathlib.Path(path).read_text(encoding="utf-8")
+    s = _mask_revenue_names(s)     # 실명 → 김○수
+    s = _inject_bg(s)
+    s = _inject_topbar(s)
+    return s
 
 
 def token_ci() -> str:
@@ -51,6 +62,11 @@ def token_ci() -> str:
 
 
 def main():
+    # --revenue-from <합본 HTML>: 그 페이지만 새로 만들어 올린다(나머지는 보존)
+    src_revenue = None
+    if "--revenue-from" in sys.argv:
+        src_revenue = sys.argv[sys.argv.index("--revenue-from") + 1]
+
     at = token_ci()
     base = f"https://script.googleapis.com/v1/projects/{SCRIPT_ID}"
 
@@ -59,10 +75,16 @@ def main():
     if cur.get("ERR"):
         print("현재 내용 조회 실패:", cur["ERR"]); sys.exit(1)
     keep = {f["name"]: f for f in cur.get("files", []) if f["name"] in PRESERVE}
+
+    if src_revenue:   # 방금 만든 매출 합본으로 교체
+        keep["revenue"] = {"name": "revenue", "type": "HTML",
+                           "source": revenue_page_from(src_revenue)}
+        print(f"  갱신: revenue ← {src_revenue} ({len(keep['revenue']['source'])}자, 이름 마스킹 적용)")
+
     for n in PRESERVE:
-        if n in keep:
+        if n in keep and not (src_revenue and n == "revenue"):
             print(f"  보존: {n} ({len(keep[n].get('source',''))}자)")
-        else:
+        elif n not in keep:
             # 없으면 만들지 않는다 — 빈 페이지로 덮어 사라지게 하느니 그대로 두는 게 낫다
             print(f"  ⚠️ {n} 없음 — 이번 배포에서 제외(로컬 deploy_hub 로 올릴 것)")
 
