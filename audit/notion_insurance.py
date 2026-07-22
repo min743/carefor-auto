@@ -43,21 +43,26 @@ def judge_from(cars: dict, errors: list, branch_name: str, all_branches: list | 
     myerr = [e for e in (errors or []) if _match(e.get("branch", ""), branch_name)]
 
     orphan = []
+    orph_valid, orph_problem = [], []
     if all_branches:
         def _assigned(b: str) -> bool:
             return any(_match(b, x) for x in all_branches)
-        orphan = ([f"{no}(유효)" for no, c in (cars or {}).items() if not _assigned(c.get("branch", ""))]
-                  + [f"{e.get('car','?')}({e.get('reason','')})"
-                     for e in (errors or []) if not _assigned(e.get("branch", ""))])
+        orph_valid = [no for no, c in (cars or {}).items() if not _assigned(c.get("branch", ""))]
+        orph_problem = [f"{e.get('car','?')}({e.get('reason','')})"
+                        for e in (errors or []) if not _assigned(e.get("branch", ""))]
     exp = [e for e in myerr if EXPIRED in (e.get("reason") or "")]
     other = [e for e in myerr if EXPIRED not in (e.get("reason") or "")]
 
-    orph_txt = ""
-    if orphan:
-        # 소속이 비었거나 광역('공용'·'본부')이면 어느 지점에도 안 잡힌다 → 건수를 드러내고 주의로 낮춘다
-        orph_txt = (f" ※노션 소속 미지정 차량 {len(orphan)}건(어느 지점에도 안 잡힘 — 이 지점 차량이"
-                    f" 아닐 수 있음, 노션 '소속' 입력 필요): "
-                    + ", ".join(orphan[:4]) + (f" 외 {len(orphan)-4}건" if len(orphan) > 4 else ""))
+    # 소속 미지정 안내. ★유효한 미지정 차량은 숨겨도 문제가 없으니(보험 유효) 강등하지 않고 안내만 한다.
+    #   반면 '문제 있는(만기경과·증서없음 등) 미지정 차량'은 이 지점 것일 수 있어 숨기면 안 됨 → 주의로 낮춘다.
+    notes = []
+    if orph_problem:
+        notes.append(f"소속 미지정 '문제' 차량 {len(orph_problem)}건(이 지점 것일 수 있어 확인요망): "
+                     + ", ".join(orph_problem[:4]) + (f" 외 {len(orph_problem)-4}건" if len(orph_problem) > 4 else ""))
+    if orph_valid:
+        notes.append(f"소속 미지정 유효차량 {len(orph_valid)}건(노션 '소속' 입력 권장): "
+                     + ", ".join(orph_valid[:4]) + (f" 외 {len(orph_valid)-4}건" if len(orph_valid) > 4 else ""))
+    orph_txt = (" ※" + " / ".join(notes)) if notes else ""
 
     if not mine and not myerr:
         return {"status": "주의",
@@ -76,8 +81,8 @@ def judge_from(cars: dict, errors: list, branch_name: str, all_branches: list | 
         st = "양호"
         soon = sorted((c.get("expiry", "") for c in mine.values()))
         head = f"전 차량 유효 {len(mine)}대 (최근 만기 {soon[0] if soon else '?'})"
-    if orphan and st == "양호":
-        st = "주의"          # 미매칭 차량의 만기경과가 숨지 않도록 양호로 두지 않는다
+    if orph_problem and st == "양호":
+        st = "주의"          # '문제 있는' 미매칭 차량의 만기경과 등이 숨지 않도록 양호로 두지 않는다
     return {"status": st, "detail": f"[③자동차종합보험] {head} (노션 차량현황 기준)" + orph_txt}
 
 
