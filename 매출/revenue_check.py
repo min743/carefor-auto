@@ -1187,9 +1187,10 @@ def combine_month(y: int, m: int, branches, progress=print):
  table.hist{{width:auto;max-width:100%}}
  /* 계산기 — 매출 보면서 바로 계산하라고(허브 것과 같은 방식). 평소엔 접혀 있다. */
  /* 지점 탭 옆에 둔다(사용자 요청) — 탭 버튼과 같은 모양이되 색으로 구분 */
- .calcbtn{{border:1px solid #cdd6e4;background:#fff;border-radius:8px;padding:7px 14px;
-   font-size:14px;cursor:pointer;font-family:inherit;color:#2f6fdb;font-weight:700;margin-left:8px}}
- .calcbtn:hover{{background:#eef3fb}}
+ /* 선택된 지점 탭과 같은 파란 배경으로 — 눈에 바로 띄게(사용자 요청) */
+ .calcbtn{{border:1px solid #2f6fdb;background:#2f6fdb;border-radius:8px;padding:7px 14px;
+   font-size:14px;cursor:pointer;font-family:inherit;color:#fff;font-weight:700;margin-left:8px}}
+ .calcbtn:hover{{background:#2560c4;border-color:#2560c4}}
  .calcbox{{display:none;position:fixed;right:18px;top:70px;z-index:51;background:#fff;
    border:1px solid #dde3ec;border-radius:14px;padding:14px;width:290px;
    box-shadow:0 8px 28px rgba(21,38,71,.22)}}
