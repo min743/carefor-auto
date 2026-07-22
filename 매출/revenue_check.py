@@ -229,7 +229,7 @@ def _grab_month(page, y: int, m: int) -> list[str]:
     for attempt in range(3):
         page.evaluate(f"move_month('{y}','{m:02d}')")
         prev = -1
-        for _ in range(25):
+        for _ in range(140):        # 최대 ~70초 (실측 청주 2024-10 = 50초)
             page.wait_for_timeout(500)
             d = page.evaluate(_GRAB_CELLS)
             n = len(d.get("cells", []))
@@ -849,18 +849,19 @@ def combine_month(y: int, m: int, branches, progress=print):
             np_total += _np.get("비급여계", 0)
             np_meal += _np.get("식사재료비", 0)
             np_snack += _np.get("간식비", 0)
-            ov += (f"<tr><td style='white-space:nowrap;text-align:center'>{link}</td><td class='num'>{target}</td>"
+            ov += (f"<tr class='ovrow' data-b='{key}'>"
+                   f"<td style='white-space:nowrap;text-align:center'>{link}</td><td class='num'>{target}</td>"
                    f"<td class='num' style='white-space:nowrap'>{_diff(prv['rev_billed'], cur['rev_billed'], True, '원')}"
                    f"<div style='font-size:11px;color:#8894a6'>{prv['pay']:,}건 → {cur['pay']:,}건</div></td>"
                    f"{_money(prv['rev_over8_billed'], cur['rev_over8_billed'], prv['over8'], cur['over8'], True)}"
                    f"{_money(prv['rev_under8_billed'], cur['rev_under8_billed'], prv['u8'], cur['u8'], True)}"
                    f"{_money(prv['gain'], cur['gain'], prv['near'], cur['near'], False)}</tr>")
         else:
-            ov += (f"<tr><td>{link}</td><td class='num'>{p['target']}</td>"
+            ov += (f"<tr class='ovrow' data-b='{key}'><td>{link}</td><td class='num'>{p['target']}</td>"
                    f"<td colspan=4 style='color:#c00'>매출 금액은 재실행 후 표시됩니다</td></tr>")
 
     if have_prev:
-        ov += ("<tr style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
+        ov += ("<tr class='ovsum' style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
                f"<td class='num' style='white-space:nowrap'>{_diff(ptot['rev_billed'], tot['rev_billed'], True, '원')}"
                f"<div style='font-size:11px;color:#667'>{ptot['pay']:,}건 → {tot['pay']:,}건</div></td>"
                f"{_money(ptot['rev_over8_billed'], tot['rev_over8_billed'], ptot['over8'], tot['over8'], True)}"
@@ -1041,7 +1042,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                     acc["o8"] += src.get("rev_over8", 0)
                     acc["u8"] += src.get("rev_under8", 0)
                     acc["d"] += src.get("pay_days", 0)
-                _r += (f"<tr><td style='white-space:nowrap'>{nm}</td>"
+                _r += (f"<tr class='ovrow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
                        f"<td class='num'>{cu.get('people', 0)}</td>"
                        f"<td class='num' style='white-space:nowrap'>"
                        f"{_diff(pr.get('rev_total', 0), cu.get('rev_total', 0), True, '원')}"
@@ -1052,7 +1053,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                        + _money(pr.get('rev_under8', 0), cu.get('rev_under8', 0),
                                 pr.get('u8', 0), cu.get('u8', 0), True)
                        + "</tr>")
-            _r += ("<tr style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
+            _r += ("<tr class='ovsum' style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
                    f"<td class='num' style='white-space:nowrap'>{_diff(_p['rev'], _c['rev'], True, '원')}"
                    f"<div style='font-size:11px;color:#667'>{_p['d']:,}건 → {_c['d']:,}건</div></td>"
                    + _money(_p["o8"], _c["o8"], None, None, True)
@@ -1097,7 +1098,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                     acc["o8"] += src.get("rev_over8", 0)
                     acc["u8"] += src.get("rev_under8", 0)
                     acc["d"] += src.get("pay_days", 0)
-                _r += (f"<tr><td style='white-space:nowrap'>{nm}</td>"
+                _r += (f"<tr class='ovrow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
                        f"<td class='num'>{cu.get('people', 0)}</td>"
                        f"<td class='num' style='white-space:nowrap'>"
                        f"{_diff(pr.get('rev_total', 0), cu.get('rev_total', 0), True, '원')}"
@@ -1109,7 +1110,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                                 pr.get("u8", 0), cu.get("u8", 0), True) + "</tr>")
             if not _r:
                 continue
-            _r += ("<tr style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
+            _r += ("<tr class='ovsum' style='font-weight:700;background:#eef3fb'><td>합계</td><td class='num'>–</td>"
                    f"<td class='num' style='white-space:nowrap'>{_diff(_pp['rev'], _c['rev'], True, '원')}"
                    f"<div style='font-size:11px;color:#667'>{_pp['d']:,}건 → {_c['d']:,}건</div></td>"
                    + _money(_pp["o8"], _c["o8"], None, None, True)
@@ -1130,7 +1131,11 @@ def combine_month(y: int, m: int, branches, progress=print):
                    + "".join(f"<option value='{yy}'>{yy}년</option>"
                              for yy in sorted({v[:4] for v in ovm_yms}, reverse=True))
                    + f"</select>"
-                     f"<select id='ovM' onchange='ovShow(this.value)' style='display:none'></select></div>")
+                     f"<select id='ovM' onchange='ovShow(this.value)' style='display:none'></select>"
+                     f"<select id='ovB' onchange='ovBranch(this.value)'>"
+                     f"<option value='_all'>전체 지점</option>"
+                     + "".join(f"<option value='{k}'>{n}</option>" for k, n in _ok)
+                     + f"</select></div>")
 
     ov_panel = (f"<div id='p__ov' class='branch active'><h1>💰 매출 극대화 점검 합본 — {y}-{m:02d}</h1>"
                 f"<div class='sub'>지점 탭을 눌러 상세를 보세요.{partial_c} 급여일 기준(비급여·한도초과·미이용 제외).{cmp_note}</div>"
@@ -1221,6 +1226,17 @@ def combine_month(y: int, m: int, branches, progress=print):
  function ovShow(v){{
    document.querySelectorAll('.ovblk').forEach(function(b){{
      b.style.display = (b.dataset.ym === v) ? 'block' : 'none';
+   }});
+   var bs = document.getElementById('ovB');
+   if (bs) ovBranch(bs.value);   /* 달을 바꿔도 고른 지점이 유지되게 */
+ }}
+ function ovBranch(k){{
+   /* 한 지점만 고르면 그 행만 남기고 합계는 숨긴다(한 줄 합계는 같은 값이라 군더더기) */
+   document.querySelectorAll('.ovrow').forEach(function(r){{
+     r.style.display = (k === '_all' || r.dataset.b === k) ? '' : 'none';
+   }});
+   document.querySelectorAll('.ovsum').forEach(function(r){{
+     r.style.display = (k === '_all') ? '' : 'none';
    }});
  }}
  function ovYear(y){{
