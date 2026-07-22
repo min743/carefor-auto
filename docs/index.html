@@ -1132,14 +1132,47 @@ window.addEventListener('beforeinstallprompt', e => {
   const btn = document.getElementById('installBtn');
   if (btn) btn.style.display = '';
 });
+/** 안내창 — alert 대신 화면에 그리는 모달.
+ *  alert 은 문구가 브라우저 메뉴를 가리키는데, 허브 iframe 안에서는 그 메뉴가 상위 페이지
+ *  (Apps Script)를 가리켜 '앱 설치' 항목이 아예 없다 → 안내대로 해도 찾을 수 없었다. */
+function showInstallHelp(html) {
+  const old = document.getElementById('instHelp');
+  if (old) old.remove();
+  const d = document.createElement('div');
+  d.id = 'instHelp';
+  d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,18,35,.55);'
+    + 'display:flex;align-items:center;justify-content:center;padding:22px';
+  d.innerHTML = '<div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:350px;'
+    + 'text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.3);font-size:13.5px;line-height:1.75;color:#1f2937">'
+    + '<div style="font-size:32px">📲</div>'
+    + '<h3 style="margin:8px 0 10px;font-size:17px;color:#1e3a8a">앱 설치</h3>'
+    + '<div>' + html + '</div>'
+    + '<button type="button" style="margin-top:16px;background:#1e3a8a;color:#fff;border:0;'
+    + 'padding:10px 22px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer">확인</button></div>';
+  d.querySelector('button').onclick = () => d.remove();
+  d.onclick = e => { if (e.target === d) d.remove(); };
+  document.body.appendChild(d);
+}
+
 function installApp() {
   if (_installPrompt) {
     _installPrompt.prompt();
     _installPrompt.userChoice.then(() => {
       _installPrompt = null;
     });
+    return;
+  }
+  // 프롬프트가 없다 = 지금 문맥에선 설치 불가.
+  // 허브(Apps Script) iframe 안이면 브라우저가 설치를 아예 제안하지 않는다 → 최상위 새 탭으로 열어준다.
+  let inFrame = false;
+  try { inFrame = window.top !== window.self; } catch (e) { inFrame = true; }
+  if (inFrame) {
+    window.open(location.href, '_blank', 'noopener');
+    showInstallHelp('이 앱을 <b>새 탭</b>으로 열었습니다.<br>그 탭에서 <b>📲 설치</b>를 다시 누르면 설치됩니다.'
+      + '<br><br><small style="color:#6b7280">허브 화면 안(내장 프레임)에서는 브라우저가 설치를 허용하지 않습니다.</small>');
   } else {
-    alert('설치 방법:\nChrome 주소창 오른쪽 ⋮ 메뉴 → "앱으로 설치" 또는\n"저장 및 공유 → 바로가기 만들기"를 선택해주세요.');
+    showInstallHelp('크롬 주소창 오른쪽 <b>설치 아이콘</b>, 또는<br><b>⋮ 메뉴 → 캐스트·저장 및 공유 → 페이지를 앱으로 설치</b>'
+      + '<br><br><small style="color:#6b7280">이미 설치돼 있으면 이 항목은 보이지 않습니다.</small>');
   }
 }
 window.addEventListener('appinstalled', () => {
