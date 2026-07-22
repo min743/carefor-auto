@@ -458,11 +458,16 @@ def aggregate(data: dict, excl: set | frozenset = frozenset()) -> dict:
     def summarize(recs: list[dict]) -> dict[str, dict]:
         agg: dict[str, dict] = {}
         for r in recs:
-            a = agg.setdefault(r["name"], {"pay_days": 0, "u8_days": 0, "near_days": 0,
+            a = agg.setdefault(r["name"], {"pay_days": 0, "u8_days": 0, "o8_days": 0,
+                                           "near_days": 0,
                                            "t68": 0, "near_dates": [], "transport": False,
                                            "gain": 0, "gain_est": False})
             a["pay_days"] += 1
             a["transport"] = a["transport"] or r["transport"]
+            if r["min"] >= FULL_8H:
+                # 8h이상 — 총급여일 = 8h이상 + 8h미만 이 딱 맞아떨어지게 별도 집계
+                # (사용자 요청 2026-07-22: 비교할 때 8h이상 건수도 필요)
+                a["o8_days"] += 1
             if r["min"] < FULL_8H:
                 a["u8_days"] += 1
                 if 360 <= r["min"] < 480:
@@ -511,6 +516,11 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
     total_near = sum(a["near_days"] for _, a in cur_agg.items())
     total_u8 = sum(a["u8_days"] for nm, a in cur_agg.items() if nm not in excl)
     total_pay = sum(a["pay_days"] for _, a in cur_agg.items())
+    # ★총급여일 = 8h이상 + 8h미만 이 정확히 맞아떨어지게 전원 기준으로 따로 센다.
+    #   total_u8 은 계약제외자를 뺀 값이라 (총급여일 − total_u8) 은 8h이상이 아니다 —
+    #   이걸 헷갈려 숫자가 안 맞았다(사용자 지적 2026-07-22 "정확한 데이터 산정 필요").
+    total_o8 = sum(a.get("o8_days", 0) for _, a in cur_agg.items())
+    total_u8_all = sum(a["u8_days"] for _, a in cur_agg.items())
     total_gain = sum(a["gain"] for _, a in cur_agg.items())
     excl_days = sum(a["u8_days"] for nm, a in cur_agg.items() if nm in excl and a["u8_days"])
     excl_ppl = sum(1 for nm, a in cur_agg.items() if nm in excl and a["u8_days"])
@@ -551,7 +561,9 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
                         f"(6~8h {a['t68']})</span>")
         rows_u8 += (
             f"<tr{style}><td>{e(nm)}{badge}</td><td>{e(grade_of.get(nm,'?'))}</td>"
-            f"<td class='num'>{a['pay_days']}</td><td class='num'>{u8_cell}</td>"
+            f"<td class='num'>{a['pay_days']}</td>"
+            f"<td class='num'>{a.get('o8_days', a['pay_days'] - a['u8_days'])}</td>"
+            f"<td class='num'>{u8_cell}</td>"
             f"<td class='num'>{a['near_days'] if not is_excl else '—'}</td>"
             f"<td class='num'>{delta(nm,'u8_days')}</td>"
             f"<td>{'○' if a['transport'] else ''}</td></tr>")
@@ -596,8 +608,12 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
 <div class="sub">대상월 {y}-{m:02d} · 전월 대비 · 대상: 수급중·보류 {n_active}명 · 급여일 기준(비급여·한도초과·미이용 제외){partial_note}{f" · <b>계약상 8h미만 {excl_ppl}명 {excl_days}일 제외</b>" if excl_ppl else ""}</div>
 
 <div class="cards">
- <div class="card"><div class="k">총 급여일</div><div class="v">{total_pay:,}</div></div>
- <div class="card"><div class="k">8시간 미만 급여일</div><div class="v">{total_u8:,}</div></div>
+ <div class="card"><div class="k">총 급여일</div><div class="v">{total_pay:,}</div>
+  <div style="font-size:11px;color:#8a93a5;margin-top:4px">8h이상 {total_o8:,} + 8h미만 {total_u8_all:,}</div></div>
+ <div class="card"><div class="k">8시간 이상 급여일</div><div class="v">{total_o8:,}</div>
+  <div style="font-size:11px;color:#8a93a5;margin-top:4px">전체의 {round(total_o8/total_pay*100) if total_pay else 0}%</div></div>
+ <div class="card"><div class="k">8시간 미만 급여일</div><div class="v">{total_u8_all:,}</div>
+  <div style="font-size:11px;color:#8a93a5;margin-top:4px">{f'그중 계약제외 {excl_days:,}일' if excl_days else '연장 검토 대상'}</div></div>
  <div class="card hi"><div class="k">근소차 7:40~7:59 (연장후보)</div><div class="v">{total_near:,}건</div></div>
  <div class="card hi"><div class="k">연장 시 잠재 월매출<sup>추정</sup></div><div class="v">{total_gain:,}원</div></div>
 </div>
@@ -608,9 +624,10 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
  <tbody>{rows_near or '<tr><td colspan=7 style="text-align:center;color:#999">해당 없음</td></tr>'}</tbody></table>
 
 <h2>② 8시간 미만 급여일 — 전체</h2>
-<table><thead><tr><th>수급자</th><th>등급</th><th>총급여일</th><th>8h미만 <span style="font-weight:400;color:#8a93a5;font-size:11px">(그중 6~8h)</span></th>
+<table><thead><tr><th>수급자</th><th>등급</th><th>총급여일</th><th>8h이상</th>
+ <th>8h미만 <span style="font-weight:400;color:#8a93a5;font-size:11px">(그중 6~8h)</span></th>
  <th>근소차</th><th>8h미만 전월비</th><th>송영</th></tr></thead>
- <tbody>{rows_u8 or '<tr><td colspan=7 style="text-align:center;color:#999">해당 없음</td></tr>'}</tbody></table>
+ <tbody>{rows_u8 or '<tr><td colspan=8 style="text-align:center;color:#999">해당 없음</td></tr>'}</tbody></table>
 
 <h2>③ 보류자 현황 ({n_hold}명) — 보류일 오래된 순</h2>
 <table><thead><tr><th>수급자</th><th>등급</th><th>보류일</th><th>보류 사유</th></tr></thead>
