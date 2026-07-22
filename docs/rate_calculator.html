@@ -182,10 +182,11 @@
       <option value="5">5등급</option><option value="C">인지지원등급</option>
     </select></div>
     <div><label>본인부담률</label><select id="rate">
-      <option value="0.15" selected>일반 15%</option>
-      <option value="0.09">감경 9%</option>
-      <option value="0.06">감경 6%</option>
-      <option value="0">기초수급 0%</option>
+      <option value="0.15" selected>15% (감경 0%)</option>
+      <option value="0.09">9% (감경 40%)</option>
+      <option value="0.06">6% (감경 60%) · 의료급여</option>
+      <option value="0.06">6% (감경 60%)</option>
+      <option value="0">0% (감경 100%) · 기초수급</option>
     </select></div>
     <div><label>기준 월</label><input type="month" id="ym" value="2026-08"></div>
     <div><label>주·야간보호 유형</label><div class="toggle" id="dtype">
@@ -386,7 +387,9 @@ function surcharge(s, dow, isHoliday){
 /* ── 계산 ── */
 function calc(){
   const grade = document.getElementById('grade').value;
-  const rate  = +document.getElementById('rate').value;
+  const rateSel = document.getElementById('rate');
+  const rate  = +rateSel.value;
+  const rateLabel = rateSel.options[rateSel.selectedIndex].text;  // 예: "6% (감경 60%) · 의료급여"
   const [Y,M] = document.getElementById('ym').value.split('-').map(Number);
   const base  = LIMIT[grade];
   const last  = new Date(Y,M,0).getDate();
@@ -535,7 +538,7 @@ function calc(){
   /* ⑤ 계산식 */
   const f=[];
   f.push(`■ 기준`);
-  f.push(`  등급 ${grade==='C'?'인지지원':grade+'등급'} · 본인부담률 ${Math.round(rate*100)}%`);
+  f.push(`  등급 ${grade==='C'?'인지지원':grade+'등급'} · 본인부담률 ${rateLabel}`);
   f.push(`  기준월 ${Y}년 ${M}월 · 주·야간보호 ${dementiaRoom?'치매전담실':'일반'}`);
   f.push(``);
   f.push(`■ 월 한도액`);
@@ -588,7 +591,7 @@ function calc(){
   document.getElementById('phMeta').textContent =
     [ who ? `수급자 ${who}` : null,
       `${grade==='C'?'인지지원등급':grade+'등급'}`,
-      `본인부담률 ${Math.round(rate*100)}%`,
+      `본인부담률 ${rateLabel}`,
       `${Y}년 ${M}월 기준`,
       `주·야간보호 ${dementiaRoom?'치매전담실':'일반'}`,
       `작성일 ${stamp}` ].filter(Boolean).join('  ·  ');
