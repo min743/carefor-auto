@@ -66,15 +66,56 @@
     font:12.5px/1.7 Consolas,monospace;white-space:pre-wrap}
   .copy{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);
     background:#fff;border-radius:6px;cursor:pointer;float:right}
+  .print{font:inherit;font-size:13.5px;padding:7px 16px;border:0;background:var(--accent);
+    color:#fff;border-radius:7px;cursor:pointer;font-weight:600}
+  .printhead{display:none}
+
+  @media print{
+    @page{margin:12mm}
+    body{background:#fff}
+    .wrap{max-width:none;padding:0}
+    .printhead{display:block;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #333}
+    .printhead .t{font-size:19px;font-weight:700}
+    .printhead .m{font-size:12.5px;color:#555;margin-top:3px}
+    h1,.sub,.print,.add,.del,.copy,#addBtn{display:none !important}
+    .card{border:1px solid #bbb;box-shadow:none;page-break-inside:avoid;
+      margin-bottom:10px;padding:12px 14px}
+    .card h2{font-size:13.5px}
+    /* 스크롤 영역을 펼쳐서 전부 인쇄 */
+    .scroll{overflow:visible !important;max-height:none !important}
+    .card .scroll[style]{max-height:none !important;overflow:visible !important}
+    table{font-size:11px} th,td{padding:4px 5px}
+    thead{display:table-header-group}
+    tr{page-break-inside:avoid}
+    /* 입력 컨트롤은 테두리 없이 값만 */
+    select,input{border:0 !important;padding:0 !important;background:none !important;
+      -webkit-appearance:none;appearance:none;font-weight:600}
+    .toggle button:not(.on){display:none}
+    .toggle{border:0} .toggle button.on{background:none;color:#000;padding:0 4px}
+    .days button:not(.on){display:none}
+    .days button.on{background:none !important;border:0;color:#000;width:auto;font-weight:700}
+    pre{background:#fff;color:#000;border:1px solid #ccc;font-size:10.5px;line-height:1.5}
+    .warn{border:1px solid #999;background:none !important;color:#000 !important}
+    .tot div{background:none} .tot .big{border:2px solid #000}
+    .tot .big b{color:#000}
+  }
 </style>
 
 <div class="wrap">
+<div class="printhead">
+  <div class="t">장기요양 급여비용·본인부담 산출내역</div>
+  <div class="m" id="phMeta"></div>
+</div>
+
 <h1>장기요양 수가·초과금 계산기</h1>
-<div class="sub">2026년 급여비용 고시 기준 · 방문요양 / 주·야간보호 토글 · 월 한도액 초과금 자동 산출</div>
+<div class="sub">2026년 급여비용 고시 기준 · 방문요양 / 주·야간보호 토글 · 월 한도액 초과금 자동 산출
+  <button class="print" id="printBtn" style="margin-left:10px">🖨 인쇄 / PDF 저장</button></div>
 
 <div class="card">
   <h2>① 수급자 정보</h2>
   <div class="row">
+    <div><label>수급자명 (출력용·저장 안 됨)</label>
+      <input type="text" id="who" placeholder="예: 홍○○" style="width:120px"></div>
     <div><label>등급</label><select id="grade">
       <option value="1">1등급</option><option value="2">2등급</option>
       <option value="3">3등급</option><option value="4" selected>4등급</option>
@@ -465,12 +506,26 @@ function calc(){
       f.push(`  ${DAYNM[k]}요일   ${won(dayTotals[k])}`));
   }
   document.getElementById('formula').textContent = f.join('\n');
+
+  /* 인쇄 머리글 */
+  const who = document.getElementById('who').value.trim();
+  const t = new Date();
+  const stamp = `${t.getFullYear()}. ${t.getMonth()+1}. ${t.getDate()}.`;
+  document.getElementById('phMeta').textContent =
+    [ who ? `수급자 ${who}` : null,
+      `${grade==='C'?'인지지원등급':grade+'등급'}`,
+      `본인부담률 ${Math.round(rate*100)}%`,
+      `${Y}년 ${M}월 기준`,
+      `주·야간보호 ${dementiaRoom?'치매전담실':'일반'}`,
+      `작성일 ${stamp}` ].filter(Boolean).join('  ·  ');
 }
 
 document.getElementById('addBtn').onclick=()=>{
   scheds.push({svc:'visit',days:[],from:'09:00',to:'12:00'}); renderScheds(); calc(); };
 ['grade','rate','ym'].forEach(id=>document.getElementById(id).onchange=calc);
 document.getElementById('cap8').oninput = calc;
+document.getElementById('who').oninput = calc;
+document.getElementById('printBtn').onclick = ()=>window.print();
 document.querySelectorAll('#dtype button').forEach(b=>b.onclick=()=>{
   dementiaRoom = b.dataset.t==='dementia';
   document.querySelectorAll('#dtype button').forEach(x=>
