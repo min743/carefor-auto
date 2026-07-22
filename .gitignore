@@ -18,6 +18,11 @@ apps_script/consult_read.gs
 점검표/
 평가준비/
 *.xlsx
+# 매출점검 산출물 — 수급자 실명이 든 보고서·제외명단. 프로그램(revenue_check.py)만 커밋하고
+# 결과물은 절대 올리지 않는다. 원본은 클로드코드/매출점검/<지점>/ 에 로컬 보관.
+매출점검/
+_8시간미만계약제외.txt
+_보류제외.txt
 
 # PWA 매니페스트는 커밋 필요 (docs 공개 페이지)
 !docs/hq-manifest.json
