@@ -934,7 +934,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                 for k, nm in _keys:
                     d = _hist.get(k, {}).get(_ym)
                     if not d:
-                        _rows += (f"<tr><td style='white-space:nowrap'>{nm}</td>"
+                        _rows += (f"<tr class='brow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
                                   f"<td colspan={len(_NP) + 2} style='color:#c8ced8'>개소 전</td></tr>")
                         continue
                     np = d.get("nonpay") or {}
@@ -942,11 +942,11 @@ def combine_month(y: int, m: int, branches, progress=print):
                     _sum["계"] += np.get("비급여계", 0)
                     for l in _NP:
                         _sum[l] += np.get(l, 0)
-                    _rows += (f"<tr><td style='white-space:nowrap'>{nm}</td>"
+                    _rows += (f"<tr class='brow' data-b='{k}'><td style='white-space:nowrap'>{nm}</td>"
                               f"<td class='num'><b>{d['rev_total']:,}</b></td>"
                               + "".join(f"<td class='num'>{np.get(l, 0):,}</td>" for l in _NP)
                               + f"<td class='num'><b>{np.get('비급여계', 0):,}</b></td></tr>")
-                _rows += ("<tr style='font-weight:700;background:#eef3fb'><td>합계</td>"
+                _rows += ("<tr class='sumrow' style='font-weight:700;background:#eef3fb'><td>합계</td>"
                           f"<td class='num'>{_sum['rev']:,}</td>"
                           + "".join(f"<td class='num'>{_sum[l]:,}</td>" for l in _NP)
                           + f"<td class='num'>{_sum['계']:,}</td></tr>")
@@ -968,7 +968,10 @@ def combine_month(y: int, m: int, branches, progress=print):
                 f"<div class='histpick'>"
                 f"<select id='histY' onchange='histYear(this.value)'>{_yopt}</select>"
                 f"<select id='histM' onchange='histShow(this.value)'></select>"
-                f"</div>{_blocks}")
+                f"<select id='histB' onchange='histBranch(this.value)'>"
+                f"<option value='_all'>전체 지점</option>"
+                + "".join(f"<option value='{k}'>{n}</option>" for k, n in _keys)
+                + f"</select></div>{_blocks}")
 
     np_table = (f"<h2 style='margin-top:26px'>🧾 비급여 항목 — {prev_ym}</h2>"
                 f"<div class='sub'>공단급여·본인부담금을 <b>제외한</b> 비용. "
@@ -1074,6 +1077,18 @@ def combine_month(y: int, m: int, branches, progress=print):
  function histShow(ym){{
    document.querySelectorAll('.hblk').forEach(function(b){{
      b.style.display = (b.dataset.ym === ym) ? 'block' : 'none';
+   }});
+   var bs = document.getElementById('histB');
+   if (bs) histBranch(bs.value);   /* 달을 바꿔도 고른 지점이 유지되게 */
+ }}
+ function histBranch(k){{
+   /* '전체 지점'이면 다 보이고 합계도 보인다. 한 지점만 고르면 그 행만 남기고 합계는 숨긴다
+      (한 줄짜리 합계는 같은 값이라 군더더기). */
+   document.querySelectorAll('.hblk .brow').forEach(function(r){{
+     r.style.display = (k === '_all' || r.dataset.b === k) ? '' : 'none';
+   }});
+   document.querySelectorAll('.hblk .sumrow').forEach(function(r){{
+     r.style.display = (k === '_all') ? '' : 'none';
    }});
  }}
  function histYear(y){{
