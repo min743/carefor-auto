@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>구인현황 지연분석 요약</title>
+<style>
+body{font-family:'맑은 고딕',sans-serif;margin:0;background:#f4f6fa;color:#222}
+header{background:#2f5496;color:#fff;padding:14px 20px}
+header h1{font-size:18px;margin:0}
+.sub{font-size:12px;opacity:.85;margin-top:3px}
+.wrap{padding:16px;max-width:1100px;margin:0 auto}
+h2{font-size:14px;color:#2f5496;margin:22px 0 8px}
+.back{display:inline-block;margin-bottom:12px;background:#eef2f9;color:#2f5496;padding:6px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:bold}
+.kpis{display:flex;gap:10px;flex-wrap:wrap}
+.kcard{background:#fff;border-radius:10px;padding:12px 16px;box-shadow:0 2px 6px rgba(0,0,0,.08);min-width:150px;flex:1}
+.kcard.small{min-width:110px}
+.kl{font-size:12px;color:#666}
+.kv{font-size:24px;font-weight:bold;color:#2f5496;margin:4px 0}
+.ks{font-size:11px;color:#999}
+.bars{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.bar-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.bl{width:130px;flex-shrink:0;color:#444}
+.bt{flex:1;background:#eef2f9;border-radius:6px;height:14px;overflow:hidden}
+.bf{height:100%;border-radius:6px}
+.bn{width:34px;text-align:right;font-weight:bold;color:#2f5496}
+.empty{color:#999;font-size:12px}
+#gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
+#gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
+.note{font-size:11px;color:#777;margin-top:16px;line-height:1.6}
+</style></head><body>
+<div id="gate"><h2>🔒 구인현황 지연분석 요약</h2><div>접속 번호를 입력하세요</div>
+<input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
+<header><h1>🧑‍🤝‍🧑 구인현황 지연분석 요약 (본부 공유용)</h1><div class="sub">데이터 기준: 2026-07-22 11:44:52</div></header>
+<div class="wrap">
+<a class="back" href="hq.html">← 🏢 본부 허브</a>
+
+<div class="kpis"><div class="kcard"><div class="kl">전체 구인</div><div class="kv">12</div><div class="ks">현재 목록 기준</div></div><div class="kcard"><div class="kl">첫 연락 미실시</div><div class="kv">9</div><div class="ks">구인 등록 후 통화 기록 없음</div></div><div class="kcard"><div class="kl">연락 후 정체</div><div class="kv">3</div><div class="ks">통화는 했지만 다음 진행 없음</div></div><div class="kcard"><div class="kl">30일 초과 경과</div><div class="kv">5</div><div class="ks">생성일 기준</div></div></div>
+
+<h2>구인 상태별 분포</h2>
+<div class="bars"><div class="bar-row"><div class="bl">시작 전</div><div class="bt"><div class="bf" style="width:100%;background:#4a69b0"></div></div><div class="bn">9</div></div><div class="bar-row"><div class="bl">매칭 중</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">면접 통과</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">통화 완료</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div></div>
+
+<h2>지연 원인 분포 <span style="font-weight:normal;color:#999;font-size:11px">· 내부=직원 액션 대기 · 외부=지원자·요양보호사 반응 대기 · 원인불명=마지막 이벤트 이후 정체 중</span></h2>
+<div class="bars"><div class="bar-row"><div class="bl">원인불명(정체 중)</div><div class="bt"><div class="bf" style="width:100%;background:#c02020"></div></div><div class="bn">12</div></div><div class="bar-row"><div class="bl">외부</div><div class="bt"><div class="bf" style="width:42%;background:#b57a00"></div></div><div class="bn">5</div></div><div class="bar-row"><div class="bl">내부</div><div class="bt"><div class="bf" style="width:33%;background:#2f5496"></div></div><div class="bn">4</div></div></div>
+
+<h2>센터 현황 <span style="font-weight:normal;color:#999;font-size:11px">· 캣츠 수급자 지표</span></h2>
+<div class="kpis"><div class="kcard small"><div class="kl">실 수급자</div><div class="kv">244</div></div><div class="kcard small"><div class="kl">일반요양</div><div class="kv">42</div></div><div class="kcard small"><div class="kl">가족요양</div><div class="kv">122</div></div><div class="kcard small"><div class="kl">방문목욕</div><div class="kv">23</div></div></div>
+<div class="bars" style="margin-top:8px"><div class="bar-row"><div class="bl">대전점</div><div class="bt"><div class="bf" style="width:100%;background:#2f5496"></div></div><div class="bn">288</div></div><div class="bar-row"><div class="bl">대전 둔산점</div><div class="bt"><div class="bf" style="width:0%;background:#2f5496"></div></div><div class="bn">0</div></div></div>
+
+<div class="note">
+· 이 페이지에는 수급자·지원자 개인정보(이름·주소·연락처)가 포함되어 있지 않습니다 (집계 수치만).<br>
+· 개별 건 상세는 사내 구인현황 지연분석 대시보드에서만 확인할 수 있습니다.
+</div>
+</div>
+<script>
+const PIN='15771389';
+document.getElementById('pin').addEventListener('input',e=>{
+  if(e.target.value===PIN){document.getElementById('gate').style.display='none';sessionStorage.setItem('ap','1');}
+});
+if(sessionStorage.getItem('ap')==='1')document.getElementById('gate').style.display='none';
+</script>
+</body></html>
