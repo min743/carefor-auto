@@ -540,10 +540,10 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
         dates = ", ".join(f"{d}일({rt})" for d, rt, _ in sorted(a["near_dates"]))
         gain = f'{a["gain"]:,}원<sup>추정</sup>' if a["gain"] else "—"
         rows_near += (
-            f"<tr><td>{e(nm)}</td><td>{e(grade_of.get(nm,'?'))}</td>"
+            f"<tr><td>{e(nm)}</td><td class='ce'>{e(grade_of.get(nm,'?'))}</td>"
             f"<td class='num'>{a['near_days']}</td><td>{e(dates)}</td>"
             f"<td class='num'>{gain}</td><td class='num'>{delta(nm,'near_days')}</td>"
-            f"<td>{'○' if a['transport'] else ''}</td></tr>")
+            f"<td class='ce'>{'○' if a['transport'] else ''}</td></tr>")
 
     # 8h미만 전체(근소차 아니어도). 계약제외자는 맨 아래로, 회색 배지 표시.
     u8_rows = sorted([(nm, a) for nm, a in cur_agg.items() if a["u8_days"] > 0],
@@ -560,13 +560,13 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
             u8_cell += (f" <span style='color:#8a93a5;font-size:11px'>"
                         f"(6~8h {a['t68']})</span>")
         rows_u8 += (
-            f"<tr{style}><td>{e(nm)}{badge}</td><td>{e(grade_of.get(nm,'?'))}</td>"
+            f"<tr{style}><td>{e(nm)}{badge}</td><td class='ce'>{e(grade_of.get(nm,'?'))}</td>"
             f"<td class='num'>{a['pay_days']}</td>"
             f"<td class='num'>{a.get('o8_days', a['pay_days'] - a['u8_days'])}</td>"
             f"<td class='num'>{u8_cell}</td>"
             f"<td class='num'>{a['near_days'] if not is_excl else '—'}</td>"
             f"<td class='num'>{delta(nm,'u8_days')}</td>"
-            f"<td>{'○' if a['transport'] else ''}</td></tr>")
+            f"<td class='ce'>{'○' if a['transport'] else ''}</td></tr>")
 
     # 보류자 마지막 일정 (등급=hold_grade, 보류일·주요질환=hold_info). 복귀예정 등 수동 제외.
     hold_grade = data.get("hold_grade", {})
@@ -578,8 +578,10 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
         info = hold_info.get(nm, {})
         since = info.get("since") or "—"
         reason = info.get("reason") or ""
-        hold_rows += (f"<tr><td>{e(nm)}</td><td>{e(hold_grade.get(nm) or grade_of.get(nm,'?'))}</td>"
-                      f"<td>{e(since)}</td><td>{e(reason)}</td></tr>")
+        # 이름·등급·보류일은 짧으니 내용폭으로 붙이고(ce), 남는 폭은 '보류 사유'가 먹게 둔다
+        hold_rows += (f"<tr><td class='ce'>{e(nm)}</td>"
+                      f"<td class='ce'>{e(hold_grade.get(nm) or grade_of.get(nm,'?'))}</td>"
+                      f"<td class='ce'>{e(since)}</td><td>{e(reason)}</td></tr>")
 
     n_active = len(active)
     n_hold = len(hold_names_show)
@@ -589,16 +591,36 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
     return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <title>매출점검 {e(branch)} {y}-{m:02d}</title>
 <style>
- body{{font-family:'맑은 고딕',sans-serif;margin:24px;color:#1a2233;background:#f6f8fb}}
+ /* 전체 틀을 가운데로. 여백은 padding 으로 — 탭바가 margin:-24px 로 뚫고 나가는 구조라
+    margin 을 쓰면 탭바가 어긋난다. 표·탭바가 이 틀을 공유해 좌우 끝이 맞는다. */
+ body{{font-family:'맑은 고딕',sans-serif;max-width:1500px;margin:0 auto;padding:24px;
+   color:#1a2233;background:#f6f8fb}}
  h1{{font-size:20px;margin:0 0 4px}} h2{{font-size:16px;margin:28px 0 8px;border-left:4px solid #2f6fdb;padding-left:8px}}
  .sub{{color:#667;font-size:13px;margin-bottom:16px}}
  .cards{{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}}
  .card{{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;min-width:150px;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
  .card .k{{font-size:12px;color:#778}} .card .v{{font-size:22px;font-weight:700;margin-top:4px}}
  .card.hi .v{{color:#d9480f}}
- table{{border-collapse:collapse;width:100%;background:#fff;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
- th,td{{border:1px solid #e6ebf2;padding:7px 9px;text-align:left}}
- th{{background:#eef3fb;font-weight:600}} td.num{{text-align:right;font-variant-numeric:tabular-nums}}
+ /* ★큰 표는 width:100% 유지 — 내용폭(auto)으로 좁히면 탭바는 끝까지 가는데 표만 좁아져
+    좌우가 어긋나 보인다(사용자 지적 2026-07-22 '탭과 네모박스 차이가 크다'). */
+ /* ★width:100% 로 늘리면 남는 폭을 마지막 자유 칸(수급자 이름)이 혼자 먹어 터무니없이 넓어진다
+    (사용자 지적 2026-07-22 '수급자 칸이 100은 되는 것 같은데'). → 내용폭에 맞춘다. */
+ /* ★모든 표를 틀 폭에 100% 로 맞춘다 — auto 면 표마다 폭이 달라 들쭉날쭉(전체 일치 요청).
+    대신 틀(body)을 1080px 로 좁혀 남는 폭이 이름 칸으로 크게 몰리지 않게 했다. */
+ table{{border-collapse:collapse;width:auto;max-width:100%;background:#fff;font-size:13px;
+   box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+ /* ★기본을 center 로 — left 로 두면 클래스 없는 칸(수급자명·해당 날짜·보류 사유)이
+    왼쪽에 남아 표마다 정렬이 어긋난다(사용자 지적 2026-07-22). */
+ th,td{{border:1px solid #e6ebf2;padding:7px 9px;text-align:center}}
+ /* ★text-align:center 를 반드시 여기 둘 것 — 위 th,td 규칙이 left 라 안 주면 머리글이 왼쪽에 붙는다 */
+ th{{background:#eef3fb;font-weight:600;white-space:nowrap;text-align:center}}
+ /* ★width:1% = '내용 최소폭으로 붙여라'. 안 주면 width:100% 가 좁은 칸(송영·근소차 등)까지
+    똑같이 벌려 쓸데없이 넓어진다(사용자 지적 2026-07-22). 남는 폭은 이름·사유 칸이 먹는다. */
+ td.num{{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}}
+ td.ce{{text-align:center;white-space:nowrap}}
+ /* 이름 칸이 남는 폭을 다 먹지 않게 상한을 준다 */
+ td:first-child{{max-width:180px}}
+
  tr:nth-child(even) td{{background:#fbfcfe}}
  sup{{color:#d9480f;font-size:9px}}
  .up{{color:#d9480f;font-weight:700}} .down{{color:#2b8a3e}} .flat{{color:#aab}}
@@ -728,7 +750,7 @@ def combine_month(y: int, m: int, branches, progress=print):
             ex_u8 += cur.get("u8_excl", 0)
             ex_rev += cur.get("rev_under8_excl", 0)
             tot_excess += cur.get("excess", 0)
-            ov += (f"<tr><td>{link}</td><td class='num'>{target}</td>"
+            ov += (f"<tr><td style='white-space:nowrap;text-align:center'>{link}</td><td class='num'>{target}</td>"
                    f"<td class='num' style='white-space:nowrap'>{_diff(prv['rev_billed'], cur['rev_billed'], True, '원')}"
                    f"<div style='font-size:11px;color:#8894a6'>{prv['pay']:,}건 → {cur['pay']:,}건</div></td>"
                    f"{_money(prv['rev_over8_billed'], cur['rev_over8_billed'], prv['over8'], cur['over8'], True)}"
@@ -835,9 +857,22 @@ def combine_month(y: int, m: int, branches, progress=print):
  .tabbtn.active{{background:#2f6fdb;border-color:#2f6fdb;color:#fff;font-weight:700}}
  .branch{{display:none}} .branch.active{{display:block}}
  .hint{{color:#8a94a6;font-size:12px;margin:2px 0 10px}}
- .bh{{margin:16px 0 6px;font-weight:700;font-size:14px;color:#1a2233;border-left:3px solid #2f6fdb;padding-left:8px}}
+ .bh{{margin:16px 0 6px;font-weight:700;font-size:14px;color:#1a2233;
+   border-left:3px solid #2f6fdb;padding-left:8px;box-sizing:border-box}}
  .bh .cnt{{color:#8a94a6;font-weight:400;font-size:12px;margin-left:4px}}
- table.hold{{width:auto;min-width:420px;max-width:720px;margin-bottom:6px}}
+ /* 폭을 고정해야 지점별로 어긋나지 않는다(auto 면 사유 길이에 따라 제각각). */
+ /* ★table-layout:fixed + 칸 폭 고정 — 안 하면 지점마다 '보류 사유' 길이에 따라
+    앞 칸(수급자·등급·보류일) 폭이 제각각 늘어나 지점끼리 세로줄이 안 맞는다
+    (사용자 지적 2026-07-22 '사이즈 정렬 필요'). */
+ /* 표 폭도 내용에 맞게 줄인다 — 100% 로 두면 '보류 사유' 칸만 화면 끝까지 늘어난다
+    (사용자 요청 2026-07-22 '보류사유는 칸을 줄여서'). 칸 폭은 고정해 지점끼리 세로줄을 맞춘다. */
+ table.hold{{width:auto;max-width:100%;margin:0 0 6px 0;table-layout:fixed}}
+ table.hold th:nth-child(1),table.hold td:nth-child(1){{width:110px}}
+ table.hold th:nth-child(2),table.hold td:nth-child(2){{width:80px}}
+ table.hold th:nth-child(3),table.hold td:nth-child(3){{width:170px}}
+ table.hold th:nth-child(4),table.hold td:nth-child(4){{width:430px;white-space:normal}}
+ /* 보류자 표는 전 칸 가운데 정렬(사유 포함) */
+ table.hold td{{text-align:center}}
  table.hold td.nm{{font-weight:600;white-space:nowrap}} table.hold td.ce{{text-align:center;white-space:nowrap}}
  table.hold th{{white-space:nowrap}}
 </style></head><body>
