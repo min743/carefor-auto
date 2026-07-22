@@ -320,8 +320,13 @@ function renderScheds(){
       const k=+b.dataset.d, a=scheds[i].days;
       a.includes(k) ? a.splice(a.indexOf(k),1) : a.push(k);
       renderScheds(); calc(); });
-    d.querySelector('.f').onchange = e=>{scheds[i].from=e.target.value; calc();};
-    d.querySelector('.t').onchange = e=>{scheds[i].to  =e.target.value; calc();};
+    const bindTime=(sel,key)=>{
+      const el=d.querySelector(sel);
+      // input: 시·분·오전/오후 스피너와 시계 선택 즉시 반영 / change: 커밋 시 반영
+      const upd=e=>{ if(e.target.value){ scheds[i][key]=e.target.value; calc(); } };
+      el.oninput=upd; el.onchange=upd;
+    };
+    bindTime('.f','from'); bindTime('.t','to');
     d.querySelector('.del').onclick = ()=>{scheds.splice(i,1); renderScheds(); calc();};
     box.appendChild(d);
   });
