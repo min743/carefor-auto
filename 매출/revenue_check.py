@@ -713,6 +713,10 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
  /* 표 폭 자동 통일 — 기준은 ② 8시간 미만 표. 합본의 fitTables 와 같은 규칙(지점 단독 페이지용). */
  (function(){{
    function fit(){{
+     /* ★합본에 이 body 가 통째로 복사돼 들어간다(_extract_report). 그때 이 스크립트도 같이
+        따라와서 document 전체 표(전체요약·이력·비급여·보류자)를 건드려 폭을 망가뜨렸다.
+        합본에는 자체 fitTables 가 있으므로, 탭바가 보이면 여기선 아무것도 하지 않는다. */
+     if (document.querySelector('.tabbar')) return;
      var ts = document.querySelectorAll('table');
      if(ts.length < 2) return;
      for(var i=0;i<ts.length;i++) ts[i].style.width='';
@@ -911,6 +915,57 @@ def combine_month(y: int, m: int, branches, progress=print):
         np_rows += ("<tr style='font-weight:700;background:#eef3fb'><td>합계</td>"
                     + "".join(f"<td class='num'>{np_tot[l]:,}</td>" for l in _NP)
                     + f"<td class='num'>{np_sum:,}</td></tr>")
+    # ── 월별 매출 이력 (개소월~지난달) ──────────────────────────────────────
+    # revenue_history_collect.py 가 한 번 긁어 쌓아둔 revenue_monthly.json 을 읽는다.
+    # 비교값(전월비)은 넣지 않는다 — 복잡해진다는 사용자 판단(2026-07-22). 실적만 세로로 쌓는다.
+    hist_table = ""
+    try:
+        _hf = hist_dir / "revenue_monthly.json"
+        _hist = json.loads(_hf.read_text(encoding="utf-8")) if _hf.exists() else {}
+    except Exception:
+        _hist = {}
+    if _hist:
+        _keys = [(k, n) for k, n, _ in parts if k in _hist]
+        _yms = sorted({ym for k, _ in _keys for ym in _hist.get(k, {})}, reverse=True)
+        if _keys and _yms:
+            _hrows = ""
+            for _ym in _yms:          # ★ym 을 쓰면 파일명 변수를 덮어써 엉뚱한 달로 저장된다
+                _mtot = _mnp = 0
+                _tds = ""
+                for k, _n in _keys:
+                    d = _hist.get(k, {}).get(_ym)
+                    if d:
+                        _mtot += d["rev_total"]
+                        _np = (d.get("nonpay") or {}).get("비급여계", 0)
+                        _mnp += _np
+                        _tds += (f"<td class='num'>{d['rev_total']:,}"
+                                 f"<div style='font-size:11px;color:#8894a6'>"
+                                 f"비급여 {_np:,}</div></td>")
+                    else:
+                        _tds += "<td class='num' style='color:#c8ced8'>–</td>"
+                _hrows += (f"<tr class='hrow' data-ym='{_ym}'><td class='ce'><b>{_ym[:4]}-{_ym[4:]}</b></td>{_tds}"
+                           f"<td class='num'><b>{_mtot:,}</b>"
+                           f"<div style='font-size:11px;color:#667'>비급여 {_mnp:,}</div></td></tr>")
+            # 연·월 선택 UI — 26개월을 한꺼번에 늘어놓지 않고 고른 달만 보여준다.
+            _years = sorted({v[:4] for v in _yms}, reverse=True)
+            _ybtn = "".join(
+                f"<button class='ybtn{" active" if i == 0 else ""}' data-y='{yy}' "
+                f"onclick=\"histYear('{yy}')\">{yy}년</button>" for i, yy in enumerate(_years))
+            _mbtn = "".join(
+                f"<button class='mbtn' data-ym='{v}' onclick=\"histShow('{v}')\">"
+                f"{int(v[4:])}월</button>" for v in sorted(_yms))
+            hist_table = (
+                f"<h2 style='margin-top:26px'>📈 월별 매출 이력</h2>"
+                f"<div class='sub'>연도·월을 눌러 그 달 실적을 봅니다. 위=급여매출(급여수가 합), "
+                f"아래 작은 글씨=비급여(식사재료비·간식비 등 7-1 청구 기준). 개소 전은 <b>–</b>.<br>"
+                f"전월 대비 증감은 넣지 않았습니다 — 실적만 봅니다.</div>"
+                f"<div class='histpick'>{_ybtn}</div>"
+                f"<div class='histpick' id='histMonths'>{_mbtn}</div>"
+                f"<div style='overflow-x:auto'><table class='hist'><thead><tr><th>연월</th>"
+                + "".join(f"<th>{n}</th>" for _k, n in _keys)
+                + "<th>합계</th></tr></thead>"
+                f"<tbody>{_hrows}</tbody></table></div>")
+
     np_table = (f"<h2 style='margin-top:26px'>🧾 비급여 항목 — {prev_ym}</h2>"
                 f"<div class='sub'>공단급여·본인부담금을 <b>제외한</b> 비용. "
                 f"출처 7-1 본인부담금 청구관리 합계 행.<br>"
@@ -937,6 +992,7 @@ def combine_month(y: int, m: int, branches, progress=print):
                 f"<th>8시간 미만 매출<br><small>금액 · 건수</small></th>"
                 f"<th>잠재매출<sup>추정</sup><br><small>금액 · 근소차건</small></th></tr></thead>"
                 f"<tbody>{ov}</tbody></table></div>"
+                f"{hist_table}"
                 f"{np_table}"
                 f"{hold_table}"
                 f"<div class='note'>· <b>매출 = 공단 청구기준 급여비용</b>(7-1 급여비용 공단+본인). "
@@ -973,6 +1029,14 @@ def combine_month(y: int, m: int, branches, progress=print):
  /* 비급여 표는 보류자 표와 **항상 같은 폭**이어야 한다(사용자 요청 2026-07-22).
     둘 다 같은 고정폭을 쓰면 내용이 바뀌어도 어긋나지 않는다. */
  table.hold,table.nonpay{{width:867px;max-width:100%;margin:0 0 6px 0;table-layout:fixed}}
+ /* 월별 이력은 행이 20+개라 연월 칸을 고정해 세로줄을 맞춘다 */
+ table.hist{{width:auto;max-width:100%}}
+ .histpick{{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}}
+ .histpick button{{border:1px solid #cdd6e4;background:#fff;border-radius:8px;
+   padding:5px 12px;font-size:13px;cursor:pointer;font-family:inherit;color:#334}}
+ .histpick button.active{{background:#2f6fdb;border-color:#2f6fdb;color:#fff;font-weight:700}}
+ tr.hrow{{display:none}} tr.hrow.on{{display:table-row}}
+ table.hist th:first-child,table.hist td:first-child{{width:90px;white-space:nowrap}}
  table.nonpay th:first-child,table.nonpay td:first-child{{width:110px}}
  table.hold th:nth-child(1),table.hold td:nth-child(1){{width:110px}}
  table.hold th:nth-child(2),table.hold td:nth-child(2){{width:80px}}
@@ -991,6 +1055,9 @@ def combine_month(y: int, m: int, branches, progress=print):
     ⚠️ display:none 인 패널은 폭이 0으로 측정되므로 반드시 '보이게 한 뒤' 재계산할 것. */
  function fitTables(panel){{
    if(!panel) return;
+   /* ★전체요약(p__ov)은 성격이 다른 표(매출·이력·비급여·보류자)가 섞여 있어
+      한 폭으로 맞추면 비급여 표가 눌려 글자가 겹친다. 지점 탭에서만 맞춘다. */
+   if(panel.id === 'p__ov') return;
    var ts = panel.querySelectorAll('table');
    if(ts.length < 2) return;
    for(var i=0;i<ts.length;i++) ts[i].style.width='';      // 이전 값 지우고 자연폭부터 다시
@@ -1000,6 +1067,20 @@ def combine_month(y: int, m: int, branches, progress=print):
    /* 지정폭이 내용보다 좁으면 브라우저가 최소폭을 쓰므로 눌려 깨지지 않는다 */
    for(var j=0;j<ts.length;j++) ts[j].style.width = w+'px';
  }}
+ /* 월별 이력: 연도 고르면 그 해 월 버튼만, 월 고르면 그 달 행만 보인다.
+    26개월을 한꺼번에 늘어놓으면 길어서 못 본다(사용자 요청 2026-07-22). */
+ function histShow(ym){{
+   document.querySelectorAll('tr.hrow').forEach(r=>r.classList.toggle('on', r.dataset.ym===ym));
+   document.querySelectorAll('.mbtn').forEach(b=>b.classList.toggle('active', b.dataset.ym===ym));
+ }}
+ function histYear(y){{
+   document.querySelectorAll('.ybtn').forEach(b=>b.classList.toggle('active', b.dataset.y===y));
+   var vis=[];
+   document.querySelectorAll('.mbtn').forEach(function(b){{
+     var ok=b.dataset.ym.slice(0,4)===y; b.style.display=ok?'':'none'; if(ok)vis.push(b.dataset.ym);
+   }});
+   if(vis.length) histShow(vis[vis.length-1]);   /* 그 해 최신 달 */
+ }}
  function show(k){{
    document.querySelectorAll('.branch').forEach(e=>e.classList.remove('active'));
    var el=document.getElementById('p_'+k); if(el) el.classList.add('active');
@@ -1007,7 +1088,10 @@ def combine_month(y: int, m: int, branches, progress=print):
    fitTables(el);                                          // 보인 뒤에 계산해야 폭이 잡힌다
    window.scrollTo(0,0);
  }}
- window.addEventListener('load', function(){{ fitTables(document.querySelector('.branch.active')); }});
+ window.addEventListener('load', function(){{
+   fitTables(document.querySelector('.branch.active'));
+   var y=document.querySelector('.ybtn'); if(y) histYear(y.dataset.y);   /* 최신 연도·달로 시작 */
+ }});
  window.addEventListener('resize', function(){{ fitTables(document.querySelector('.branch.active')); }});
 </script>
 </body></html>"""
