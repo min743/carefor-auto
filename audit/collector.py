@@ -270,6 +270,33 @@ def run_branch_audit(
         except Exception as e:
             progress_cb(f"[{branch_name}] 생일쿠폰 대조 건너뜀: {e}")
 
+        # 항목 28③ 자동차종합보험 가입기간 유효 — 노션 차량현황 기준 자동판정
+        # ★기본값을 try 진입 '전'에 무조건 박는다. items.py auto_subs 에 ③을 넣었기 때문에
+        #   sub_status 에 ③이 비어 있으면 대시보드 autoVal 이 '항목 status'로 폴백해
+        #   **안 본 보험에 만점이 자동 기입**된다(양호 지점 3곳에 1.0점 — 검수 실증).
+        #   import 실패(모듈 미커밋)·judge 내부 예외 등 어디서 터져도 이 기본값이 남아야 한다.
+        #   status 는 올리지 않는다 — 로컬 실행마다 28이 주의로 뒤집히는 노이즈 방지.
+        r28 = analysis["item_results"].get("28")
+        if r28:
+            r28.setdefault("sub_status", {})["③"] = "주의"   # 기본 = 판정 불가(수기)
+        try:
+            from .notion_insurance import judge as ins_judge
+            if r28:
+                ins = ins_judge(branch_name, all_branches=list(BRANCH_CUTOFFS), progress_cb=progress_cb)
+                if ins:
+                    r28.setdefault("sub_status", {})["③"] = ins["status"]
+                    # ③이 자동판정됐으니 '수기 확인' 안내에서 ③을 뺀다(모순 문구 방지)
+                    det = (r28.get("detail") or "").replace(
+                        "(③자동차종합보험 유효기간·④직원 수칙 준수 면담은 수기 확인)",
+                        "(④직원 수칙 준수 면담은 수기 확인)")
+                    r28["detail"] = det + " / " + ins["detail"]
+                    # 항목 상태는 하위 판정 중 가장 나쁜 것으로 맞춘다(③이 미흡인데 항목이 양호로 남지 않도록)
+                    rank = {"양호": 0, "주의": 1, "미흡": 2}
+                    if rank.get(ins["status"], 0) > rank.get(r28.get("status", "양호"), 0):
+                        r28["status"] = ins["status"]
+        except Exception as e:
+            progress_cb(f"[{branch_name}] 28③ 자동차보험 판정 건너뜀: {e}")
+
     if item33:
         analysis["item_results"]["33"] = item33
         # 항목 33①: 신규 수급자 기피식품 기재(욕구사정 영양 판단근거) 자동판정
