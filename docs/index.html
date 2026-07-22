@@ -1171,10 +1171,24 @@ function installApp() {
     showInstallHelp('이 앱을 <b>새 탭</b>으로 열었습니다.<br>그 탭에서 <b>📲 설치</b>를 다시 누르면 설치됩니다.'
       + '<br><br><small style="color:#6b7280">허브 화면 안(내장 프레임)에서는 브라우저가 설치를 허용하지 않습니다.</small>');
   } else {
-    // 여기까지 오면 브라우저가 설치를 제안하지 않는 상태 = 대개 '이미 설치됨'.
-    // 수동 경로는 최후수단 — 문구는 실제 크롬 메뉴명 그대로 쓴다(예전엔 이름이 틀려 못 찾았다).
-    showInstallHelp('<b>이미 설치돼 있을 가능성이 큽니다.</b><br>작업표시줄·시작메뉴에서 <b>차량관리</b> 아이콘을 찾아보세요.'
-      + '<br><br><small style="color:#6b7280">그래도 없으면 — 크롬 <b>⋮ 메뉴 → 전송, 저장, 공유 → 페이지를 앱으로 설치</b></small>');
+    // 여기까지 오면 브라우저가 설치를 제안하지 않는 상태.
+    // ⚠️ 기기마다 이유·방법이 다르다. 뭉뚱그려 안내하면 '없는 메뉴'를 찾게 만든다(실제로 그랬다).
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/i.test(ua)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);  // 아이패드 iPadOS
+    const isAndroid = /android/i.test(ua);
+    if (isIOS) {
+      // iOS 는 설치 API 자체가 없다 — 공유 시트가 유일한 경로. 크롬 메뉴 안내는 여기서 절대 쓰면 안 된다.
+      showInstallHelp('아이폰·아이패드는 버튼으로 설치할 수 없습니다.<br>'
+        + '화면 아래 <b>공유 ⬆️</b> → <b>"홈 화면에 추가"</b>를 눌러주세요.'
+        + '<br><br><small style="color:#6b7280">iOS 정책상 앱이 직접 설치를 띄울 수 없습니다.</small>');
+    } else if (isAndroid) {
+      showInstallHelp('<b>이미 설치돼 있을 가능성이 큽니다.</b><br>홈 화면·앱 서랍에서 <b>차량관리</b> 아이콘을 찾아보세요.'
+        + '<br><br><small style="color:#6b7280">없으면 — 크롬 <b>⋮ 메뉴 → 앱 설치</b>(또는 "홈 화면에 추가")</small>');
+    } else {
+      showInstallHelp('<b>이미 설치돼 있을 가능성이 큽니다.</b><br>작업표시줄·시작메뉴에서 <b>차량관리</b> 아이콘을 찾아보세요.'
+        + '<br><br><small style="color:#6b7280">없으면 — 크롬 <b>⋮ 메뉴 → 전송, 저장, 공유 → 페이지를 앱으로 설치</b></small>');
+    }
   }
 }
 window.addEventListener('appinstalled', () => {
