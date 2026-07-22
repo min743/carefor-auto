@@ -664,6 +664,21 @@ def render_html(branch: str, y: int, m: int, data: dict, agg: dict,
  · <b>전월비</b> ▲=증가 ▼=감소. · <b>송영 ○</b> = 이동서비스(차량) 이용자 → 등·하원 시간 조정으로 연장 실현 가능.<br>
  · 개인정보 포함 — 로컬 전용, 외부 공유 금지.
 </div>
+<script>
+ /* 표 폭 자동 통일 — 기준은 ② 8시간 미만 표. 합본의 fitTables 와 같은 규칙(지점 단독 페이지용). */
+ (function(){{
+   function fit(){{
+     var ts = document.querySelectorAll('table');
+     if(ts.length < 2) return;
+     for(var i=0;i<ts.length;i++) ts[i].style.width='';
+     var w = Math.round((ts[1]||ts[0]).getBoundingClientRect().width);
+     if(!w) return;
+     for(var j=0;j<ts.length;j++) ts[j].style.width = w+'px';
+   }}
+   window.addEventListener('load', fit);
+   window.addEventListener('resize', fit);
+ }})();
+</script>
 </body></html>"""
 
 
@@ -879,12 +894,29 @@ def combine_month(y: int, m: int, branches, progress=print):
 <div class="tabbar">{btns}</div>
 {panels}
 <script>
+ /* 표 폭 자동 통일 — 기준은 ② 8시간 미만 표(사용자 지정 2026-07-22).
+    ①·③ 은 행 수·내용에 따라 폭이 제각각이라(근소차가 줄면 ① 이 좁아짐) 나란히 보면 어긋난다.
+    ⚠️ display:none 인 패널은 폭이 0으로 측정되므로 반드시 '보이게 한 뒤' 재계산할 것. */
+ function fitTables(panel){{
+   if(!panel) return;
+   var ts = panel.querySelectorAll('table');
+   if(ts.length < 2) return;
+   for(var i=0;i<ts.length;i++) ts[i].style.width='';      // 이전 값 지우고 자연폭부터 다시
+   var base = ts[1] || ts[0];                              // ts[1] = ② 8시간 미만 표
+   var w = Math.round(base.getBoundingClientRect().width);
+   if(!w) return;
+   /* 지정폭이 내용보다 좁으면 브라우저가 최소폭을 쓰므로 눌려 깨지지 않는다 */
+   for(var j=0;j<ts.length;j++) ts[j].style.width = w+'px';
+ }}
  function show(k){{
    document.querySelectorAll('.branch').forEach(e=>e.classList.remove('active'));
    var el=document.getElementById('p_'+k); if(el) el.classList.add('active');
    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.k===k));
+   fitTables(el);                                          // 보인 뒤에 계산해야 폭이 잡힌다
    window.scrollTo(0,0);
  }}
+ window.addEventListener('load', function(){{ fitTables(document.querySelector('.branch.active')); }});
+ window.addEventListener('resize', function(){{ fitTables(document.querySelector('.branch.active')); }});
 </script>
 </body></html>"""
     dest = OUT_ROOT / f"매출점검_합본_{ym}.html"
