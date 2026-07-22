@@ -1185,6 +1185,26 @@ def combine_month(y: int, m: int, branches, progress=print):
  table.hold,table.nonpay{{width:867px;max-width:100%;margin:0 0 6px 0;table-layout:fixed}}
  /* 월별 이력은 행이 20+개라 연월 칸을 고정해 세로줄을 맞춘다 */
  table.hist{{width:auto;max-width:100%}}
+ /* 계산기 — 매출 보면서 바로 계산하라고(허브 것과 같은 방식). 평소엔 접혀 있다. */
+ .calcbtn{{position:fixed;right:18px;bottom:18px;z-index:50;background:#2f6fdb;color:#fff;
+   border:0;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;
+   font-family:inherit;box-shadow:0 4px 14px rgba(47,111,219,.35)}}
+ .calcbox{{display:none;position:fixed;right:18px;bottom:70px;z-index:51;background:#fff;
+   border:1px solid #dde3ec;border-radius:14px;padding:14px;width:290px;
+   box-shadow:0 8px 28px rgba(21,38,71,.22)}}
+ .calcbox.on{{display:block}}
+ .calcexp{{text-align:right;font-size:11.5px;color:#8a94a6;min-height:15px;white-space:nowrap;overflow-x:auto}}
+ .calcout{{background:#f6f8fb;border:1px solid #e6ebf2;border-radius:9px;padding:9px 11px;
+   text-align:right;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;
+   white-space:nowrap;overflow-x:auto}}
+ .calcgrid{{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:9px}}
+ .calcgrid button{{border:1px solid #e6ebf2;background:#fff;border-radius:8px;padding:10px 0;
+   font-size:14px;font-family:inherit;cursor:pointer;color:#1a2233}}
+ .calcgrid button:hover{{background:#eef3fb}}
+ .calcgrid button.op{{background:#f2f6fc;color:#2f6fdb;font-weight:700}}
+ .calcgrid button.eq{{background:#2f6fdb;color:#fff;font-weight:700}}
+ .calcgrid button.fn{{background:#fdf1ec;color:#b4451f;font-weight:700}}
+
  .histpick{{display:flex;gap:8px;margin:10px 0}}
  .histpick select{{border:1px solid #cdd6e4;background:#fff;border-radius:8px;
    padding:6px 12px;font-size:14px;font-family:inherit;color:#1a2233;cursor:pointer}}
@@ -1200,6 +1220,25 @@ def combine_month(y: int, m: int, branches, progress=print):
  table.hold td.nm{{font-weight:600;white-space:nowrap}} table.hold td.ce{{text-align:center;white-space:nowrap}}
  table.hold th{{white-space:nowrap}}
 </style></head><body>
+<button class="calcbtn" onclick="calcToggle()">🧮 계산기</button>
+<div class="calcbox" id="calcBox">
+  <div class="calcexp" id="calcExp"></div>
+  <div class="calcout" id="calcOut">0</div>
+  <div class="calcgrid">
+    <button class="fn" onclick="calcClear()">C</button>
+    <button class="fn" onclick="calcBack()">←</button>
+    <button class="fn" onclick="calcPct()">%</button>
+    <button class="op" onclick="calcOp('/')">÷</button>
+    <button onclick="calcNum('7')">7</button><button onclick="calcNum('8')">8</button>
+    <button onclick="calcNum('9')">9</button><button class="op" onclick="calcOp('*')">×</button>
+    <button onclick="calcNum('4')">4</button><button onclick="calcNum('5')">5</button>
+    <button onclick="calcNum('6')">6</button><button class="op" onclick="calcOp('-')">−</button>
+    <button onclick="calcNum('1')">1</button><button onclick="calcNum('2')">2</button>
+    <button onclick="calcNum('3')">3</button><button class="op" onclick="calcOp('+')">+</button>
+    <button onclick="calcNum('0')">0</button><button onclick="calcNum('000')">000</button>
+    <button onclick="calcDot()">.</button><button class="eq" onclick="calcEq()">=</button>
+  </div>
+</div>
 <div class="tabbar">{btns}</div>
 {panels}
 <script>
@@ -1283,6 +1322,64 @@ def combine_month(y: int, m: int, branches, progress=print):
    }}).join('');
    if (ms.length) {{ sel.value = ms[ms.length-1]; histShow(sel.value); }}   /* 그 해 최신 달 */
  }}
+ /* 계산기 — 허브 것과 같은 규칙. eval 안 씀(입력이 코드로 실행되면 위험), 누산기 방식.
+    금액 업무라 세 자리 콤마 항상 표시. % = 앞 숫자의 몇 퍼센트. */
+ var _cCur='0', _cAcc=null, _cOp=null, _cFresh=true;
+ function _cFmt(s){{
+   if(s===''||s==='-') return s||'0';
+   var neg=s[0]==='-', b=neg?s.slice(1):s, pt=b.split('.');
+   var i=pt[0].replace(/\B(?=(\d{{3}})+(?!\d))/g, ',');
+   return (neg?'-':'')+i+(pt.length>1?'.'+pt[1]:'');
+ }}
+ function _cDraw(){{
+   document.getElementById('calcOut').textContent=_cFmt(_cCur);
+   document.getElementById('calcExp').textContent =
+     _cAcc===null ? '' : _cFmt(String(_cAcc))+' '+({{'+':'+','-':'−','*':'×','/':'÷'}}[_cOp]||'');
+ }}
+ function _cRun(a,b,o){{
+   a=parseFloat(a); b=parseFloat(b);
+   if(o==='+')return a+b; if(o==='-')return a-b;
+   if(o==='*')return a*b; if(o==='/')return b===0?0:a/b; return b;
+ }}
+ function _cR(v){{ return Math.round(v*1e6)/1e6; }}
+ function calcToggle(){{ document.getElementById('calcBox').classList.toggle('on'); }}
+ function calcNum(n){{
+   if(_cFresh){{ _cCur=(n==='000'?'0':n); _cFresh=false; }}
+   else if(_cCur==='0'){{ _cCur=(n==='000'?'0':n); }} else {{ _cCur+=n; }}
+   _cDraw();
+ }}
+ function calcDot(){{ if(_cFresh){{_cCur='0.';_cFresh=false;}} else if(_cCur.indexOf('.')<0)_cCur+='.'; _cDraw(); }}
+ function calcOp(o){{
+   if(_cAcc!==null && !_cFresh) _cCur=String(_cR(_cRun(_cAcc,_cCur,_cOp)));
+   _cAcc=parseFloat(_cCur); _cOp=o; _cFresh=true; _cDraw();
+ }}
+ function calcEq(){{
+   if(_cAcc===null||_cOp===null) return;
+   _cCur=String(_cR(_cRun(_cAcc,_cCur,_cOp))); _cAcc=null; _cOp=null; _cFresh=true; _cDraw();
+ }}
+ function calcPct(){{
+   _cCur = (_cAcc!==null) ? String(_cR(_cAcc*parseFloat(_cCur)/100))
+                          : String(_cR(parseFloat(_cCur)/100));
+   _cFresh=false; _cDraw();
+ }}
+ function calcClear(){{ _cCur='0'; _cAcc=null; _cOp=null; _cFresh=true; _cDraw(); }}
+ function calcBack(){{
+   if(_cFresh) return;
+   _cCur=_cCur.length>1?_cCur.slice(0,-1):'0';
+   if(_cCur===''||_cCur==='-')_cCur='0'; _cDraw();
+ }}
+ document.addEventListener('keydown', function(e){{
+   var box=document.getElementById('calcBox');
+   if(!box||!box.classList.contains('on')) return;
+   var k=e.key;
+   if(k>='0'&&k<='9'){{calcNum(k);e.preventDefault();}}
+   else if(k==='.'){{calcDot();e.preventDefault();}}
+   else if('+-*/'.indexOf(k)>=0){{calcOp(k);e.preventDefault();}}
+   else if(k==='Enter'||k==='='){{calcEq();e.preventDefault();}}
+   else if(k==='Backspace'){{calcBack();e.preventDefault();}}
+   else if(k==='Escape'){{calcClear();e.preventDefault();}}
+   else if(k==='%'){{calcPct();e.preventDefault();}}
+ }});
  function show(k){{
    document.querySelectorAll('.branch').forEach(e=>e.classList.remove('active'));
    var el=document.getElementById('p_'+k); if(el) el.classList.add('active');
