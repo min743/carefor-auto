@@ -29,6 +29,7 @@ _보류제외.txt
 
 # PWA 매니페스트는 커밋 필요 (docs 공개 페이지)
 !docs/hq-manifest.json
+!docs/rate_calc_manifest.json
 # 진행추적 히스토리 — 커밋 필요(항목 상태만·개인정보 없음). *.json 에 막혀 예외 지정.
 !docs/audit_history.json
 

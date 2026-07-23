@@ -1,5 +1,9 @@
 <meta charset="utf-8">
-<title>장기요양 수가·초과금 계산기 (2026)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>장기요양 수가·급여 계산기 (2026)</title>
+<link rel="manifest" href="rate_calc_manifest.json">
+<meta name="theme-color" content="#1e3a8a">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
   :root{
     --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --ink:#1c2024; --mut:#6b7280;
@@ -158,8 +162,9 @@
 </div>
 
 <div class="sub" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-  <span>방문요양 / 주·야간보호 토글 · 월 한도액 초과금 자동 산출</span>
-  <button class="print" id="printBtn">🖨 인쇄 / PDF 저장</button></div>
+  <span>2026년 급여비용 고시 기준 · 방문요양 / 주·야간보호 · 월 한도액 초과금·중증가산 자동 산출</span>
+  <button class="print" id="printBtn">🖨 인쇄 / PDF 저장</button>
+  <button class="print" id="installBtn" style="background:#0f766e">⬇ 바로가기 설치</button></div>
 
 <div class="popts">
   <b>출력 항목</b>
@@ -196,6 +201,10 @@
     <div><label>8시간 인정 횟수</label>
       <input type="text" id="cap8" placeholder="자동" style="width:64px"> 회
       <div style="font-size:11.5px;color:var(--mut)">비우면 자동 산출</div></div>
+    <div><label>중증가산 (1·2등급 방문요양)</label>
+      <label style="display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--ink);cursor:pointer">
+        <input type="checkbox" id="useSevere" checked> 포함</label>
+      <div style="font-size:11.5px;color:var(--mut)">시간당 2,000·일 최대 6,000원</div></div>
     <div><label>4대보험 공제율 (실 중증가산 수령)</label>
       <input type="text" id="deduct" value="9.4" style="width:56px"> %
       <div style="font-size:11.5px;color:var(--mut)">센터 기준으로 조정</div></div>
@@ -393,6 +402,7 @@ function surcharge(s, dow, isHoliday){
 /* ── 계산 ── */
 function calc(){
   const grade = document.getElementById('grade').value;
+  const useSevere = document.getElementById('useSevere').checked;
   const rateSel = document.getElementById('rate');
   const rate  = +rateSel.value;
   const rateLabel = rateSel.options[rateSel.selectedIndex].text;  // 예: "6% (감경 60%) · 의료급여"
@@ -462,7 +472,7 @@ function calc(){
     if(bf.warn) warns.add(bf.warn);
     // 방문요양 중증가산: 1·2등급, 시간당 2,000원, 1일 최대 6,000원 (시간대 가산과 별도)
     let severe=0;
-    if(s.svc==='visit' && (grade==='1'||grade==='2') && bf.fee>0)
+    if(useSevere && s.svc==='visit' && (grade==='1'||grade==='2') && bf.fee>0)
       severe = Math.min(Math.round(span(s).min/60*2000), 6000);
     return {...bf, ...sc, add: bf.fee*sc.r, severe, total: bf.fee*(1+sc.r) + severe};
   };
@@ -642,6 +652,26 @@ document.getElementById('addBtn').onclick=()=>{
 document.getElementById('cap8').oninput = calc;
 document.getElementById('deduct').oninput = calc;
 document.getElementById('who').oninput = calc;
+document.getElementById('useSevere').onchange = calc;
+
+/* 바로가기 설치 (PWA) — 공유허브 서비스워커와 충돌 방지 위해 매니페스트 방식만 사용 */
+let deferredPrompt=null;
+const installBtn=document.getElementById('installBtn');
+// 이미 설치(standalone)로 열렸으면 버튼 숨김
+if(window.matchMedia('(display-mode: standalone)').matches) installBtn.style.display='none';
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; });
+installBtn.onclick=async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null; installBtn.style.display='none';
+  }else{
+    alert('설치 방법\n\n· 크롬/엣지: 주소창 오른쪽 설치(⊕) 아이콘 클릭\n'+
+          '· 안드로이드: 메뉴(⋮) → 앱 설치 / 홈 화면에 추가\n'+
+          '· 아이폰 사파리: 공유 → 홈 화면에 추가');
+  }
+};
+window.addEventListener('appinstalled', ()=>{ installBtn.style.display='none'; });
 document.getElementById('printBtn').onclick = ()=>window.print();
 
 /* 출력 항목 선택 — 체크 해제한 카드는 인쇄에서만 빠짐 (화면에는 그대로) */
