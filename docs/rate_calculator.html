@@ -230,9 +230,6 @@
       <label style="display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--ink);cursor:pointer">
         <input type="checkbox" id="useSevere" checked> 포함</label>
       <div style="font-size:11.5px;color:var(--mut)">시간당 2,000·일 최대 6,000원</div></div>
-    <div><label>4대보험 공제율 (실 중증가산 수령)</label>
-      <input type="text" id="deduct" value="9.4" style="width:56px"> %
-      <div style="font-size:11.5px;color:var(--mut)">센터 기준으로 조정</div></div>
     <div><label>월 한도액</label><div style="font-weight:600;font-size:16px" id="limitTxt">-</div></div>
   </div>
   <div id="bonusBox"></div>
@@ -623,8 +620,6 @@ function calc(){
     `<thead><tr><th class="l">날짜</th><th class="l">내역</th><th>급여비용</th>
       <th>한도내</th><th>초과금</th><th>본인부담</th><th>한도잔액</th></tr></thead><tbody>${rows}</tbody>`;
 
-  const deductPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('deduct').value)||0));
-  const sevNet = sevMonth*(1-deductPct/100);
   document.getElementById('totals').innerHTML = `
     <div><span class="k">월 총 급여비용</span><b>${won(gross)}</b></div>
     <div><span class="k">한도 내 사용</span><b>${won(used)}</b>
@@ -634,10 +629,7 @@ function calc(){
       <span class="k">한도내 ${Math.round(rate*100)}% + 초과분 100%</span></div>
     ${sevMonth>0?`
     <div><span class="k">월 중증가산 합계</span><b>${won(sevMonth)}</b>
-      <span class="k">1·2등급 방문요양</span></div>
-    <div style="background:var(--ok-bg);border-color:#bfe3c9">
-      <span class="k">실 중증가산 수령 (4대보험 ${deductPct}% 공제)</span>
-      <b style="color:var(--ok)">${won(sevNet)}</b></div>`:''}`;
+      <span class="k">1·2등급 방문요양 (급여비용 포함)</span></div>`:''}`;
 
   /* ⑤ 계산식 */
   const f=[];
@@ -683,7 +675,6 @@ function calc(){
     f.push(``);
     f.push(`■ 중증가산 (1·2등급 방문요양, 급여비용에 포함)`);
     f.push(`  월 중증가산 합계      ${won(sevMonth)}`);
-    f.push(`  실 수령(4대보험 ${deductPct}% 공제) ${won(sevMonth)} × ${(1-deductPct/100).toFixed(3)} = ${won(sevNet)}`);
   }
   f.push(``);
   f.push(`■ 본인부담 총액`);
@@ -716,7 +707,6 @@ document.getElementById('addBtn').onclick=()=>{
   scheds.push({svc:'visit',days:[],from:'09:00',to:'12:00'}); renderScheds(); calc(); };
 ['grade','rate','ym'].forEach(id=>document.getElementById(id).onchange=calc);
 document.getElementById('cap8').oninput = calc;
-document.getElementById('deduct').oninput = calc;
 document.getElementById('who').oninput = calc;
 document.getElementById('useSevere').onchange = calc;
 
