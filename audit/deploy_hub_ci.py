@@ -65,6 +65,10 @@ def main():
     src_revenue = None
     if "--revenue-from" in sys.argv:
         src_revenue = sys.argv[sys.argv.index("--revenue-from") + 1]
+    # --carcost: 로컬 '차량_월별수리비내역.html' 로 차량 페이지도 갱신(로컬 정기실행용).
+    #   경로가 고정이라 인자를 받지 않고 deploy_hub.page_html 을 그대로 쓴다(중복 구현 금지).
+    #   CI 에는 그 원본이 없으므로 CI 에서는 이 플래그를 쓰지 않는다 — 안 주면 종전대로 보존.
+    want_carcost = "--carcost" in sys.argv
 
     at = token_ci()
     base = f"https://script.googleapis.com/v1/projects/{SCRIPT_ID}"
@@ -79,9 +83,20 @@ def main():
         keep["revenue"] = {"name": "revenue", "type": "HTML",
                            "source": revenue_page_from(src_revenue)}
         print(f"  갱신: revenue ← {src_revenue} ({len(keep['revenue']['source'])}자, 이름 마스킹 적용)")
+    if want_carcost:  # 로컬 차량 수리비 HTML 로 교체 (원본 없으면 조용히 보존)
+        try:
+            from audit.deploy_hub import page_html as _page_html
+            keep["carcost"] = {"name": "carcost", "type": "HTML",
+                               "source": _page_html("carcost")}
+            print(f"  갱신: carcost ← 로컬 차량 수리비 ({len(keep['carcost']['source'])}자)")
+        except Exception as ex:
+            print(f"  ⚠️ carcost 원본을 못 읽어 보존합니다: {ex}")
 
+    _updated = {"revenue"} if src_revenue else set()
+    if want_carcost and "carcost" in keep:
+        _updated.add("carcost")
     for n in PRESERVE:
-        if n in keep and not (src_revenue and n == "revenue"):
+        if n in keep and n not in _updated:
             print(f"  보존: {n} ({len(keep[n].get('source',''))}자)")
         elif n not in keep:
             # 없으면 만들지 않는다 — 빈 페이지로 덮어 사라지게 하느니 그대로 두는 게 낫다
