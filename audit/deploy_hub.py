@@ -243,11 +243,21 @@ def _git_md(path: str) -> str:
     return ""
 
 
-def _embed_date(kind: str) -> str:
+def _embed_date(kind: str, src: str | None = None) -> str:
     """매출·차량수리비(Apps Script 서빙, 커밋 안 됨)의 데이터 기준일 → 'MM/DD 기준' 캡션.
-    차량수리비는 파일에 박힌 '데이터 기준일'을, 매출은 합본 파일 수정시각을 쓴다."""
+    차량수리비는 파일에 박힌 '데이터 기준일'을, 매출은 합본 파일 수정시각을 쓴다.
+
+    ★ src: 원본 HTML 문자열을 직접 넘기면 로컬 파일 대신 그걸 읽는다.
+      CI 러너에는 저장소 밖 원본(`클로드코드/`)이 없어 파일을 읽으면 죽는다
+      (실제로 2026-07-22~23 허브 자동배포가 이걸로 3회 연속 실패했다).
+      CI 는 보존해 온 carcost 소스를 넘겨 캡션을 유지한다. 없으면 캡션만 비운다."""
     if kind == "carcost":
-        t = (CC / "차량_월별수리비내역.html").read_text(encoding="utf-8")
+        t = src
+        if t is None:
+            p = CC / "차량_월별수리비내역.html"
+            if not p.exists():
+                return ""
+            t = p.read_text(encoding="utf-8")
         m = re.search(r"데이터 기준일\s*(\d{4})-(\d{2})-(\d{2})", t)
         if m:
             return "🔄 " + m.group(2) + "/" + m.group(3) + " 기준"
@@ -261,7 +271,7 @@ def _embed_date(kind: str) -> str:
     return ""
 
 
-def build_html() -> str:
+def build_html(carcost_src: str | None = None) -> str:
     """허브 원본 → Apps Script 용으로 변환. 원본은 건드리지 않는다."""
     # 원본은 **Pages 밖**(apps_script/)에 둔다 — docs/ 에 두면 허브 내용이 공개 저장소에서 그대로 읽힌다.
     s = (ROOT / "apps_script" / "hub_source.html").read_text(encoding="utf-8")
@@ -272,7 +282,7 @@ def build_html() -> str:
                    m.group(1), ("🔄 " + _git_md(m.group(1)) + " 갱신") if _git_md(m.group(1)) else ""),
                s)
     s = s.replace("{{UPD_REVENUE}}", _embed_date("revenue"))
-    s = s.replace("{{UPD_CARCOST}}", _embed_date("carcost"))
+    s = s.replace("{{UPD_CARCOST}}", _embed_date("carcost", carcost_src))
     # 1) PIN 게이트 제거 — 도메인 인증이 대신한다(PIN 은 소스에 노출돼 있어 보호 효과도 없었다)
     s = re.sub(r'<div id="gate">.*?</div>\s*(?=<header>)', "", s, flags=re.S)
     s = re.sub(r"const PIN='[^']*';", "", s)

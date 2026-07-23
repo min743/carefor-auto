@@ -106,7 +106,9 @@ def main():
     files = [
         {"name": "appsscript", "type": "JSON", "source": json.dumps(MANIFEST, ensure_ascii=False)},
         {"name": "Code", "type": "SERVER_JS", "source": CODE},
-        {"name": "hub", "type": "HTML", "source": build_html()},
+        {"name": "hub", "type": "HTML",
+         # 보존해 온 carcost 소스에서 기준일 캡션을 뽑는다(CI 엔 로컬 원본이 없다)
+         "source": build_html(carcost_src=keep.get("carcost", {}).get("source"))},
     ] + [keep[n] for n in PRESERVE if n in keep]
 
     r = api(at, f"{base}/content", {"files": files}, method="PUT")
