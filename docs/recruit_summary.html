@@ -10,6 +10,7 @@ header h1{font-size:18px;margin:0}
 .sub{font-size:12px;opacity:.85;margin-top:3px}
 .wrap{padding:16px;max-width:1100px;margin:0 auto}
 h2{font-size:14px;color:#2f5496;margin:22px 0 8px}
+.center-name{font-size:12px;color:#666;margin:10px 0 6px}
 .back{display:inline-block;margin-bottom:12px;background:#eef2f9;color:#2f5496;padding:6px 14px;border-radius:16px;text-decoration:none;font-size:13px;font-weight:bold}
 .kpis{display:flex;gap:10px;flex-wrap:wrap}
 .kcard{background:#fff;border-radius:10px;padding:12px 16px;box-shadow:0 2px 6px rgba(0,0,0,.08);min-width:150px;flex:1}
@@ -24,31 +25,53 @@ h2{font-size:14px;color:#2f5496;margin:22px 0 8px}
 .bf{height:100%;border-radius:6px}
 .bn{width:34px;text-align:right;font-weight:bold;color:#2f5496}
 .empty{color:#999;font-size:12px}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+th,td{border:1px solid #dde3ee;padding:6px 8px;text-align:center}
+th{background:#eef2f9}
+td.name{white-space:nowrap;font-weight:bold}
+td.chips{text-align:left}
+.chip{display:inline-block;font-size:10.5px;color:#555;background:#eef2f9;border-radius:6px;padding:2px 6px;margin:1px}
+.chip-unknown{background:#fbe4e4;color:#c02020}
+.muted{color:#999;font-size:11px}
+.badge{display:inline-block;border-radius:10px;padding:2px 9px;font-weight:bold}
+.b-good{background:#e3f3e6;color:#2c8a41}
+.b-warn{background:#faf0d9;color:#b57a00}
+.b-serious{background:#fbe9e0;color:#c0602f}
+.b-critical{background:#fbdfe1;color:#c02020}
+.b-na{background:#eee;color:#999}
+.tblwrap{overflow-x:auto}
 #gate{position:fixed;inset:0;background:#2f5496;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff}
 #gate input{font-size:22px;padding:8px 14px;border-radius:8px;border:0;width:130px;text-align:center;letter-spacing:6px}
 .note{font-size:11px;color:#777;margin-top:16px;line-height:1.6}
 </style></head><body>
 <div id="gate"><h2>🔒 구인현황 지연분석 요약</h2><div>접속 번호를 입력하세요</div>
 <input id="pin" type="password" maxlength="12" inputmode="numeric" autofocus></div>
-<header><h1>🧑‍🤝‍🧑 구인현황 지연분석 요약 (본부 공유용)</h1><div class="sub">데이터 기준: 2026-07-22 11:44:52</div></header>
+<header><h1>🧑‍🤝‍🧑 구인현황 지연분석 요약 (본부 공유용)</h1><div class="sub">데이터 기준: 2026-07-23 09:37:08</div></header>
 <div class="wrap">
 <a class="back" href="hq.html">← 🏢 본부 허브</a>
 
-<div class="kpis"><div class="kcard"><div class="kl">전체 구인</div><div class="kv">12</div><div class="ks">현재 목록 기준</div></div><div class="kcard"><div class="kl">첫 연락 미실시</div><div class="kv">9</div><div class="ks">구인 등록 후 통화 기록 없음</div></div><div class="kcard"><div class="kl">연락 후 정체</div><div class="kv">3</div><div class="ks">통화는 했지만 다음 진행 없음</div></div><div class="kcard"><div class="kl">30일 초과 경과</div><div class="kv">5</div><div class="ks">생성일 기준</div></div></div>
+<div class="kpis"><div class="kcard"><div class="kl">전체 구인</div><div class="kv">13</div><div class="ks">현재 목록 기준</div></div><div class="kcard"><div class="kl">첫 연락 미실시</div><div class="kv">10</div><div class="ks">구인 등록 후 통화 기록 없음</div></div><div class="kcard"><div class="kl">연락 후 정체</div><div class="kv">3</div><div class="ks">통화는 했지만 다음 진행 없음</div></div><div class="kcard"><div class="kl">30일 초과 경과</div><div class="kv">5</div><div class="ks">생성일 기준</div></div></div>
 
 <h2>구인 상태별 분포</h2>
-<div class="bars"><div class="bar-row"><div class="bl">시작 전</div><div class="bt"><div class="bf" style="width:100%;background:#4a69b0"></div></div><div class="bn">9</div></div><div class="bar-row"><div class="bl">매칭 중</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">면접 통과</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">통화 완료</div><div class="bt"><div class="bf" style="width:11%;background:#4a69b0"></div></div><div class="bn">1</div></div></div>
+<div class="bars"><div class="bar-row"><div class="bl">시작 전</div><div class="bt"><div class="bf" style="width:100%;background:#4a69b0"></div></div><div class="bn">10</div></div><div class="bar-row"><div class="bl">매칭 중</div><div class="bt"><div class="bf" style="width:10%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">면접 통과</div><div class="bt"><div class="bf" style="width:10%;background:#4a69b0"></div></div><div class="bn">1</div></div><div class="bar-row"><div class="bl">통화 완료</div><div class="bt"><div class="bf" style="width:10%;background:#4a69b0"></div></div><div class="bn">1</div></div></div>
 
 <h2>지연 원인 분포 <span style="font-weight:normal;color:#999;font-size:11px">· 내부=직원 액션 대기 · 외부=지원자·요양보호사 반응 대기 · 원인불명=마지막 이벤트 이후 정체 중</span></h2>
-<div class="bars"><div class="bar-row"><div class="bl">원인불명(정체 중)</div><div class="bt"><div class="bf" style="width:100%;background:#c02020"></div></div><div class="bn">12</div></div><div class="bar-row"><div class="bl">외부</div><div class="bt"><div class="bf" style="width:42%;background:#b57a00"></div></div><div class="bn">5</div></div><div class="bar-row"><div class="bl">내부</div><div class="bt"><div class="bf" style="width:33%;background:#2f5496"></div></div><div class="bn">4</div></div></div>
+<div class="bars"><div class="bar-row"><div class="bl">원인불명(정체 중)</div><div class="bt"><div class="bf" style="width:100%;background:#c02020"></div></div><div class="bn">13</div></div><div class="bar-row"><div class="bl">외부</div><div class="bt"><div class="bf" style="width:38%;background:#b57a00"></div></div><div class="bn">5</div></div><div class="bar-row"><div class="bl">내부</div><div class="bt"><div class="bf" style="width:31%;background:#2f5496"></div></div><div class="bn">4</div></div></div>
 
 <h2>센터 현황 <span style="font-weight:normal;color:#999;font-size:11px">· 캣츠 수급자 지표</span></h2>
-<div class="kpis"><div class="kcard small"><div class="kl">실 수급자</div><div class="kv">244</div></div><div class="kcard small"><div class="kl">일반요양</div><div class="kv">42</div></div><div class="kcard small"><div class="kl">가족요양</div><div class="kv">122</div></div><div class="kcard small"><div class="kl">방문목욕</div><div class="kv">23</div></div></div>
-<div class="bars" style="margin-top:8px"><div class="bar-row"><div class="bl">대전점</div><div class="bt"><div class="bf" style="width:100%;background:#2f5496"></div></div><div class="bn">288</div></div><div class="bar-row"><div class="bl">대전 둔산점</div><div class="bt"><div class="bf" style="width:0%;background:#2f5496"></div></div><div class="bn">0</div></div></div>
+<h3 class="center-name">대전점</h3><div class="kpis" style="margin-bottom:10px"><div class="kcard small"><div class="kl">실 수급자</div><div class="kv">232</div></div><div class="kcard small"><div class="kl">일반요양</div><div class="kv">53</div></div><div class="kcard small"><div class="kl">가족요양</div><div class="kv">124</div></div><div class="kcard small"><div class="kl">방문목욕</div><div class="kv">23</div></div></div><h3 class="center-name">천안점(병설)</h3><div class="kpis" style="margin-bottom:10px"><div class="kcard small"><div class="kl">실 수급자</div><div class="kv">3</div></div><div class="kcard small"><div class="kl">일반요양</div><div class="kv">3</div></div><div class="kcard small"><div class="kl">가족요양</div><div class="kv">0</div></div><div class="kcard small"><div class="kl">방문목욕</div><div class="kv">0</div></div></div>
+
+<h2>구인 목록 <span style="font-weight:normal;color:#999;font-size:11px">· 경과일 많은 순 · 수급자명은 가운데 마스킹</span></h2>
+<div class="tblwrap">
+<table>
+<thead><tr><th>수급자</th><th>지역</th><th>생성일</th><th>경과일</th><th>구인상태</th><th>케어링 시급</th><th>난이도 참고정보</th><th>현재 정체 구간</th></tr></thead>
+<tbody><tr><td class="name">이○자</td><td>대전 유성구 장대동 356-9</td><td>2026-01-26</td><td><span class="badge b-critical">177일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 3등급</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">도○운</td><td>-</td><td>2026-03-10</td><td><span class="badge b-critical">134일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 4등급</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">황○복</td><td>-</td><td>2026-03-25</td><td><span class="badge b-critical">119일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 5등급</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">김○상</td><td>-</td><td>2026-04-10</td><td><span class="badge b-critical">103일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 2등급</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">나○순</td><td>-</td><td>2026-04-29</td><td><span class="badge b-serious">84일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 4등급</span> <span class="chip">근무시간: 09:00 ~ 12:00</span> <span class="chip">주간횟수: 5</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">강○택</td><td>대전광역시 유성구 구암동</td><td>2026-06-26</td><td><span class="badge b-warn">26일</span></td><td>시작 전</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 2등급</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">조○계</td><td>대전광역시 서구 갈마동</td><td>2026-06-29</td><td><span class="badge b-warn">23일</span></td><td>시작 전</td><td>14,000원</td><td class="chips"><span class="chip">장기요양인정등급: 1등급</span> <span class="chip">동거인여부: 있음</span> <span class="chip">애완동물여부: 없음</span> <span class="chip">근무시간: 09:00 ~ 12:00</span> <span class="chip">주간횟수: 2</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">맹○호</td><td>충청남도 천안시 서북구 성정동</td><td>2026-07-06</td><td><span class="badge b-warn">16일</span></td><td>통화 완료</td><td>13,000원</td><td class="chips"><span class="chip">장기요양인정등급: 5등급</span> <span class="chip">인지저하여부: 저하</span> <span class="chip">동거인여부: 있음</span> <span class="chip">근무시간: 12:00 ~ 15:00</span> <span class="chip">주간횟수: 5</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">연락 후 정체</span></td></tr><tr><td class="name">노○임</td><td>대전광역시 서구 둔산동</td><td>2026-07-10</td><td><span class="badge b-warn">12일</span></td><td>면접 통과</td><td>-</td><td class="chips"><span class="chip">장기요양인정등급: 5등급</span> <span class="chip">동거인여부: 없음</span> <span class="chip">주간횟수: 0</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">연락 후 정체</span></td></tr><tr><td class="name">조○예</td><td>대전광역시 서구 용문동</td><td>2026-07-16</td><td><span class="badge b-good">6일</span></td><td>시작 전</td><td>13,000원</td><td class="chips"><span class="chip">장기요양인정등급: 4등급</span> <span class="chip">인지저하여부: 저하</span> <span class="chip">동거인여부: 있음</span> <span class="chip">애완동물여부: 없음</span> <span class="chip">근무시간: 11:00 ~ 14:00</span> <span class="chip">주간횟수: 5</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">이○종</td><td>대전광역시 서구 탄방동</td><td>2026-07-21</td><td><span class="badge b-good">1일</span></td><td>시작 전</td><td>13,000원</td><td class="chips"><span class="chip">장기요양인정등급: 3등급</span> <span class="chip">동거인여부: 있음</span> <span class="chip">애완동물여부: 없음</span> <span class="chip">근무시간: 09:00 ~ 12:00</span> <span class="chip">주간횟수: 3</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr><tr><td class="name">이○범</td><td>대전광역시 서구 둔산동</td><td>2026-07-21</td><td><span class="badge b-good">1일</span></td><td>매칭 중</td><td>13,000원</td><td class="chips"><span class="chip">장기요양인정등급: 4등급</span> <span class="chip">동거인여부: 있음</span> <span class="chip">애완동물여부: 없음</span> <span class="chip">근무시간: 10:00 ~ 18:00</span> <span class="chip">주간횟수: 3</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">연락 후 정체</span></td></tr><tr><td class="name">신○</td><td>대전광역시 서구 월평동</td><td>2026-07-23</td><td><span class="badge b-good">0일</span></td><td>시작 전</td><td>13,000원</td><td class="chips"><span class="chip">장기요양인정등급: 4등급</span> <span class="chip">동거인여부: 없음</span> <span class="chip">애완동물여부: 없음</span> <span class="chip">근무시간: 13:00 ~ 15:00</span> <span class="chip">주간횟수: 5</span> <span class="chip">희망성별코드명: 여성</span></td><td><span class="chip chip-unknown">원인불명</span> <span class="muted">첫 연락 없음</span></td></tr></tbody>
+</table>
+</div>
 
 <div class="note">
-· 이 페이지에는 수급자·지원자 개인정보(이름·주소·연락처)가 포함되어 있지 않습니다 (집계 수치만).<br>
-· 개별 건 상세는 사내 구인현황 지연분석 대시보드에서만 확인할 수 있습니다.
+· 이 페이지의 수급자명은 가운데 마스킹되어 있고, 연락처·주소 상세 등 그 외 개인정보는 포함되어 있지 않습니다.<br>
+· 개별 건 상세(연락 이력 등)는 사내 구인현황 지연분석 대시보드에서만 확인할 수 있습니다.
 </div>
 </div>
 <script>
