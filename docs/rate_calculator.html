@@ -99,6 +99,23 @@
     background:#eef1f5;color:var(--mut)}
   .limtag.inc{background:var(--ok-bg);color:var(--ok)}
   .limsub{font-size:11.5px;color:var(--mut);font-weight:400;margin-top:2px}
+
+  /* 모드 토글 (급여 / 본인부담금) */
+  .modebar{display:flex;justify-content:center;margin-bottom:18px}
+  .modebar .toggle{border:1px solid var(--line);border-radius:10px}
+  .modebar .toggle button{padding:10px 26px;font-size:15px}
+  body[data-mode="wage"] #copayView{display:none}
+  body[data-mode="copay"] #wageView{display:none}
+  /* 급여 계산기 결과줄 */
+  .wrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    padding:12px 4px;border-bottom:1px solid var(--line)}
+  .wrow .lab{font-weight:600}
+  .wrow .desc{font-size:12px;color:var(--mut);margin-top:3px}
+  .wrow .amt{font-weight:700;font-size:17px;white-space:nowrap}
+  .wrow.net{background:var(--accent-soft);border-radius:8px;border:0;padding:14px 12px;margin-top:6px}
+  .wrow.net .amt{color:var(--accent);font-size:20px}
+  .wtag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;
+    background:var(--ok-bg);color:var(--ok);margin-left:6px;vertical-align:middle}
   @media (max-width:560px){.brand{flex-wrap:wrap}.brand .prov{margin-left:0;text-align:left}}
 
   @media print{
@@ -166,6 +183,14 @@
   <button class="print" id="printBtn">🖨 인쇄 / PDF 저장</button>
   <button class="print" id="installBtn" style="background:#0f766e">⬇ 바로가기 설치</button></div>
 
+<div class="modebar">
+  <div class="toggle" id="mode">
+    <button data-m="copay" class="on">🧾 본인부담금 계산기</button>
+    <button data-m="wage">💰 급여 계산기</button>
+  </div>
+</div>
+
+<div id="copayView">
 <div class="popts">
   <b>출력 항목</b>
   <label><input type="checkbox" data-sec="secSched">이용 일정</label>
@@ -269,6 +294,47 @@
     추석 연휴(9/26 토) 대체공휴일과 지방선거일 반영 여부는 관보로 확인하세요.
   </div>
 </div>
+</div><!-- /copayView -->
+
+<div id="wageView">
+<div class="card">
+  <h2>요양보호사 급여 (일반요양) <span class="badge">시급 직접입력</span></h2>
+  <div class="row">
+    <div><label>요양보호사명 (출력용)</label>
+      <input type="text" id="wName" placeholder="예: 김○○" style="width:110px"></div>
+    <div><label>등급</label><select id="wGrade">
+      <option value="1">1등급</option><option value="2">2등급</option>
+      <option value="3">3등급</option><option value="4" selected>4등급</option>
+      <option value="5">5등급</option></select></div>
+    <div><label>평일 시급 (급여 직접입력)</label>
+      <input type="text" id="wHourly" value="13000" style="width:80px"> 원</div>
+    <div><label>일 근무시간</label><input type="text" id="wHours" value="3" style="width:52px"> 시간</div>
+    <div><label>평일 근무일</label><input type="text" id="wWeekday" value="20" style="width:52px"> 일</div>
+    <div><label>일요일 근무</label><input type="text" id="wSun" value="0" style="width:52px"> 일</div>
+    <div><label>공휴일 근무</label><input type="text" id="wHol" value="0" style="width:52px"> 일</div>
+  </div>
+  <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 18px">
+    <label style="display:inline-flex;gap:5px;align-items:center;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="wNoPension"> 만 65세 이상 (국민연금 제외)</label>
+    <label style="display:inline-flex;gap:5px;align-items:center;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="wMedicaid"> 의료급여 수급권자 (건강·장기요양 제외)</label>
+    <label style="display:inline-flex;gap:5px;align-items:center;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="wNoEmploy"> 고용보험 중복가입 (고용보험 제외)</label>
+  </div>
+  <div style="font-size:12px;color:var(--mut);margin-top:10px">
+    일요일·공휴일 시급 = 평일 시급 + 통상임금(2026년 12,390원) × 0.5 (휴일근로 50% 가산)</div>
+</div>
+
+<div class="card">
+  <h2>급여 계산 결과 <button class="copy" id="wCopyBtn">계산식 복사</button></h2>
+  <div id="wResult"></div>
+</div>
+
+<div class="card" id="wFormulaCard">
+  <h2>계산식</h2>
+  <pre id="wFormula"></pre>
+</div>
+</div><!-- /wageView -->
 
 <div class="foot">
   본 계산기는 <b>케어링 충청본부 방문요양 대전점</b>에서 제공합니다<br>
@@ -653,6 +719,81 @@ document.getElementById('cap8').oninput = calc;
 document.getElementById('deduct').oninput = calc;
 document.getElementById('who').oninput = calc;
 document.getElementById('useSevere').onchange = calc;
+
+/* ── 모드 토글 (급여 / 본인부담금) ── */
+document.body.dataset.mode = 'copay';
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{
+  document.body.dataset.mode = b.dataset.m;
+  document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on', x===b));
+});
+
+/* ── 급여 계산기 (일반요양, 2026 기준) ── */
+const TONGSANG_2026 = 12390;                 // 통상임금(최저시급)
+const floor10 = x => Math.floor(x/10)*10;    // 10원 단위 절삭
+function wageCalc(){
+  const num = id => parseFloat(document.getElementById(id).value)||0;
+  const hourly = num('wHourly'), hours = num('wHours');
+  const wd = num('wWeekday'), sun = num('wSun'), hol = num('wHol');
+  const grade = document.getElementById('wGrade').value;
+  const noPension = document.getElementById('wNoPension').checked;
+  const medicaid  = document.getElementById('wMedicaid').checked;
+  const noEmploy  = document.getElementById('wNoEmploy').checked;
+
+  const holWage = hourly + TONGSANG_2026*0.5;   // 일요일·공휴일 시급
+  const gross = hours*(hourly*wd + holWage*hol + holWage*sun);
+
+  const employ  = noEmploy  ? 0 : floor10(gross*0.009);    // 고용 0.9%
+  const health  = medicaid  ? 0 : floor10(gross*0.03595);  // 건강 3.595%
+  const ltc     = medicaid  ? 0 : floor10(health*0.1314);  // 장기요양 = 건강 ×13.14%
+  const pension = noPension ? 0 : floor10(gross*0.0475);    // 연금 4.75%
+  const net = gross - employ - health - ltc - pension;
+
+  const nm = document.getElementById('wName').value.trim();
+  const R=[];
+  R.push(`<div class="wrow"><div><div class="lab">평일 시급</div>
+    <div class="desc">${grade}등급 · 직접입력</div></div><div class="amt">${won(hourly)}</div></div>`);
+  R.push(`<div class="wrow"><div><div class="lab">일요일·공휴일 시급</div>
+    <div class="desc">평일 ${won(hourly)} + 통상임금 ${won(TONGSANG_2026)} × 0.5</div></div>
+    <div class="amt">${won(holWage)}</div></div>`);
+  R.push(`<div class="wrow"><div><div class="lab">월급여 (총급여)</div>
+    <div class="desc">${hours}시간 × (평일 ${won(hourly)}×${wd}일${hol?` + 공휴일 ${won(holWage)}×${hol}일`:''}${sun?` + 일요일 ${won(holWage)}×${sun}일`:''})</div></div>
+    <div class="amt">${won(gross)}</div></div>`);
+  const dline=(lab,amt,desc,zero)=>`<div class="wrow"><div><div class="lab">${lab}${zero?' <span class="wtag">제외</span>':''}</div>
+    <div class="desc">${desc}</div></div><div class="amt">－${won(amt)}</div></div>`;
+  R.push(dline('고용보험료', employ, `총급여 × 0.9% (10원 절삭)`, noEmploy));
+  R.push(dline('건강보험료', health, `총급여 × 3.595% (10원 절삭)`, medicaid));
+  R.push(dline('장기요양보험료', ltc, `건강보험료 × 13.14% (10원 절삭)`, medicaid));
+  R.push(dline('국민연금', pension, `총급여 × 4.75% (10원 절삭)`, noPension));
+  R.push(`<div class="wrow net"><div><div class="lab">실수령액</div>
+    <div class="desc">총급여 ${won(gross)} − 공제 ${won(gross-net)}</div></div>
+    <div class="amt">${won(net)}</div></div>`);
+  document.getElementById('wResult').innerHTML = R.join('');
+
+  const f=[];
+  f.push(`■ 요양보호사 급여 (일반요양·2026)`);
+  if(nm) f.push(`  ${nm} · ${grade}등급`);
+  f.push(`  평일 시급 ${won(hourly)} / 일 근무 ${hours}시간`);
+  f.push(`  근무일 — 평일 ${wd}일${sun?` · 일요일 ${sun}일`:''}${hol?` · 공휴일 ${hol}일`:''}`);
+  f.push(``);
+  f.push(`  일요일·공휴일 시급 = ${won(hourly)} + ${won(TONGSANG_2026)} × 0.5 = ${won(holWage)}`);
+  f.push(`  월급여 = ${hours} × (${won(hourly)}×${wd}${hol?` + ${won(holWage)}×${hol}`:''}${sun?` + ${won(holWage)}×${sun}`:''}) = ${won(gross)}`);
+  f.push(``);
+  f.push(`  고용보험료   ${won(employ)}${noEmploy?'  (중복가입 제외)':'  = 총급여 × 0.9%'}`);
+  f.push(`  건강보험료   ${won(health)}${medicaid?'  (의료급여 제외)':'  = 총급여 × 3.595%'}`);
+  f.push(`  장기요양보험 ${won(ltc)}${medicaid?'  (의료급여 제외)':'  = 건강 × 13.14%'}`);
+  f.push(`  국민연금     ${won(pension)}${noPension?'  (65세이상 제외)':'  = 총급여 × 4.75%'}`);
+  f.push(`  ───────────────`);
+  f.push(`  실수령액 = ${won(gross)} − ${won(gross-net)} = ${won(net)}`);
+  document.getElementById('wFormula').textContent = f.join('\n');
+}
+['wHourly','wHours','wWeekday','wSun','wHol','wName'].forEach(id=>
+  document.getElementById(id).oninput = wageCalc);
+['wGrade','wNoPension','wMedicaid','wNoEmploy'].forEach(id=>
+  document.getElementById(id).onchange = wageCalc);
+document.getElementById('wCopyBtn').onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById('wFormula').textContent);
+  document.getElementById('wCopyBtn').textContent='복사됨'; };
+wageCalc();
 
 /* 바로가기 설치 (PWA) — 공유허브 서비스워커와 충돌 방지 위해 매니페스트 방식만 사용 */
 let deferredPrompt=null;
