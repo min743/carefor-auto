@@ -1,0 +1,26 @@
+name: 정기검사 기간 대조 (노션↔앱)
+
+# 노션 차량현황(검사유효기간 속성 + 댓글 '자동차검사 가능기간')과
+# 차량관리 앱(공단 cyberts 값)을 대조한다. 노션 읽기에 NOTION_TOKEN 이 필요해 CI 에서만 돈다.
+# 공단↔앱은 로컬에서 이미 검증(0 불일치)했으므로 여기서는 노션↔앱만 본다(--no-cyberts, 빠름).
+# 수동 실행 전용. 결과는 로그의 '정기검사 기간 대조' 섹션에서 확인.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 패키지 설치
+        # fetch_cars 가 최상위에서 src.credentials(→keyring)를 import 한다(토큰은 env 로 읽지만 import 는 필요).
+        run: pip install requests keyring
+      - name: 정기검사 노션↔앱 대조
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python -X utf8 -m audit.verify_inspect --no-cyberts
