@@ -285,17 +285,6 @@ function render(){
         <table class="small-table"><tr><th>수급자</th><th>현황</th><th>수급기간</th><th>누락①</th><th>누락②</th><th>누락③</th><th>표준약관</th><th>계약연속</th><th>계획점검</th></tr>
         ${an.rows_check.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></details>`;
     }
-    // 문제 판정(미흡·주의) 항목이 실은 전건 표(item_results[no].rows) — 잘림 없이 펼쳐 확인
-    ITEMS.forEach(it=>{
-      const r = d.item_results && d.item_results[String(it.no)];
-      if(!r || !Array.isArray(r.rows) || !r.rows.length) return;
-      const cols = Array.isArray(r.cols) ? r.cols : [];
-      html += `<details><summary>🔎 ${it.no}. ${it.name} — ${r.status} 상세 (${r.rows.length}건)</summary>`
-        + `<table class="small-table">`
-        + (cols.length ? `<tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>` : '')
-        + r.rows.map(row=>`<tr>${row.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')
-        + `</table></details>`;
-    });
   }
 
   document.getElementById('content').innerHTML = html;
