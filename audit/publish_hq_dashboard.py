@@ -89,6 +89,15 @@ def publish_dashboard_html():
     idx = html.rfind("</body>")
     html = html[:idx] + _HQ_SCRIPT + html[idx:]
     DASH_OUT.write_text(html, encoding="utf-8")
+    # ★엑셀 내보내기(XLSX)는 vendor/xlsx.full.min.js 를 상대경로로 읽는다.
+    #   Pages 는 docs/ 를 루트로 서빙하므로 docs/vendor 에도 있어야 한다(없으면 404 → 엑셀 버튼 오류).
+    import shutil
+    src = ROOT / "vendor" / "xlsx.full.min.js"
+    dst = DASH_OUT.parent / "vendor" / "xlsx.full.min.js"
+    if src.exists():
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if not dst.exists() or dst.stat().st_size != src.stat().st_size:
+            shutil.copy2(src, dst)
     return DASH_OUT
 
 # 명단표: 0번 컬럼이 수급자 이름 (구조 고정)
