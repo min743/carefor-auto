@@ -96,6 +96,22 @@ jobs:
       - name: 패키지 설치
         run: pip install -r requirements-ci.txt
 
+      # 30① 동행 작성자 직종보정(known_writers.json)은 직원 실명이라 저장소에 커밋 못 한다(gitignore).
+      # 시크릿(KNOWN_WRITERS_JSON)에서 러너 안에만 복원 → collect_medical import 시 로드된다.
+      # 이 스텝이 없으면(시크릿 미설정) 보정 없이도 30①은 규칙만으로 양호 판정되고 직종만 '?'로 표시된다.
+      # ★반드시 collect_medical 을 import 하는 어떤 수집/점검 스텝보다 먼저 와야 한다.
+      - name: 30① known_writers 복원 (러너 내 임시 — 커밋 안 함)
+        env:
+          KNOWN_WRITERS_JSON: ${{ secrets.KNOWN_WRITERS_JSON }}
+        run: |
+          if [ -n "$KNOWN_WRITERS_JSON" ]; then
+            mkdir -p audit_results
+            printf '%s' "$KNOWN_WRITERS_JSON" > audit_results/known_writers.json
+            echo "known_writers.json 복원 ($(wc -c < audit_results/known_writers.json) bytes)"
+          else
+            echo "KNOWN_WRITERS_JSON 시크릿 없음 — 직종보정 생략(30①은 규칙으로 판정)"
+          fi
+
       - name: Playwright 브라우저 설치
         run: playwright install chromium --with-deps
 

@@ -1968,6 +1968,15 @@ def analyze_branch_pages(data: dict, cutoff: str, today: date | None = None,
                        + (" / " + m30["detail"] if m30 else " (①동행진료 기록은 수기 확인)")
                        + csd_note),
         }
+        # 30번 특이사항 전건(하단 drill-down용) — 연계-상담 작성일 미확인 + 진료-프로그램 겹침(둘 다 수기확인)
+        rows30 = [[x["name"], x["written"], "연계기록지 작성일 상담 미확인"]
+                  for x in csd if x.get("has_consult") is False]
+        for o in ((m30 or {}).get("overlap") or []):
+            nm, _, dt = o.rpartition(" ")
+            rows30.append([nm or o, dt, "진료일에 프로그램 참여(모순)"])
+        if rows30:
+            item_results["30"]["cols"] = ["수급자", "날짜", "구분"]
+            item_results["30"]["rows"] = rows30
     if case_parsed:
         item_results["29"] = {
             "status": st(case_miss),
