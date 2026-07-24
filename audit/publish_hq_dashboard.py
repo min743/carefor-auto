@@ -157,10 +157,13 @@ def sanitize(payload: dict):
             # 전건 drill-down 표(rows): 명단 컬럼의 실명도 마스킹(안 하면 verify 백스톱이 발행을 막음)
             if isinstance(r, dict) and r.get("rows"):
                 r["rows"] = _mask_array(r["rows"], rx)
-        # analysis.item_results 도 동일 처리(있으면)
+        # analysis.item_results 도 동일 처리(있으면) — ★rows 도 마스킹(top-level 과 같은 item_results
+        #   복사본이라 rows 실명이 여기로도 샌다. detail 만 처리하면 verify 백스톱이 발행을 막음)
         for r in (an.get("item_results") or {}).values():
             if isinstance(r, dict) and r.get("detail"):
                 r["detail"] = html.escape(detail_for_share(r["detail"], rx))
+            if isinstance(r, dict) and r.get("rows"):
+                r["rows"] = _mask_array(r["rows"], rx)
     return payload, names
 
 
